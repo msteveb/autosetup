@@ -1,0 +1,716 @@
+#!/bin/sh
+# Copyright (c) 2006-2010 WorkWare Systems http://www.workware.net.au/
+# All rights reserved
+# \
+exec $($(dirname "$0")/find-tclsh || echo false) "$0" "$@"
+
+set autosetup(version) 0.6.0
+
+# Can be set to 1 to debug early-init problems
+set autosetup(debug) 0
+
+##################################################################
+#
+# Main flow of control, option handling
+#
+proc main {argv} {
+	global autosetup
+
+	# There are two directories, builddir and srcdir
+	# - srcdir is where auto.def lives
+	# - builddir is where output files are created
+	# Normally both are [pwd], but:
+	# - If WRAPPER is set, srcdir is set to the directory containing that file
+	# - If -C <dir> is given, srcdir and builddir are both set to that dir
+
+	# 'misc' is needed before we can do anything, so set a temporary libdir
+	# in case this is the development version
+	set autosetup(libdir) [file dirname $::argv0]/lib
+	use misc
+
+	# Need a special check for -C because it affects the environment
+	autosetup_check_directory argv
+
+	# Now set up the environment
+	set autosetup(dir) [realdir [file dirname [realpath $::argv0]]]
+	set autosetup(prog) [file join $autosetup(dir) [file tail $::argv0]]
+	set autosetup(deps) [list $autosetup(prog)]
+	if {$autosetup(installed)} {
+		set autosetup(libdir) $autosetup(dir)
+	} else {
+		set autosetup(libdir) [file join $autosetup(dir) lib]
+	}
+	if {[env WRAPPER ""] eq ""} {
+		# Invoked directly
+		set autosetup(exe) $autosetup(prog)
+		set autosetup(srcdir) [pwd]
+	} else {
+		# Invoked via the configure wrapper
+		set autosetup(exe) [env WRAPPER]
+		set autosetup(srcdir) [file dirname $autosetup(exe)]
+	}
+	set autosetup(autodef) [relative-path $autosetup(srcdir)/auto.def]
+	set autosetup(argv) $argv
+	set autosetup(cmdline) {}
+	set autosetup(options) {}
+	set autosetup(optionhelp) {}
+
+	# Parse options
+	use getopt
+
+	array set ::useropts [getopt argv]
+
+	#"=Core Options:"
+	options-add {
+		option-checking=1
+
+		"-C dir"   =>  "change to the given directory before running autosetup"
+		help       =>  "display help and options"
+		version    =>  "display the version of autosetup"
+		manual:=text => "display the autosetup manual. Alternative formats are 'wiki' and 'asciidoc'"
+		debug       =>  "display debugging output as autosetup runs"
+		install     =>  "install autosetup to the current directory (in the 'autosetup/' subdirectory)"
+		force init  =>  "create an initial 'configure' script if none exists"
+	}
+
+	#parray ::useropts
+	if {[opt-bool version]} {
+		puts $autosetup(version)
+		exit 0
+	}
+
+	# Debugging output (set this early)
+	incr autosetup(debug) [opt-bool debug]
+	incr autosetup(force) [opt-bool force]
+
+	if {[opt-bool help]} {
+		use help
+		autosetup_help
+	}
+
+	if {[opt-val manual] ne ""} {
+		use help
+		autosetup_manual [opt-val manual]
+	}
+
+	if {[opt-bool init]} {
+		use init
+		autosetup_init
+	}
+
+	if {[opt-bool install]} {
+		use install
+		autosetup_install
+	}
+
+	if {![file exists $autosetup(autodef)]} {
+		# Check for invalid option first
+		options {}
+		user-error "No auto.def found in $autosetup(srcdir)"
+	}
+
+	# Parse extra arguments into autosetup(cmdline)
+	foreach arg $argv {
+		if {[regexp {(.*)=(.*)} $arg -> n v]} {
+			dict set autosetup(cmdline) $n $v
+			define $n $v
+		} else {
+			user-error "Unexpected parameter: $arg"
+		}
+	}
+
+	lappend autosetup(deps) $autosetup(autodef)
+
+	set cmd "$autosetup(exe)"
+	foreach arg $autosetup(argv) {
+		append cmd " [quote-if-needed $arg]"
+	}
+	define AUTOREMAKE $cmd
+
+	# Log how we were invoked
+	configlog "Invoked as: [env WRAPPER $::argv0] [quote-argv $autosetup(argv)]"
+
+	source $autosetup(autodef)
+
+	# Could warn here if options {} was not specified
+	exit 0
+}
+
+# @opt-bool option ...
+#
+# Check each of the named, boolean options and return 1 if any of them have
+# been set by the user.
+# 
+proc opt-bool {args} {
+	option-check-names {*}$args
+	opt_bool ::useropts {*}$args
+}
+
+# @opt-val option-list ?default=""?
+#
+# Returns a list containing all the values given for the non-boolean options in 'option-list'.
+# There will be one entry in the list for each option given by the user, including if the
+# same option was used multiple times.
+# If only a single value is required, use something like:
+#
+## lindex [opt-val $names] end
+#
+# If no options were set, $default is returned (exactly, not as a list).
+# 
+proc opt-val {names {default ""}} {
+	option-check-names {*}$names
+	join [opt_val ::useropts $names $default]
+}
+
+proc option-check-names {args} {
+	foreach o $args {
+		if {$o ni $::autosetup(options)} {
+			autosetup-error "Request for undeclared option --$o"
+		}
+	}
+}
+
+# Parse the option definition in $opts and update
+# ::useropts() and ::autosetup(optionhelp) appropriately
+#
+proc options-add {opts} {
+	global useropts autosetup
+
+	for {set i 0} {$i < [llength $opts]} {incr i} {
+		set opt [lindex $opts $i]
+		if {[string match =* $opt]} {
+			# This is a special heading
+			lappend autosetup(optionhelp) $opt ""
+			continue
+		}
+
+		#puts "i=$i, opt=$opt"
+		regexp {^([^:=]*)(:)?(=)?(.*)$} $opt -> name colon equal value
+		if {$name in $autosetup(options)} {
+			autosetup-error "Option $name already specified"
+		}
+
+		#puts "$opt => $name $colon $equal $value"
+
+		# Find the corresponding value in the user options
+		# and set the default if necessary
+		if {[string match "-*" $opt]} {
+			# This is a documentation-only option, like "-C <dir>"
+			set opthelp $opt
+		} elseif {$colon eq ""} {
+			# Boolean option
+			lappend autosetup(options) $name
+
+			if {![info exists useropts($name)]} {
+				set useropts($name) $value
+			}
+			if {$value eq "1"} {
+				set opthelp "--disable-$name"
+			} else {
+				set opthelp "--$name"
+			}
+		} else {
+			# String option.
+			lappend autosetup(options) $name
+
+			if {$equal eq "="} {
+				if {[info exists useropts($name)]} {
+					# If the user specified the option with no value, the value will be "1"
+					# Replace with the default
+					if {$useropts($name) eq "1"} {
+						set useropts($name) $value
+					}
+				}
+				set opthelp "--$name?=$value?"
+			} else {
+				set opthelp "--$name=$value"
+			}
+		}
+
+		# Now create the help for this option if appropriate
+		if {[lindex $opts $i+1] eq "=>"} {
+			set desc [lindex $opts $i+2]
+			#string match \n* $desc
+			# A multi-line description
+			lappend autosetup(optionhelp) $opthelp $desc
+			incr i 2
+		}
+	}
+}
+
+proc module-options {opts} {
+	options-add $opts
+	if {[opt-bool help]} {
+		# Ensure that the module isn't executed on --help
+		# We are running under eval or source, so use break
+		# to prevent further execution
+		#return -code break -level 2
+		return -code break
+	}
+}
+
+proc max {a b} {
+	expr {$a > $b ? $a : $b}
+}
+
+proc options-wrap-desc {text length firstprefix nextprefix initial} {
+	set len $initial
+	set space $firstprefix
+	foreach word [split $text] {
+		set word [string trim $word]
+		if {$word == ""} {
+			continue
+		}
+		if {$len && [string length $space$word] + $len >= $length} {
+			puts ""
+			set len 0
+			set space $nextprefix
+		}
+		incr len [string length $space$word]
+		# Use x^Hx hightlighting for 'quoted' single words
+		puts -nonewline $space$word
+		set space " "
+	}
+	if {$len} {
+		puts ""
+	}
+}
+
+proc options-show {} {
+	# Determine the max option width
+	set max 0
+	foreach {opt desc} $::autosetup(optionhelp) {
+		if {[string match =* $opt] || [string match \n* $desc]} {
+			continue
+		}
+		set max [max $max [string length $opt]]
+	}
+	set indent [string repeat " " [expr $max+4]]
+
+	# Now output
+	foreach {opt desc} $::autosetup(optionhelp) {
+		if {[string match =* $opt]} {
+			puts [string range $opt 1 end]
+			continue
+		}
+		puts -nonewline "  [format %-${max}s $opt]"
+		if {[string match \n* $desc]} {
+			puts $desc
+		} else {
+			options-wrap-desc [string trim $desc] 90 "  " $indent [expr $max + 2]
+		}
+	}
+}
+
+proc options {optlist} {
+	# Allow options as a list or args
+	options-add {"=Local Options:"}
+	options-add $optlist
+
+	if {[opt-bool help]} {
+		options-show
+		exit 0
+	}
+
+	# Check for invalid options
+	if {[opt-bool option-checking]} {
+		foreach o [array names ::useropts] {
+			if {$o ni $::autosetup(options)} {
+				user-error "Unknown option --$o"
+			}
+		}
+	}
+}
+
+proc config_guess {} {
+	if {[file executable $::autosetup(dir)/config.guess]} {
+		exec $::autosetup(dir)/config.guess
+	} else {
+		configlog "No config.guess, so using uname"
+		string tolower [exec uname -p]-unknown-[exec uname -s][exec uname -r]
+	}
+}
+
+proc config_sub {alias} {
+	if {[file executable $::autosetup(dir)/config.sub]} {
+		exec $::autosetup(dir)/config.sub $alias
+	} else {
+		return $alias
+	}
+}
+
+# @define name ?value=1?
+# 
+# Defines the named variable to the given value.
+# These name, values pairs represent the results of the configuration check
+# and are available to be checked, modified and substituted.
+#
+proc define {name {value 1}} {
+	set ::define($name) $value
+}
+
+# @define-append name value
+#
+# Appends the given value to the given 'defined' variable.
+# If the variable is not defined or empty, it is set to $value.
+# Otherwise the value is appended, separated by a space.
+#
+proc define-append {name value} {
+	if {[info exists ::define($name)] && $::define($name) ne ""} {
+		append ::define($name) " " $value
+	} else {
+		set ::define($name) $value
+	}
+}
+
+# @get-define name ?default=0?
+#
+# Returns the current value of the 'defined' variable, or $default
+# if not set.
+#
+proc get-define {name {default 0}} {
+	if {[info exists ::define($name)]} {
+		return $::define($name)
+	}
+	return $default
+}
+
+# @is-defined name
+#
+# Returns 1 if the given variable is defined.
+#
+proc is-defined {name} {
+	info exists ::define($name)
+}
+
+# @get-env name default
+#
+# If $name was specified on the command line, return it.
+# If $name was set in the environment, return it.
+# Otherwise return $default.
+#
+proc get-env {name default} {
+	if {[dict exists $::autosetup(cmdline) $name]} {
+		return [dict get $::autosetup(cmdline) $name]
+	}
+	env $name $default
+}
+
+# @readfile filename ?default=""?
+#
+# Return the contents of the file, without the trailing newline.
+# If the doesn't exist or can't be read, returns $default.
+#
+proc readfile {filename {default_value ""}} {
+	set result $default_value
+	catch {
+		set f [open $filename]
+		set result [read -nonewline $f]
+		close $f
+	}
+	return $result
+}
+
+# @writefile filename value
+#
+# Creates the given file containing $value.
+# Does not add an extra newline.
+#
+proc writefile {filename value} {
+	set f [open $filename w]
+	puts -nonewline $f $value
+	close $f
+}
+
+proc quote-if-needed {str} {
+	if {[string match {*[\" ]*} $str]} {
+		return \"[string map [list \" \\" \\ \\\\] $str]\"
+	}
+	return $str
+}
+
+proc quote-argv {argv} {
+	set args {}
+	foreach arg $argv {
+		lappend args [quote-if-needed $arg]
+	}
+	join $args
+}
+
+# @find-executable name
+#
+# Searches the path for an executable with the given name.
+# Returns 1 if found, or 0 if not.
+#
+proc find-executable {name} {
+	foreach p [split [env PATH .] :] {
+		set exec [file join $p $name]
+		if {[file executable $exec]} {
+			dputs "Found $name -> $exec"
+			return 1
+		}
+	}
+	return 0
+}
+
+# @find-an-executable ?-required? name ...
+#
+# Given a list of possible executable names,
+# searches for one of these on the path.
+#
+# Returns the name found, or "" if none found.
+# If the first parameter is '-required', an error is generated
+# if no executable is found.
+#
+proc find-an-executable {args} {
+	set required 0
+	if {[lindex $args 0] eq "-required"} {
+		set args [lrange $args 1 end]
+	}
+	foreach name $args {
+		if {[find-executable $name]} {
+			return $name
+		}
+	}
+	if {$required} {
+		user-error "failed to find one of: $args"
+	}
+	return ""
+}
+
+# @configlog msg
+#
+# Writes the given message to the configuration log, config.log
+#
+proc configlog {msg} {
+	if {![info exists ::autosetup(logfh)]} {
+		set ::autosetup(logfh) [open config.log w]
+	}
+	puts $::autosetup(logfh) $msg
+}
+
+# @msg-checking msg
+#
+# Writes the message with no newline to stdout.
+#
+proc msg-checking {msg} {
+	puts -nonewline $msg
+	set ::autosetup(msg-checking) 1
+}
+
+# @msg-result msg
+#
+# Writes the message to stdout.
+#
+proc msg-result {msg} {
+	puts $msg
+	set ::autosetup(msg-checking) 0
+	show-notices
+}
+
+# Will be overridden by 'use misc'
+proc error-stacktrace {msg} {
+	return $msg
+}
+
+proc error-location {msg} {
+	return $msg
+}
+
+##################################################################
+#
+# Debugging output
+#
+proc dputs {msg} {
+	if {$::autosetup(debug)} {
+		puts $msg
+	}
+}
+
+##################################################################
+#
+# User and system warnings and errors
+#
+# Usage errors such as wrong command line options
+
+# @user-error msg
+#
+# Indicate incorrect usage to the user, including if required components
+# or features are not found.
+# autosetup exits with a non-zero return code.
+#
+proc user-error {msg} {
+	show-notices
+	puts stderr "Error: $msg"
+	puts stderr "Try: autosetup --help for options"
+	exit 1
+}
+
+# @user-notice msg
+#
+# Output the given message to stderr.
+#
+proc user-notice {msg} {
+	lappend ::autosetup(notices) $msg
+}
+
+# Incorrect usage in the auto.def file. Identify the location.
+proc autosetup-error {msg} {
+	show-notices
+	puts stderr [error-location $msg]
+	exit 1
+}
+
+proc show-notices {} {
+	if {$::autosetup(msg-checking)} {
+		puts ""
+		set ::autosetup(msg-checking) 0
+	}
+	flush stdout
+	if {[info exists ::autosetup(notices)]} {
+		puts stderr [join $::autosetup(notices) \n]
+		unset ::autosetup(notices)
+	}
+}
+
+proc autosetup_version {} {
+	return "autosetup v$::autosetup(version)"
+}
+
+##################################################################
+#
+# Directory/path handling
+#
+
+proc realdir {dir} {
+	set oldpwd [pwd]
+	cd $dir
+	set pwd [pwd]
+	cd $oldpwd
+	return $pwd
+}
+
+# Follow symlinks until we get to something which is not a symlink
+proc realpath {path} {
+	#puts -nonewline "$path -> "
+	while {1} {
+		if {[catch {
+			set path [file link $path]
+		}]} {
+			# Not a link
+			break
+		}
+	}
+	#puts "$path"
+	return $path
+}
+
+# Convert absolute path, $path into a path relative
+# to the given directory and return it.
+#
+proc relative-path {path} {
+	set diff 0
+	set same 0
+	set newf {}
+	set prefix {}
+	set path [file-normalize $path]
+	set pwd [pwd]
+
+	# Try to make the filename relative to the current dir
+	foreach p [split $pwd /] f [split $path /] {
+		if {$p ne $f} {
+			if {$f == ""} {
+				# pwd is longer than path
+				return $path
+			}
+			incr diff
+		} elseif {!$diff} {
+			incr same
+		}
+		if {$diff} {
+			if {$p ne ""} {
+				# Add .. for sibling dir
+				lappend prefix ..
+			}
+			lappend newf $f
+		}
+	}
+	# Note: Only allow up to 3 .. entries.
+	if {$diff == 0 || $same == 1 || [llength $prefix] > 3} {
+		return $path
+	}
+
+	join [concat $prefix $newf] /
+}
+
+# Check for the -C option
+proc autosetup_check_directory {argvname} {
+	upvar $argvname argv
+	set i [lsearch -exact $argv -C]
+	if {$i >= 0} {
+		set dir [lindex $argv $i+1]
+		if {$dir ne ""} {
+			set ::argv0 [file-normalize $::argv0]
+			cd $dir
+			set argv [lreplace $argv $i $i+1]
+		}
+	}
+}
+
+##################################################################
+#
+# Library module support
+#
+
+# @use module ...
+#
+# Load the given library modules.
+# e.g. use cc cc-shared
+#
+proc use {args} {
+	foreach m $args {
+		if {[info exists ::libmodule($m)]} {
+			continue
+		}
+		set ::libmodule($m) 1
+		if {[info exists ::modsource($m)]} {
+			uplevel #0 eval $::modsource($m)
+		} else {
+			set source $::autosetup(libdir)/${m}.tcl
+			if {[file exists $source]} {
+				lappend ::autosetup(deps) $source
+				uplevel #0 [list source $source]
+			} else {
+				puts "Looking for $source"
+				autosetup-error "use: No such module: $m"
+			}
+		}
+	}
+}
+
+# Initial settings
+set autosetup(exe) $::argv0
+set autosetup(istcl) 1
+set autosetup(installed) 0
+set autosetup(msg-checking) 0
+
+# Embedded modules are inserted below here
+##-- CUT HERE --##
+
+##################################################################
+#
+# Entry/Exit
+#
+if {$autosetup(debug)} {
+	main $argv
+	exit 0
+}
+if {[catch {main $argv} msg] == 1} {
+	show-notices
+	puts stderr [error-stacktrace $msg]
+	if {!$autosetup(debug) && !$autosetup(istcl)} {
+		puts stderr "Try: '[file tail $autosetup(exe)] --debug' for a full stack trace"
+	}
+	exit 1
+}
+show-notices

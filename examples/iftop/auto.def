@@ -1,0 +1,210 @@
+# Initial auto.def created by 'autosetup --init'
+
+use cc
+
+# Add any user options here
+options {
+    with-resolver: resolver:guess => {
+        Technique iftop should use for name resolution.
+          Valid options are:
+          netdb          use gethostbyaddr_r in multiple
+                         threads.
+          netdb_1thread  use gethostbyaddr_r and
+                         assume it is not reentrant.
+          ares           use the MIT ARES asynchronous
+                         resolver library.
+          forking        use the REALLY SUCKY forking resolver.
+          guess          run experiments to guess a
+                         reasonable value.  Only works if you
+                         aren't cross-compiling.  This
+                         is the default.  guess will
+                         either select netdb or netdb_1thread.
+          none           don't do name resolution.
+    }
+    with-libpcap: libpcap:WHERE => {
+        Where the libpcap packet-capture library is found.
+        The pcap library should be installed in WHERE/lib,
+        and the header file in either WHERE/include or
+        WHERE/include/pcap.
+    }
+    default-promiscuous => "If enabled, iftop will operate in promiscuous mode to capture outgoing packets"
+}
+
+define IFTOP_VERSION "0.17"
+
+cc-check-includes sys/ioctl.h sys/time.h sys/sockio.h unistd.h time.h
+
+# Are we on a system that uses the STREAMS low-level DLPI interface?
+cc-check-includes sys/dlpi.h
+
+cc-check-functions regcomp select strdup strerror strspn
+
+cc-check-function-in-lib socket socket
+cc-check-function-in-lib log m
+cc-check-function-in-lib gethostbyname nsl
+cc-check-function-in-lib inet_aton socket nsl
+cc-check-function-in-lib inet_pton socket nsl
+
+# Find integers of known physical size.
+# First check for C99 types
+
+# C99
+foreach inc {stdlib.h stdint.h sys/inttypes.h} {
+    if {[cc-check-sizeof "-includes $inc" u_int32_t] == 4} {
+        define-feature c99-ints
+        break
+    }
+}
+if {![have-feature c99-ints]} {
+    # No C99 int types, so figure them out from basic types.
+    cc-check-sizeof "unsigned short int" "unsigned int" "unsigned long int"
+}
+
+# Find lipbcap
+set pcapdirs [opt-val {libpcap with-libpcap} "/usr /usr/local /opt /software"]
+
+msg-checking "Checking for pcap.h..."
+foreach dir $pcapdirs {
+    foreach path {"" pcap/} {
+        if {[cctest -includes pcap.h -cflags -I$dir/${path}include]} {
+            msg-result "$dir/include/${path}pcap.h"
+            define-feature pcap.h
+            define-append EXTRA_CFLAGS "-I$dir/${path}include"
+            break
+        }
+    }
+    if {[have-feature pcap.h]} {
+        break
+    }
+}
+
+if {![have-feature pcap.h]} {
+    msg-result none
+    user-error "can't find pcap.h You're not going to get very far without libpcap."
+}
+if {![cc-check-function-in-lib pcap_open_live pcap "-L$dir/lib"]} {
+    user-error "can't find libpcap. You're not going to get very far without libpcap."
+}
+define-append EXTRA_LDFLAGS "-L$dir/lib"
+
+# Curses. Really, we need ncurses or something similarly advanced, since
+# we use the (apparently obscure) mvchgat function. Unfortunately, there's
+# a solid chance that mvchgat is a macro, so we can't just use
+# AC_SEARCH_LIBS....
+
+cc-check-includes curses.h
+msg-checking "Checking for a curses library containing mvchgat..."
+foreach lib {curses ncurses} {
+    if {[cctest -includes curses.h -link 1 -libs -l$lib -code {mvchgat(0, 0, 1, A_REVERSE, 0, NULL);}]} {
+        msg-result "$lib"
+        define-append LIBS -l$lib
+        define-feature curses
+        break
+    }
+}
+if {![have-feature curses]} {
+    msg-result "none"
+    user-error "Curses! Foiled again! Can't find a curses library supporting mvchgat. Consider installing ncurses."
+}
+
+# POSIX threads. Different systems like different combinations of flags,
+# libraries, etc. We use a test program to figure this stuff out.
+
+msg-checking "POSIX threads compilation..."
+# The code to compile
+foreach flag {"" -mt -pthread -thread} {
+    foreach lib {"" -lpthread "-lpthread -lposix4"} {
+        set ok [cctest -cflags $flag -link 1 -libs $lib -sourcefile config/pthread.c]
+        if {$ok} {
+            define THREAD_FLAGS $flag
+            define THREAD_LIBS $lib
+            msg-result "CFLAGS=$flag LIBS=$lib"
+            break
+        }
+    }
+    if {$ok} {
+        break
+    }
+}
+
+if {!$ok} {
+    msg-result "no idea"
+    user-error "can't figure out how to compile with POSIX threads.  If your system actually supports POSIX threads, this means we've messed up."
+}
+
+# Are we on a system (like Solaris) that requires promiscuous mode in order to
+# see any outgoing packets?
+
+if {[opt-bool default-promiscuous] || [string match *-solaris* [get-define host]} {
+    define NEED_PROMISCUOUS_FOR_OUTGOING
+}
+
+#
+# Name resolution.
+#
+# This is complicated because we need some sort of reentrant mechanism for
+# name resolution. Naturally, UNIX vendors have come up with a variety of
+# incompatible schemes for this, many of which don't work at all.
+#
+
+# First, the default resolver, which uses getnameinfo or gethostbyaddr_r. If
+# not available, we fall back to gethostbyaddr. We could fall back to ARES,
+# but that's probably not available on typical machines.
+
+# If we've been asked to guess, remember that fact in specified_resolver.
+# From this point on, resolver is our preferred resolver given the
+# experiments we've done so far, or "guess" if we have no idea.
+set resolver [opt-val {with-resolver resolver} guess]
+set specified_resolver $resolver
+if {$resolver eq "guess"} {
+    # Best possibility is getnameinfo.
+    if {[cc-check-function-in-lib getnameinfo nsl]} {
+        # XXX For the moment, don't use getnameinfo, since it isn't actually
+        # thread safe on, e.g., NetBSD.
+        # define USE_GETNAMEINFO
+        msg-result "Not using getnameinfo in case it isn't thread safe"
+    }
+    set resolver netdb
+}
+
+if {$resolver eq "netdb"} {
+    if {![cc-check-function-in-lib gethostbyaddr_r nsl]} {
+        if {$specified_resolver eq "netdb"} {
+           # They wanted gethostbyaddr_r, but they can't have it, so stop.
+           user-error "no library defines gethostbyaddr_r"
+        }
+    }
+
+    # Figure out whether we have
+    # glibc-style or Solaris-style gethostbyaddr_r (or neither...).
+    # Separate determining how to call gethostbyaddr_r from testing
+    # whether it works so we can support cross-compilation.            
+
+    if {[have-feature gethostbyaddr_r]} {
+        msg-checking "Checking how to call gethostbyaddr_r..."
+        if {[cctest -link 1 -sourcefile config/hostentp_ghba_r.c]} {
+            msg-result "7 arg"
+            define GETHOSTBYADDR_R_RETURNS_HOSTENT_P
+            define USE_GETHOSTBYADDR_R
+        } elseif {[cctest -link 1 -sourcefile config/int_ghba_r.c]} {
+            msg-result "8 arg"
+            define GETHOSTBYADDR_R_RETURNS_INT
+            define USE_GETHOSTBYADDR_R
+        } else {
+            msg-result "don't know how"
+        }
+    }
+}
+
+# They may have asked for ares.
+if {$resolver eq "ares"} {
+    # See if ares is to hand....
+    if {[cc-check-function-in-lib ares_init ares]} {
+        define USE_ARES
+    } else {
+        user-error "can't find ARES.  Re-run configure and ask for a different resolver."
+    }
+}
+
+make-autoconf-h config.h {HAVE_* NEED_* IFTOP_*}
+make-template Makefile.in

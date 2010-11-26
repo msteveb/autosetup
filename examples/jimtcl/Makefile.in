@@ -1,0 +1,132 @@
+# Tools
+CC = @CC@
+RANLIB = @RANLIB@
+AR = @AR@
+STRIP = @STRIP@
+
+# Configuration
+
+jim_libtype := @JIM_LIBTYPE@
+SH_CFLAGS ?= @SH_CFLAGS@
+SH_LDFLAGS ?= @SH_LDFLAGS@
+SHOBJ_CFLAGS ?= @SHOBJ_CFLAGS@
+SHOBJ_LDFLAGS ?= @SHOBJ_LDFLAGS@
+CFLAGS = @CFLAGS@
+LDFLAGS = @LDFLAGS@
+LDLIBS += @LIBS@
+
+prefix = @prefix@
+exec_prefix = @exec_prefix@
+
+CPPFLAGS += -D_GNU_SOURCE -Wall $(OPTIM) -I.
+ifneq (@srcdir@,.)
+CPPFLAGS += -I@srcdir@
+VPATH := @srcdir@
+endif
+
+ifeq ($(jim_libtype),static)
+	LIBJIM := libjim.a
+else
+	LIBJIM := libjim.so
+	SH_LIBJIM := $(LIBJIM)
+	CPPFLAGS += $(SH_CFLAGS)
+	DEF_LD_PATH := @LD_LIBRARY_PATH@=`pwd` 
+endif
+
+.EXPORT_ALL_VARIABLES:
+
+OBJS := jim-subcmd.o jim-interactive.o jim-format.o jim.o utf8.o jimregexp.o @EXTRA_OBJS@
+
+JIMSH := jimsh@EXEEXT@
+
+EXTENSION_OBJS := $(patsubst %,jim-%.o,@JIM_EXTENSIONS@)
+EXTENSION_MODS := $(patsubst %,%.so,@JIM_MOD_EXTENSIONS@)
+EXTENSION_TCL := $(patsubst %,%.tcl,@JIM_TCL_EXTENSIONS@)
+
+.PRECIOUS: jim-%.c
+
+# Create C extensions from pure Tcl extensions
+jim-%.c: %.tcl
+	echo $@ >>.clean
+	sh @srcdir@/make-c-ext.sh $< >$@
+
+OBJS += jim-load-static-exts.o
+
+all: $(JIMSH) $(EXTENSION_MODS)
+
+docs: Tcl.html
+
+$(JIMSH): $(LIBJIM) jimsh.o
+	$(CC) $(CFLAGS) @SH_LINKFLAGS@ $(LDFLAGS) -o $@ jimsh.o $(LIBJIM) $(LDLIBS) -lm
+
+install: all docs $(EXTENSION_TCL)
+	mkdir -p $(DESTDIR)$(prefix)/bin
+	cp $(JIMSH) $(DESTDIR)$(prefix)/bin
+	mkdir -p $(DESTDIR)$(prefix)/lib/jim
+	cp $(LIBJIM) $(DESTDIR)$(prefix)/lib
+	cp @srcdir@/README.extensions $(EXTENSION_MODS) $(EXTENSION_TCL) $(DESTDIR)$(prefix)/lib/jim
+	mkdir -p $(DESTDIR)$(prefix)/include
+	cp @srcdir@/jim.h @srcdir@/jim-eventloop.h @srcdir@/jim-nvp.h @srcdir@/jim-signal.h \
+		@srcdir@/jim-subcmd.h @srcdir@/jim-win32compat.h $(DESTDIR)$(prefix)/include
+	cp jim-config.h $(DESTDIR)$(prefix)/include
+	mkdir -p $(DESTDIR)$(prefix)/doc/jim
+	cp Tcl.html $(DESTDIR)$(prefix)/doc/jim
+
+test: $(JIMSH)
+	$(DEF_LD_PATH) $(MAKE) jimsh=`pwd`/jimsh -C @srcdir@/tests
+
+$(OBJS) $(EXTENSION_OBJS): Makefile
+
+ifneq (@JIM_UTF8@,)
+# Generate the unicode case mapping
+utf8.o: unicode_mapping.c
+
+unicode_mapping.c: @srcdir@/UnicodeData.txt @srcdir@/parse-unidata.tcl
+	@tclsh@ @srcdir@/parse-unidata.tcl @srcdir@/UnicodeData.txt >$@
+endif
+
+ifeq ($(jim_libtype),static)
+$(LIBJIM): $(OBJS) $(EXTENSION_OBJS)
+	$(AR) cr $@ $^
+	$(RANLIB) $@
+else
+$(LIBJIM): $(OBJS) $(EXTENSION_OBJS)
+	$(CC) $(CFLAGS) $(LDFLAGS) $(SH_LDFLAGS) -o $@ $^ $(LDLIBS)
+endif
+
+%.so: jim-%.c
+	$(CC) $(CFLAGS) $(CPPFLAGS) $(SHOBJ_CFLAGS) -c -o $*.o $^
+	$(CC) $(CFLAGS) $(LDFLAGS) $(SHOBJ_LDFLAGS) -o $@ $*.o $(SH_LIBJIM) $(LDLIBS)
+
+Tcl.html: jim_tcl.txt
+	@tclsh@ @srcdir@/make-index $^ | asciidoc -o $@ -d manpage - || cp @srcdir@/Tcl_shipped.html Tcl.html
+
+clean:
+	rm -f *.o *.so lib*.a $(JIMSH) Tcl.html unicode_mapping.c
+	if [ -f .clean ]; then rm -f `cat .clean` .clean; fi
+
+distclean: clean
+	rm -f jimautoconf.h jim-config.h Makefile config.status config.log
+	rm -rf autom4te.cache
+
+ship: Tcl.html
+	cp Tcl.html Tcl_shipped.html
+	autoconf && autoheader
+
+# automake compatibility. do nothing for all these targets
+EMPTY_AUTOMAKE_TARGETS := dvi pdf ps info html tags ctags mostlyclean maintainer-clean check installcheck installdirs \
+ install-pdf install-ps install-info install-html -install-dvi uninstall install-exec install-data
+.PHONY: $(EMPTY_AUTOMAKE_TARGETS)
+$(EMPTY_AUTOMAKE_TARGETS):
+
+# automake compatibilty - install sources from $(srcdir) to $(distdir)
+distdir:
+	( test -z "$(srcdir)" || cd "$(srcdir)"; git-ls-files ) | cpio -pdmu $(distdir)
+
+ifeq ($(findstring clean,$(MAKECMDGOALS)),)
+Makefile: @AUTODEPS@ @srcdir@/Makefile.in
+	@@AUTOREMAKE@
+endif
+
+reconfig:
+	@AUTOREMAKE@

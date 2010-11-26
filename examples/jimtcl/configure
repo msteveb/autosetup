@@ -1,0 +1,2 @@
+#!/bin/sh
+WRAPPER="$0" exec ../../autosetup "$@"

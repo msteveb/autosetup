@@ -1,0 +1,15 @@
+Wed 15 Dec 2010 07:31:39 EST
+----------------------------
+
+Expand the examples
+
+Have 'autosetup --init' generate a typical Makefile.in if one doesn't exist.
+
+autosetup should have a "meta-parse" phase to check that auto.def
+includes modules before options, and has an options section.
+
+Consider if we can get away without config.sub and config.guess.
+Projects which need them could provide their own.
+Many projects do not.
+
+Unit tests.

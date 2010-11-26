@@ -1,0 +1,2096 @@
+#!/bin/sh
+# Copyright (c) 2006-2010 WorkWare Systems http://www.workware.net.au/
+# All rights reserved
+# \
+exec $($(dirname "$0")/find-tclsh || echo false) "$0" "$@"
+
+set autosetup(version) 0.6.0
+
+# Can be set to 1 to debug early-init problems
+set autosetup(debug) 0
+
+##################################################################
+#
+# Main flow of control, option handling
+#
+proc main {argv} {
+	global autosetup
+
+	# There are two directories, builddir and srcdir
+	# - srcdir is where auto.def lives
+	# - builddir is where output files are created
+	# Normally both are [pwd], but:
+	# - If WRAPPER is set, srcdir is set to the directory containing that file
+	# - If -C <dir> is given, srcdir and builddir are both set to that dir
+
+	# 'misc' is needed before we can do anything, so set a temporary libdir
+	# in case this is the development version
+	set autosetup(libdir) [file dirname $::argv0]/lib
+	use misc
+
+	# Need a special check for -C because it affects the environment
+	autosetup_check_directory argv
+
+	# Now set up the environment
+	set autosetup(dir) [realdir [file dirname [realpath $::argv0]]]
+	set autosetup(prog) [file join $autosetup(dir) [file tail $::argv0]]
+	set autosetup(deps) [list $autosetup(prog)]
+	if {$autosetup(installed)} {
+		set autosetup(libdir) $autosetup(dir)
+	} else {
+		set autosetup(libdir) [file join $autosetup(dir) lib]
+	}
+	if {[env WRAPPER ""] eq ""} {
+		# Invoked directly
+		set autosetup(exe) $autosetup(prog)
+		set autosetup(srcdir) [pwd]
+	} else {
+		# Invoked via the configure wrapper
+		set autosetup(exe) [env WRAPPER]
+		set autosetup(srcdir) [file dirname $autosetup(exe)]
+	}
+	set autosetup(autodef) [relative-path $autosetup(srcdir)/auto.def]
+	set autosetup(argv) $argv
+	set autosetup(cmdline) {}
+	set autosetup(options) {}
+	set autosetup(optionhelp) {}
+
+	# Parse options
+	use getopt
+
+	array set ::useropts [getopt argv]
+
+	#"=Core Options:"
+	options-add {
+		option-checking=1
+
+		"-C dir"   =>  "change to the given directory before running autosetup"
+		help       =>  "display help and options"
+		version    =>  "display the version of autosetup"
+		manual:=text => "display the autosetup manual. Alternative formats are 'wiki' and 'asciidoc'"
+		debug       =>  "display debugging output as autosetup runs"
+		install     =>  "install autosetup to the current directory (in the 'autosetup/' subdirectory)"
+		force init  =>  "create an initial 'configure' script if none exists"
+	}
+
+	#parray ::useropts
+	if {[opt-bool version]} {
+		puts $autosetup(version)
+		exit 0
+	}
+
+	# Debugging output (set this early)
+	incr autosetup(debug) [opt-bool debug]
+	incr autosetup(force) [opt-bool force]
+
+	if {[opt-bool help]} {
+		use help
+		autosetup_help
+	}
+
+	if {[opt-val manual] ne ""} {
+		use help
+		autosetup_manual [opt-val manual]
+	}
+
+	if {[opt-bool init]} {
+		use init
+		autosetup_init
+	}
+
+	if {[opt-bool install]} {
+		use install
+		autosetup_install
+	}
+
+	if {![file exists $autosetup(autodef)]} {
+		# Check for invalid option first
+		options {}
+		user-error "No auto.def found in $autosetup(srcdir)"
+	}
+
+	# Parse extra arguments into autosetup(cmdline)
+	foreach arg $argv {
+		if {[regexp {(.*)=(.*)} $arg -> n v]} {
+			dict set autosetup(cmdline) $n $v
+			define $n $v
+		} else {
+			user-error "Unexpected parameter: $arg"
+		}
+	}
+
+	lappend autosetup(deps) $autosetup(autodef)
+
+	set cmd "$autosetup(exe)"
+	foreach arg $autosetup(argv) {
+		append cmd " [quote-if-needed $arg]"
+	}
+	define AUTOREMAKE $cmd
+
+	# Log how we were invoked
+	configlog "Invoked as: [env WRAPPER $::argv0] [quote-argv $autosetup(argv)]"
+
+	source $autosetup(autodef)
+
+	# Could warn here if options {} was not specified
+	exit 0
+}
+
+# @opt-bool option ...
+#
+# Check each of the named, boolean options and return 1 if any of them have
+# been set by the user.
+# 
+proc opt-bool {args} {
+	option-check-names {*}$args
+	opt_bool ::useropts {*}$args
+}
+
+# @opt-val option-list ?default=""?
+#
+# Returns a list containing all the values given for the non-boolean options in 'option-list'.
+# There will be one entry in the list for each option given by the user, including if the
+# same option was used multiple times.
+# If only a single value is required, use something like:
+#
+## lindex [opt-val $names] end
+#
+# If no options were set, $default is returned (exactly, not as a list).
+# 
+proc opt-val {names {default ""}} {
+	option-check-names {*}$names
+	join [opt_val ::useropts $names $default]
+}
+
+proc option-check-names {args} {
+	foreach o $args {
+		if {$o ni $::autosetup(options)} {
+			autosetup-error "Request for undeclared option --$o"
+		}
+	}
+}
+
+# Parse the option definition in $opts and update
+# ::useropts() and ::autosetup(optionhelp) appropriately
+#
+proc options-add {opts} {
+	global useropts autosetup
+
+	for {set i 0} {$i < [llength $opts]} {incr i} {
+		set opt [lindex $opts $i]
+		if {[string match =* $opt]} {
+			# This is a special heading
+			lappend autosetup(optionhelp) $opt ""
+			continue
+		}
+
+		#puts "i=$i, opt=$opt"
+		regexp {^([^:=]*)(:)?(=)?(.*)$} $opt -> name colon equal value
+		if {$name in $autosetup(options)} {
+			autosetup-error "Option $name already specified"
+		}
+
+		#puts "$opt => $name $colon $equal $value"
+
+		# Find the corresponding value in the user options
+		# and set the default if necessary
+		if {[string match "-*" $opt]} {
+			# This is a documentation-only option, like "-C <dir>"
+			set opthelp $opt
+		} elseif {$colon eq ""} {
+			# Boolean option
+			lappend autosetup(options) $name
+
+			if {![info exists useropts($name)]} {
+				set useropts($name) $value
+			}
+			if {$value eq "1"} {
+				set opthelp "--disable-$name"
+			} else {
+				set opthelp "--$name"
+			}
+		} else {
+			# String option.
+			lappend autosetup(options) $name
+
+			if {$equal eq "="} {
+				if {[info exists useropts($name)]} {
+					# If the user specified the option with no value, the value will be "1"
+					# Replace with the default
+					if {$useropts($name) eq "1"} {
+						set useropts($name) $value
+					}
+				}
+				set opthelp "--$name?=$value?"
+			} else {
+				set opthelp "--$name=$value"
+			}
+		}
+
+		# Now create the help for this option if appropriate
+		if {[lindex $opts $i+1] eq "=>"} {
+			set desc [lindex $opts $i+2]
+			#string match \n* $desc
+			# A multi-line description
+			lappend autosetup(optionhelp) $opthelp $desc
+			incr i 2
+		}
+	}
+}
+
+proc module-options {opts} {
+	options-add $opts
+	if {[opt-bool help]} {
+		# Ensure that the module isn't executed on --help
+		# We are running under eval or source, so use break
+		# to prevent further execution
+		#return -code break -level 2
+		return -code break
+	}
+}
+
+proc max {a b} {
+	expr {$a > $b ? $a : $b}
+}
+
+proc options-wrap-desc {text length firstprefix nextprefix initial} {
+	set len $initial
+	set space $firstprefix
+	foreach word [split $text] {
+		set word [string trim $word]
+		if {$word == ""} {
+			continue
+		}
+		if {$len && [string length $space$word] + $len >= $length} {
+			puts ""
+			set len 0
+			set space $nextprefix
+		}
+		incr len [string length $space$word]
+		# Use x^Hx hightlighting for 'quoted' single words
+		puts -nonewline $space$word
+		set space " "
+	}
+	if {$len} {
+		puts ""
+	}
+}
+
+proc options-show {} {
+	# Determine the max option width
+	set max 0
+	foreach {opt desc} $::autosetup(optionhelp) {
+		if {[string match =* $opt] || [string match \n* $desc]} {
+			continue
+		}
+		set max [max $max [string length $opt]]
+	}
+	set indent [string repeat " " [expr $max+4]]
+
+	# Now output
+	foreach {opt desc} $::autosetup(optionhelp) {
+		if {[string match =* $opt]} {
+			puts [string range $opt 1 end]
+			continue
+		}
+		puts -nonewline "  [format %-${max}s $opt]"
+		if {[string match \n* $desc]} {
+			puts $desc
+		} else {
+			options-wrap-desc [string trim $desc] 90 "  " $indent [expr $max + 2]
+		}
+	}
+}
+
+proc options {optlist} {
+	# Allow options as a list or args
+	options-add {"=Local Options:"}
+	options-add $optlist
+
+	if {[opt-bool help]} {
+		options-show
+		exit 0
+	}
+
+	# Check for invalid options
+	if {[opt-bool option-checking]} {
+		foreach o [array names ::useropts] {
+			if {$o ni $::autosetup(options)} {
+				user-error "Unknown option --$o"
+			}
+		}
+	}
+}
+
+proc config_guess {} {
+	if {[file executable $::autosetup(dir)/config.guess]} {
+		exec $::autosetup(dir)/config.guess
+	} else {
+		configlog "No config.guess, so using uname"
+		string tolower [exec uname -p]-unknown-[exec uname -s][exec uname -r]
+	}
+}
+
+proc config_sub {alias} {
+	if {[file executable $::autosetup(dir)/config.sub]} {
+		exec $::autosetup(dir)/config.sub $alias
+	} else {
+		return $alias
+	}
+}
+
+# @define name ?value=1?
+# 
+# Defines the named variable to the given value.
+# These name, values pairs represent the results of the configuration check
+# and are available to be checked, modified and substituted.
+#
+proc define {name {value 1}} {
+	set ::define($name) $value
+}
+
+# @define-append name value
+#
+# Appends the given value to the given 'defined' variable.
+# If the variable is not defined or empty, it is set to $value.
+# Otherwise the value is appended, separated by a space.
+#
+proc define-append {name value} {
+	if {[info exists ::define($name)] && $::define($name) ne ""} {
+		append ::define($name) " " $value
+	} else {
+		set ::define($name) $value
+	}
+}
+
+# @get-define name ?default=0?
+#
+# Returns the current value of the 'defined' variable, or $default
+# if not set.
+#
+proc get-define {name {default 0}} {
+	if {[info exists ::define($name)]} {
+		return $::define($name)
+	}
+	return $default
+}
+
+# @is-defined name
+#
+# Returns 1 if the given variable is defined.
+#
+proc is-defined {name} {
+	info exists ::define($name)
+}
+
+# @get-env name default
+#
+# If $name was specified on the command line, return it.
+# If $name was set in the environment, return it.
+# Otherwise return $default.
+#
+proc get-env {name default} {
+	if {[dict exists $::autosetup(cmdline) $name]} {
+		return [dict get $::autosetup(cmdline) $name]
+	}
+	env $name $default
+}
+
+# @readfile filename ?default=""?
+#
+# Return the contents of the file, without the trailing newline.
+# If the doesn't exist or can't be read, returns $default.
+#
+proc readfile {filename {default_value ""}} {
+	set result $default_value
+	catch {
+		set f [open $filename]
+		set result [read -nonewline $f]
+		close $f
+	}
+	return $result
+}
+
+# @writefile filename value
+#
+# Creates the given file containing $value.
+# Does not add an extra newline.
+#
+proc writefile {filename value} {
+	set f [open $filename w]
+	puts -nonewline $f $value
+	close $f
+}
+
+proc quote-if-needed {str} {
+	if {[string match {*[\" ]*} $str]} {
+		return \"[string map [list \" \\" \\ \\\\] $str]\"
+	}
+	return $str
+}
+
+proc quote-argv {argv} {
+	set args {}
+	foreach arg $argv {
+		lappend args [quote-if-needed $arg]
+	}
+	join $args
+}
+
+# @find-executable name
+#
+# Searches the path for an executable with the given name.
+# Returns 1 if found, or 0 if not.
+#
+proc find-executable {name} {
+	foreach p [split [env PATH .] :] {
+		set exec [file join $p $name]
+		if {[file executable $exec]} {
+			dputs "Found $name -> $exec"
+			return 1
+		}
+	}
+	return 0
+}
+
+# @find-an-executable ?-required? name ...
+#
+# Given a list of possible executable names,
+# searches for one of these on the path.
+#
+# Returns the name found, or "" if none found.
+# If the first parameter is '-required', an error is generated
+# if no executable is found.
+#
+proc find-an-executable {args} {
+	set required 0
+	if {[lindex $args 0] eq "-required"} {
+		set args [lrange $args 1 end]
+	}
+	foreach name $args {
+		if {[find-executable $name]} {
+			return $name
+		}
+	}
+	if {$required} {
+		user-error "failed to find one of: $args"
+	}
+	return ""
+}
+
+# @configlog msg
+#
+# Writes the given message to the configuration log, config.log
+#
+proc configlog {msg} {
+	if {![info exists ::autosetup(logfh)]} {
+		set ::autosetup(logfh) [open config.log w]
+	}
+	puts $::autosetup(logfh) $msg
+}
+
+# @msg-checking msg
+#
+# Writes the message with no newline to stdout.
+#
+proc msg-checking {msg} {
+	puts -nonewline $msg
+	set ::autosetup(msg-checking) 1
+}
+
+# @msg-result msg
+#
+# Writes the message to stdout.
+#
+proc msg-result {msg} {
+	puts $msg
+	set ::autosetup(msg-checking) 0
+	show-notices
+}
+
+# Will be overridden by 'use misc'
+proc error-stacktrace {msg} {
+	return $msg
+}
+
+proc error-location {msg} {
+	return $msg
+}
+
+##################################################################
+#
+# Debugging output
+#
+proc dputs {msg} {
+	if {$::autosetup(debug)} {
+		puts $msg
+	}
+}
+
+##################################################################
+#
+# User and system warnings and errors
+#
+# Usage errors such as wrong command line options
+
+# @user-error msg
+#
+# Indicate incorrect usage to the user, including if required components
+# or features are not found.
+# autosetup exits with a non-zero return code.
+#
+proc user-error {msg} {
+	show-notices
+	puts stderr "Error: $msg"
+	puts stderr "Try: autosetup --help for options"
+	exit 1
+}
+
+# @user-notice msg
+#
+# Output the given message to stderr.
+#
+proc user-notice {msg} {
+	lappend ::autosetup(notices) $msg
+}
+
+# Incorrect usage in the auto.def file. Identify the location.
+proc autosetup-error {msg} {
+	show-notices
+	puts stderr [error-location $msg]
+	exit 1
+}
+
+proc show-notices {} {
+	if {$::autosetup(msg-checking)} {
+		puts ""
+		set ::autosetup(msg-checking) 0
+	}
+	flush stdout
+	if {[info exists ::autosetup(notices)]} {
+		puts stderr [join $::autosetup(notices) \n]
+		unset ::autosetup(notices)
+	}
+}
+
+proc autosetup_version {} {
+	return "autosetup v$::autosetup(version)"
+}
+
+##################################################################
+#
+# Directory/path handling
+#
+
+proc realdir {dir} {
+	set oldpwd [pwd]
+	cd $dir
+	set pwd [pwd]
+	cd $oldpwd
+	return $pwd
+}
+
+# Follow symlinks until we get to something which is not a symlink
+proc realpath {path} {
+	#puts -nonewline "$path -> "
+	while {1} {
+		if {[catch {
+			set path [file link $path]
+		}]} {
+			# Not a link
+			break
+		}
+	}
+	#puts "$path"
+	return $path
+}
+
+# Convert absolute path, $path into a path relative
+# to the given directory and return it.
+#
+proc relative-path {path} {
+	set diff 0
+	set same 0
+	set newf {}
+	set prefix {}
+	set path [file-normalize $path]
+	set pwd [pwd]
+
+	# Try to make the filename relative to the current dir
+	foreach p [split $pwd /] f [split $path /] {
+		if {$p ne $f} {
+			if {$f == ""} {
+				# pwd is longer than path
+				return $path
+			}
+			incr diff
+		} elseif {!$diff} {
+			incr same
+		}
+		if {$diff} {
+			if {$p ne ""} {
+				# Add .. for sibling dir
+				lappend prefix ..
+			}
+			lappend newf $f
+		}
+	}
+	# Note: Only allow up to 3 .. entries.
+	if {$diff == 0 || $same == 1 || [llength $prefix] > 3} {
+		return $path
+	}
+
+	join [concat $prefix $newf] /
+}
+
+# Check for the -C option
+proc autosetup_check_directory {argvname} {
+	upvar $argvname argv
+	set i [lsearch -exact $argv -C]
+	if {$i >= 0} {
+		set dir [lindex $argv $i+1]
+		if {$dir ne ""} {
+			set ::argv0 [file-normalize $::argv0]
+			cd $dir
+			set argv [lreplace $argv $i $i+1]
+		}
+	}
+}
+
+##################################################################
+#
+# Library module support
+#
+
+# @use module ...
+#
+# Load the given library modules.
+# e.g. use cc cc-shared
+#
+proc use {args} {
+	foreach m $args {
+		if {[info exists ::libmodule($m)]} {
+			continue
+		}
+		set ::libmodule($m) 1
+		if {[info exists ::modsource($m)]} {
+			uplevel #0 eval $::modsource($m)
+		} else {
+			set source $::autosetup(libdir)/${m}.tcl
+			if {[file exists $source]} {
+				lappend ::autosetup(deps) $source
+				uplevel #0 [list source $source]
+			} else {
+				puts "Looking for $source"
+				autosetup-error "use: No such module: $m"
+			}
+		}
+	}
+}
+
+# Initial settings
+set autosetup(exe) $::argv0
+set autosetup(istcl) 1
+set autosetup(installed) 0
+set autosetup(msg-checking) 0
+
+# Embedded modules are inserted below here
+set autosetup(installed) 1
+# ----- module asciidoc-formatting -----
+
+set modsource(asciidoc-formatting) {
+# Copyright (c) 2010 WorkWare Systems http://www.workware.net.au/
+# All rights reserved
+
+# Module which provides text formatting
+
+proc para {text} {
+    regsub -all "\[ \t\n\]+" [string trim $text] " "
+}
+proc title {text} {
+    underline [para $text] =
+    nl
+}
+proc p {text} {
+    puts [para $text]
+    nl
+}
+proc code {text} {
+    # If the text begins with newline, skip it
+    regexp {^\n(.*)} $text -> text
+
+    # And trip spaces off the end
+    set text [string trimright $text]
+
+    # Find the indent of the first line
+    # so that can be removed from every line
+    set indent ""
+    regexp "^(\[ \t\]\+)" $text -> indent
+    set len [string length $indent]
+
+    foreach line [split $text \n] {
+        puts "    [string range $line $len end]"
+    }
+    nl
+}
+proc nl {} {
+    puts ""
+}
+proc underline {text char} {
+    regexp "^(\[ \t\]*)(.*)" $text -> indent words
+    puts $text
+    puts $indent[string repeat $char [string length $words]]
+}
+proc section {text} {
+    underline "[incr ::section]. [para $text]" -
+    set ::subsection 0
+    nl
+}
+proc subsection {text} {
+    underline "$::section.[incr ::subsection]. $text" ~
+    nl
+}
+proc bullet {text} {
+    puts "* [para $text]"
+}
+proc indent {text} {
+    puts " :: "
+    puts [para $text]
+}
+proc defn {first args} {
+    set sep ""
+    if {$first ne ""} {
+        puts "${first}::"
+    } else {
+        puts " :: "
+    }
+    set defn [string trim [join $args \n]]
+    regsub -all "\n\n" $defn "\n ::\n" defn
+    puts $defn
+}
+}
+
+# ----- module getopt -----
+
+set modsource(getopt) {
+# Copyright (c) 2006 WorkWare Systems http://www.workware.net.au/
+# All rights reserved
+
+# Simple getopt module
+
+# Parse everything out of the argv list which looks like an option
+# Knows about --enable-thing and --disable-thing as alternatives for --thing=0 or --thing=1
+proc getopt {argvname} {
+	upvar $argvname argv
+
+	for {set i 0} {$i < [llength $argv]} {incr i} {
+		set arg [lindex $argv $i]
+
+		#dputs arg=$arg
+
+		if {$arg eq "--"} {
+			# End of options
+			incr i
+			break
+		}
+
+		if {[regexp {^--([^=][^=]+)=(.*)$} $arg -> name value]} {
+			lappend opts($name) $value
+		} elseif {[regexp {^--(enable-|disable-)?([^=]*)$} $arg -> prefix name]} {
+			if {$prefix eq "disable-"} {
+				set value 0
+			} else {
+				set value 1
+			}
+			lappend opts($name) $value
+		} else {
+			break
+		}
+	}
+
+	#puts "getopt: argv=[join $argv] => [join [lrange $argv $i end]]"
+	#parray opts
+
+	set argv [lrange $argv $i end]
+
+	return [array get opts]
+}
+
+proc opt_val {optarrayname options {default {}}} {
+	upvar $optarrayname opts
+
+	set result {}
+
+	foreach o $options {
+		if {[info exists opts($o)]} {
+			lappend result {*}$opts($o)
+		}
+	}
+	if {[llength $result] == 0} {
+		return $default
+	}
+	return $result
+}
+
+proc opt_bool {optarrayname args} {
+	upvar $optarrayname opts
+
+	# Support the args being passed as a list
+	if {[llength $args] == 1} {
+		set args [lindex $args 0]
+	}
+
+	foreach o $args {
+		if {[info exists opts($o)]} {
+			if {"1" in $opts($o) || "yes" in $opts($o)} {
+				return 1
+			}
+		}
+	}
+	return 0
+}
+}
+
+# ----- module help -----
+
+set modsource(help) {
+# Copyright (c) 2010 WorkWare Systems http://www.workware.net.au/
+# All rights reserved
+
+# Module which provides usage, help and the manual
+
+proc autosetup_help {} {
+    puts "Usage: [file tail $::autosetup(exe)] \[options\] \[settings\]"
+    puts \
+{
+   This is autosetup, a faster, better alternative to autoconf.
+   Use the --manual option for the full autosetup manual.
+}
+    if {[file exists $::autosetup(autodef)]} {
+        # This relies on auto.def having a call to 'options'
+        # which will display options and quit
+        source $::autosetup(autodef)
+    } else {
+        options-show
+    }
+    exit 0
+}
+
+# Outputs the autosetup manual in one of several formats
+proc autosetup_manual {{type text}} {
+
+    switch -glob -- $type {
+        wiki {use wiki-formatting}
+        ascii* {use asciidoc-formatting}
+        default {use text-formatting}
+    }
+
+    title "[autosetup_version] -- User Manual"
+
+    section {Introduction}
+    p {
+        'autosetup' is a tool, similar to 'autoconf', to configure a build system for the
+        appropriate environment, according to the system capabilities and the user configuration.
+    }
+    p {
+        autosetup is designed to be light-weight, fast, simple and flexible.
+    }
+    p {
+        Notable features include:
+    }
+    bullet {Easily check for headers, functions, types for C/C++}
+    bullet {Easily support user configuration options}
+    bullet {Can generate files based on templates, such as Makefile.in => Makefile}
+    bullet {Can generate header files based on checked features}
+    bullet {Excellent support for cross compilation}
+    bullet {Replacement for autoconf in many situations}
+    bullet {Runs with either Tcl 8.5+, Jim Tcl or just a C compiler (using the included Jim Tcl source code!)}
+    bullet {autosetup is intended to be distributed with projects - no version issues}
+    nl
+    p {
+        autosetup is particularly targeted towards building C/C++ applications on Unix
+        systems, however it can be extended for other environments as needed.
+    }
+    p {
+        autosetup is *not*:
+    }
+    bullet {A build system}
+    bullet {A replacement for automake}
+    bullet {Intended to replace all possible uses of autoconf}
+    nl
+
+    section {Usage}
+    p {
+        autosetup accepts both standard options as well as local options
+        defined in the 'auto.def' file, and options for modules.
+        Use 'autosetup --help' to show all available options.
+    }
+    code {
+        autosetup ?options? ?settings?
+    }
+    p {
+        Some important core options are:
+    }
+    code {
+        -C dir           change to the given directory before running autosetup
+        --help           display help and options
+        --version        display the version of autosetup
+        --manual?=text?  display the autosetup manual. Alternative formats are 'wiki' and 'asciidoc'
+        --install        install autosetup to the current directory
+        --init           create an initial 'configure' script if none exists
+    }
+    p {
+        Settings are of the form 'name=value' and must be after any options.
+        These settings allow the default values to be overridded for variables such
+        as CC and CFLAGS.
+    }
+    p {
+        Optional modules may support additional options. For example, the cc module
+        supports the following additional options.
+    }
+    code {
+        --host=host-alias     a complete or partial cpu-vendor-opsys for the system where the
+                              application will run (defaults to the same value as --build)
+        --build=build-alias   a complete or partial cpu-vendor-opsys for the system where the
+                              application will be built (defaults to the result of running
+                              config.guess)
+        --prefix=dir          the target directory for the build (defaults to /usr/local)
+    }
+
+    p {
+        Typically, autosetup is invoked via a simpler wrapper script, 'configure'.
+        This provides for compatibility with autoconf.
+        For example:
+    }
+    code {
+        ./configure --host=arm-linux --utf8 --prefix=/usr CFLAGS="-g -Os"
+    }
+
+    section {Features}
+
+    subsection {Configuration descriptions are Tcl}
+
+    p {
+        Configuration requirements are given in an 'auto.def' file and are
+        written in 'Tcl', a language slightly less obscure than 'm4'!
+        As a full language, there are no additional dependencies on the
+        host system such as 'awk', 'sed' and 'bash'.
+    }
+    p {
+        Tcl is widely available on modern development platforms.
+    }
+
+    subsection {Simple Configuration Descriptions}
+    p {
+        A typical, simple auto.def file is:
+    }
+    code {
+        use cc
+
+        options {
+            shared => "build a shared library"
+            lineedit=1 => "disable line editing"
+            utf8 => "enabled UTF-8 support"
+            with-regexp regexp => "use regexp"
+        }
+
+        cc-check-types "long long"
+        cc-check-includes sys/un.h dlfcn.h
+        cc-check-functions ualarm sysinfo lstat fork vfork
+        cc-check-function-in-lib sqlite3_open sqlite3
+
+        if {[opt-bool utf8] && [have-feature fork]} {
+            msg-result "Enabling UTF-8"
+            define JIM_UTF8
+        }
+        make-autoconf-h config.h
+        make-template Makefile.in
+    }
+
+    subsection {Fast}
+    p {
+        All the processing occurs in a single process, aside from invocations of the C compiler.
+        Here are the results of a typical configure for a small project. 'autoconf' is particularly
+        slow on 'cygwin'.
+    }
+    code {
+                      autoconf     autosetup
+                      ---------    ---------
+        Linux          4.1s         1.3s
+        Mac OS X       6.4s         2.8s
+        cygwin        91.5s         9.9s
+    }
+
+    subsection {Deploys directly within a project}
+    p {
+        autosetup is deployed as a single subdirectory, autosetup, at the
+        top level of a project, containing a handful of files. This approach
+        means that there are no dependency issues with different versions
+        of autosetup since an appropriate version is part of the project.
+    }
+    p {
+        autosetup is written in Tcl, but can run under any of the following
+        Tcl interpreters:
+    }
+    bullet {Tcl 8.5 or later (which is widely deployed}
+    bullet {Jim Tcl - small footprint, portable Tcl interpreter}
+    nl
+    p {
+        The source code for Jim Tcl is included directly within
+        autosetup and is automatically built if no other Tcl
+        interpreter is available.
+    }
+    code {
+        $ ./configure --help
+        No installed jimsh or tclsh, building local bootstrap jimsh0
+        Usage: configure [options]
+
+           This is autosetup, a faster, better alternative to autoconf.
+           Use the --manual option for the full autosetup manual, including
+           standard autosetup options.
+
+        Local options:
+          --shared            Create a shared library
+          --disable-utf8      Disable utf8 support
+    }
+
+    subsection {No separate generate/run step}
+    p {
+        autosetup parses 'auto.def' and updates the configuration in a single step.
+        This simplifies and speeds development.
+    }
+
+    section {Writing auto.def files}
+
+    p {
+        auto.def files are generally simple to write, but have the full
+        power of Tcl if required for implementing complex checks or
+        option processing. The 'auto.def' file is structured as follows:
+    }
+    bullet {'use' modules}
+    bullet {'options' declaration}
+    bullet {checks and option processing}
+    bullet {template, header file and other output generation}
+    nl
+
+    subsection {Optional modules}
+    p {
+        autosetup includes the common, optional modules 'cc' and 'cc-shared'.
+        If these modules are required, declared *before* 'options' so that
+        any module-specific options can be recognised.
+    }
+    code {
+        # This project checks for C/C++ features
+        use cc
+        # And supports shared libraries/shared objects
+        use cc-shared
+
+        options { ... }
+    }
+
+    subsection {Declaring User Options}
+    p {
+        Allowed options are defined using the 'options' declaration in the 'auto.def' file.
+    }
+    p {
+        *Note*: Every auto.def *must* have an 'options' declaration immediately after any 'use'
+        declarations, even if it is empty. This ensures that 'configure --help' behaves correctly.
+    }
+    p {
+        Options are declared as follows.
+    }
+    code {
+        options {
+            boolopt            => "a boolean option which defaults to disabled"
+            boolopt2=1         => "a boolean option which defaults to enabled"
+            stringopt:         => "an option which takes an argument, e.g. --stringopt=value"
+            stringopt2:=value  => "an option where the argument is optional and defaults to 'value'"
+            optalias booltopt3 => "a boolean with a hidden alias. --optalias is not shown in --help"
+            boolopt4 => {
+                Multiline description for this option
+                which is carefully formatted.
+            }
+        }
+    }
+    p {
+        The '=>' syntax is used to indicate the help description for the option.
+        If an option is not followed by '=>', the option is not displayed in '--help'
+        but is still available.
+    }
+    p {
+        If the first character of the help description is a newline (as for 'boolopt4'),
+        the description will not be reformatted.
+    }
+    p {
+        String options can be specified multiple times, and all given values are available.
+        If there is no default value, the value must be specified.
+    }
+    p {
+        Within auto.def, options are checked with the commands 'opt-bool' and 'opt-val'.
+    }
+
+    subsection {Setting Options}
+    p {
+        Boolean options can be enabled or disabled with one of the following forms
+        (some of which are for autoconf compatibility):
+    }
+    code {
+        Enable the option:
+        --boolopt
+        --enable-boolopt
+        --boolopt=1
+        --boolopt=yes
+        Disable the option:
+        --disable-boolopt
+        --boolopt=0
+        --boolopt=no
+    }
+    p {
+        String options must have a value specified, unless the option has a default value.
+    }
+    code {
+        --stropt          - OK if a default values is given for stropt
+        --stropt=value    - Adds the given value for the option
+    }
+
+    subsection {Configuration Variables}
+    p {
+        At it's heart, autosetup is about examining user options, performing checks and
+        setting configuration variables representing the options and environment.
+        These variables are set either directly with the 'define' or 'define-feature' commands,
+        or indirectly via one of the test commands such as 'cc-check-includes'.
+    }
+    p {
+        All configuration variables are available for template substitution ('make-template'),
+        header file generation ('make-autoconf-h') or can be tested and set within 'auto.def'.
+        Certain naming conventions are used to provide expected behaviour.
+    }
+    p {
+        All commands which check for the existence of a feature, use HAVE_xxx as the name of the
+        corresponding variable (this is autoconf compatible). See 'feature-define-name' for
+        the rules used to convert a feature name to a variable name.
+    }
+    code {
+        cc-check-includes time.h sys/types.h      => HAVE_TIME_H HAVE_SYS_TYPES_H
+        cc-check-functions strlcat                => HAVE_STRLCAT
+        cc-check-types "long long" "struct stat"  => HAVE_LONG_LONG HAVE_STRUCT_STAT
+    }
+    p {
+        These two are equivalent:
+    }
+    code {
+        have-feature sys/types.h
+        get-define HAVE_SYS_TYPE_H
+    }
+    p {
+        'cc-check-sizeof' uses the SIZEOF_ prefix rather than the HAVE_ prefix.
+    }
+    p {
+        Variables used to store command names are simply the uppercase of the base command.
+    }
+    code {
+        CC              - The C compiler
+        LD              - The linker
+        AR              - ar
+        RANLIB          - ranlib
+    }
+
+    subsection {configure}
+    p {
+        In order to provide compatibility with autoconf, and to simplify out-of-tree
+        builds, autosetup can be run via a simple 'configure' script. The following
+        script is created by 'autosetup --init'.
+    }
+    code {
+        #!/bin/sh
+        dir="$(dirname "$0")/autosetup"
+        WRAPPER="$0" exec $("$dir/find-tclsh" || echo false) "$dir/autosetup" "$@"
+    }
+    p {
+        This script invokes autosetup in the autosetup/ subdirectory after setting the WRAPPER
+        environment variable.
+    }
+    p {
+        'autosetup --init' will create this script if it doesn't exist.
+    }
+
+    subsection {Checking Features}
+    p {
+        Apart from checking user options, the primary purpose of autosetup and 'auto.def'
+        is to check for the availablity of features in the environment. The 'cc' module
+        provides commands to check various settings by compiling small test programs with the
+        specified C compiler. The following is a typical example:
+    }
+    code {
+        use cc
+        options {}
+        cc-check-types "long long"
+        cc-check-includes sys/un.h
+        cc-check-functions regcomp waitpid sigaction
+        cc-check-tools ar ranlib strip
+    }
+    p {
+        See the command reference for details of these builtin checks.
+    }
+
+    subsection {Controlling the build}
+    p {
+        Once the user options have been processed and the environment checked
+        for supported features, it is necessary to use this information to
+        control the build. The 'cc' module provides two mechanisms for this:
+    }
+    bullet {'make-template' creates a file from a template by applying substitutions based on
+    the configuration variables. For example, replacing '@CC@' with 'arm-linux-gcc'.}
+    bullet {'make-autoconf-h' creates a C/C++ header file based on the configuration variables}
+    nl
+    p {
+        It is easy to create other file formats based on configuration variables. For example, one system
+        produces configuration files in the Linux kconfig format. It is also possible to output configuration
+        variables in Makefile format.
+    }
+    p {
+        autosetup has far more control over generating files to control the build since the
+        configuration variables are directly accessible in 'Tcl' from 'auto.def'.
+    }
+
+    subsection {A "standard" Makefile.in}
+    p {
+        If autosetup is being used to control a make-based build system, the use of a
+        a 'Makefile.in' with a standard structure will provide behaviour similar to that
+        provided by autoconf/automake systems. autosetup provides a typical 'Makefile.in'
+        in 'examples/typical/Makefile.in'. This example provides the following:
+    }
+    bullet {Use CC, AR, RANLIB as determined by cross compiler settings or user overrides}
+    bullet {Install to --prefix, overridable with DESTDIR}
+    bullet {Use of VPATH to support out-of-tree builds}
+    bullet {Dummy automake targets to allow for use as a subproject with automake}
+    bullet {Automatically reconfigure if auto.def changes}
+
+    section {Command Reference}
+    p {
+        autosetup provides a number of builtin commands which
+        are documented below. These may be used from 'auto.def' to test
+        for features, define variables create files from templates and
+        other similar actions.
+    }
+    p {
+        This commands are all implemented as Tcl procedures. Custom commands
+        may be added simpy by defining additional Tcl procedures in the 'auto.def' file.
+    }
+
+    automf_command_reference
+
+    section {Examples}
+    p {
+        autosetup includes a number of examples, including:
+    }
+    bullet {typical - A simple, but full feature example}
+    bullet {minimal - A minimal example}
+    bullet {jim - The Jim Tcl project uses autosetup}
+    nl
+    p {
+        These examples can be found along with the autosetup source at
+        http://repo.or.cz/w/autosetup.git
+    }
+
+    section {Tips on moving from autoconf}
+    p {
+        autosetup attempts to be reasonably compatible with an autoconf-generated
+        'configure' script. Some differences are noted below.
+    }
+    subsection {No --target, no need for --build}
+    p {
+        While autosetup has good cross compile support with '--host', it has no explicit support
+        for '--target' (which is almost never needed).
+    }
+    p {
+        Additionally, --build is rarely needed since the build system can be guessed
+        with 'config.guess'.
+    }
+    subsection {Single variable namespace}
+    p {
+        All variables defined with 'define' and 'define-feature' use a single namespace.
+        This essentially means that AC_SUBST and AC_DEFINE are equivalent, which simplifies
+        configuration in practice.
+    }
+    subsection {No autoheader}
+    p {
+        autosetup has no need for 'autoheader' since a configuration header
+        file can simply be generated directly (see 'make-autoconf-h') without a template.
+    }
+    subsection {No subdirectory support}
+    p {
+        autoconf supports configuring subdirectories with AC_CONFIG_SUBDIRS. autosetup has
+        no explicit support for this feature.
+    }
+    subsection {No automake}
+    p {
+        autosetup is not designed to be used with automake. autosetup is flexible enough
+        to be used with plain 'make', or other builds systems.
+    }
+    subsection {No AC_TRY_RUN}
+    p {
+        autosetup has no equivalent of AC_TRY_RUN which attempts to run a test program.
+        This feature is often used unnecessarily, and is useless when cross compiling, which
+        is a core feature of autosetup.
+    }
+    subsection {Modern Platform Assumption}
+    p {
+        autoconf includes support for many old and obsolete platforms. Most of these
+        are no longer relevant. autosetup assumes that the build environment is somewhat POSIX compliant.
+        This includes both cygwin and mingw on Windows.
+    }
+    subsection {Thus, no need to check for standard headers}
+    p {such as stdlib.h, string.h, etc.}
+    subsection {No AC_PROG_xxxx}
+    p {Use the generic 'cc-check-progs'}
+    code {
+        if {![cc-check-progs grep]} {
+            user-error "You don't have grep, but we need it"
+        }
+        foreach prog {gawk mawk nawk awk} {
+            if {[cc-check-progs $prog]} {
+                define AWK $prog
+                break
+            }
+        }
+        # If not found, AWK is defined as false
+    }
+    subsection {No AC_FUNC_xxx}
+    p {Use the generic 'cc-check-functions' instead}
+    subsection {No special commands to use replacement functions}
+    p {Instead consider something like the following.}
+    code {
+        # auto.def: Check all functions
+        cc-check-functions strtod backtrace
+
+        /* replacements.c */
+        #include "config.h"
+        #ifndef HAVE_STRTOD
+        double strtod(...) { /* implementation */ }
+        #endif
+    }
+    p {Alternatively, implement each missing function in it's own file.}
+    code {
+        define EXTRA_OBJS ""
+        foreach f {strtod backtrace} {
+            if {![cc-check-functions $f]} {
+                define-append EXTRA_OBJS $f.o
+            }
+        }
+    }
+    subsection {Default checks do not use any include files.}
+    p {
+        autoconf normally adds certain include files to every test build, such as stdio.h.
+        This can cause problems where declarations in these standard headers conflict with
+        the code being tested. For this reason, autosetup compile tests uses no standard headers.
+        If headers are required, they should be added explicitly.
+    }
+    subsection {Checking for includes}
+    p {When adding includes with '-includes', these are not checked for existence first}
+
+    section {Cross Compiling}
+    p {
+        In general, cross compilation works the same way as autoconf.
+        Generally this simply means specifying --host=<target-alias>.
+        For example, if you have arm-linux-gcc and related tools, run:
+    }
+    code {
+        ./configure --host=arm-linux 
+    }
+    p {
+        If additional compiler options are needed, such as -mbig-endian,
+        these can be specfied with CFLAGS. In this case, the default CFLAGS
+        of "-g -O2" won't be used so the desired debugging and optimisation
+        flags should also be added.
+    }
+    code {
+        ./configure --host=arm-linux CFLAGS="-mbig-endian -msoft-float -static-libgcc -g -Os"
+    }
+    p {
+        If the compiler and related tools have a non-standard prefix, it may be necessary to set
+        CROSS in addition to --host.
+    }
+    code {
+        ./configure --host=arm-linux CROSS=my-
+    }
+    p {
+        In this case, C the compiler should be named my-cc or my-gcc, and similarly for the other
+        tools. This is usually simpler than specifying CC, AR, RANLIB, STRIP, etc.
+    }
+
+    section {Installing}
+    p {
+        Like autoconf, autosetup uses a combination of '--prefix' and 'DESTDIR' to determine where the
+        project is installed.
+    }
+    p {
+        The '--prefix' option is used during with './configure' to specify the top level installation
+        directory. It defaults to '/usr/local'. Use '--prefix=' to install at the top level (e.g. '/bin').
+        The application may use this value (via '@prefix@' or one of the related values such as '@bindir@')
+        to find files at runtime.
+    }
+    p {
+        The 'DESTDIR' Makefile variable may be used at installation time to specify an different
+        install root directory.
+        This is especially useful to stage the installed files in a temporary location before they
+        are installed to their final location (e.g. when building a filesystem for an embedded target).
+        It defaults to the empty string (i.e. files are installed to '--prefix').
+    }
+    code {
+        ./configure --prefix=/usr
+        make DESTDIR=/tmp/staging install
+    }
+    p {
+        autosetup has no special support for installing other than providing '--prefix'. The use of
+        'DESTDIR' is by convention. In order to provide expected behaviour, Makefile.in should
+        contain something like:
+    }
+    code {
+        prefix = @prefix@
+        ...
+        install: all
+            @echo Installing from @srcdir@ and `pwd` to $(DESTDIR)$(prefix)
+    }
+
+    section {Automatic remaking}
+    p {
+        It is convenient for configure to be rerun automatically if any of the input files
+        change (for example autosetup or any of the template files). This can be achieved
+        by adding the following to Makefile.in.
+    }
+    code {
+        ifeq ($(findstring clean,$(MAKECMDGOALS)),)
+        Makefile: @AUTODEPS@ @srcdir@/Makefile.in
+                @@AUTOREMAKE@
+        endif
+    }
+    p {
+        It may also be convenient to add a target to force reconfiguring with the same options.
+    }
+    code {
+        reconfig:
+                @AUTOREMAKE@
+    }
+
+    section {Shipping autosetup}
+    p {
+        autosetup is designed to be deployed directly as part of a project.
+        It is installed as a single subdirectory, autosetup, at the
+        top level of a project.
+    }
+    p {
+        In addition to autosetup, the following files are required for
+        an autosetup-enabled project.
+    }
+    bullet {auto.def}
+    bullet {configure (generated by autosetup --init)}
+    bullet {Makefile.in (and any other template specified in auto.def)}
+    nl
+
+    section {Extending autosetup}
+    p {
+        Local modules can be added directly to the autosetup directory and loaded
+        with the 'use' command.
+    }
+    section {Future Features/Changes}
+    p {
+        Some features are not yet implemented, but are candidates for including
+        in an existing module, or adding to a new module. Others may require
+        changes to the core 'autosetup'.
+    }
+    bullet {Explicit C++ support}
+    bullet {pkg-config support}
+    bullet {More fully-featured shared library support}
+    bullet {Support for additional languages}
+    bullet {libtool support (if we must!)}
+    bullet {
+        Subdirectory support. Need to resolve how options are parsed, and
+        how variables interact between subdirectories.
+    }
+
+    section {Motivation}
+    p {
+        autoconf does the job and supports many platforms, but it suffers
+        from at least the following problems:
+    }
+    bullet {Requires configuration descriptions in a combination of m4 and shell scripts}
+    bullet {Creates 10,000 line shell scripts which are slow to run and impossible to debug}
+    bullet {Requires a multi-stage process of aclocal => autoheader => autoconf =>
+            configure => Makefile + config.h}
+    nl
+    p {
+        autosetup attempts to address these issues as follows by directly
+        parsing a simple 'auto.def' file, written in Tcl, and directly
+        generating output files such as config.h and Makefile.
+    }
+    p {
+        autosetup runs under either Tcl 8.5, which is available on almost any
+        modern system, or Jim Tcl. Jim Tcl is very easy to build on almost any
+        system in the case where Tcl is not available.
+    }
+    section {References}
+    bullet {http://freshmeat.net/articles/stop-the-autoconf-insanity-why-we-need-a-new-build-system}
+    bullet {http://www.varnish-cache.org/docs/2.1/phk/autocrap.html}
+    bullet {http://wiki.tcl.tk/27197}
+    bullet {http://jim.berlios.de/}
+    bullet {http://www.gnu.org/software/hello/manual/autoconf/index.html}
+    bullet {http://www.flameeyes.eu/autotools-mythbuster/index.html}
+    nl
+
+    subsection {Comments on autoconf}
+    bullet {http://news.ycombinator.com/item?id=1499738}
+    bullet {http://developers.slashdot.org/article.pl?sid=04/05/21/0154219}
+    bullet {http://www.airs.com/blog/archives/95}
+    nl
+
+    section {Alternative autoconf Alternatives}
+    bullet {http://pmk.sourceforge.net/faq.php - PMK}
+    bullet {https://e-reports-ext.llnl.gov/pdf/315457.pdf - autokonf}
+    nl
+
+    section {Copyright, Author and Licence}
+    p {
+        autosetup is Copyright (c) 2010 WorkWare Systems http://www.workware.net.au/
+    }
+    p {
+        autosetup was written by Steve Bennett <steveb@workware.net.au>
+    }
+    p {
+        autosetup is released under the "2-clause FreeBSD Licence" as follows.
+    }
+    code {
+        autosetup - An environment autoconfigurator
+
+        Copyright 2010 Steve Bennett <steveb@workware.net.au>
+
+        Redistribution and use in source and binary forms, with or without
+        modification, are permitted provided that the following conditions
+        are met:
+
+        1) Redistributions of source code must retain the above copyright
+           notice, this list of conditions and the following disclaimer.
+        2) Redistributions in binary form must reproduce the above
+           copyright notice, this list of conditions and the following
+           disclaimer in the documentation and/or other materials
+           provided with the distribution.
+
+        THIS SOFTWARE IS PROVIDED BY THE WORKWARE SYSTEMS ``AS IS'' AND ANY
+        EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
+        THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A
+        PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL WORKWARE
+        SYSTEMS OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+        INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+        (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+        OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+        HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+        STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+        ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
+        ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+        The views and conclusions contained in the software and documentation
+        are those of the authors and should not be interpreted as representing
+        official policies, either expressed or implied, of WorkWare Systems.
+    }
+
+    exit 0
+}
+
+# Helps output formatted text from inline documentation
+proc accumulate_reference_line {statename type str} {
+    upvar $statename state
+
+    dputs "=> ($state(type)) $type: [string trim $str]"
+    switch -glob $state(type),$type {
+        code,code - desc,desc - defn,desc - none,code - none,defn {
+            dputs "   => accum"
+            lappend state(buf) $str
+        }
+        code,none - code,defn - code,desc {
+            dputs "   => code"
+            code [join $state(buf) \n]
+            nl
+            if {$type eq "desc"} {
+                set state(buf) [list "" $str]
+            } else {
+                set state(buf) [list]
+            }
+        }
+        none,desc {
+            set type none
+        }
+        desc,* - defn,* {
+            dputs "   => defn"
+            defn [lindex $state(buf) 0] [join [lrange $state(buf) 1 end] \n]
+            nl
+            set state(buf) [list]
+            if {$type eq "code"} {
+                lappend state(buf) $str
+            }
+        }
+    }
+    if {$type eq "none"} {
+        dputs "   => reset"
+        set state(buf) [list]
+    }
+    set state(type) $type
+}
+
+# Generate a command reference from inline documentation
+proc automf_command_reference {} {
+    lappend files $::autosetup(prog)
+    if {!$::autosetup(installed)} {
+        lappend files {*}[lsort [glob -nocomplain $::autosetup(libdir)/*.tcl]]
+    }
+    foreach file $files {
+        set state(buf) [list]
+        set state(type) none
+        foreach line [split [readfile $file] \n] {
+            if {[regexp {^##($| .*)} $line -> str]} {
+                accumulate_reference_line state code $str
+                continue
+            }
+            if {[regexp {^# @(.*)} $line -> str]} {
+                accumulate_reference_line state defn $str
+                continue
+            }
+            if {[regexp {^#(.*)} $line -> str]} {
+                accumulate_reference_line state desc [string trim $str]
+                continue
+            }
+            accumulate_reference_line state none ""
+        }
+    }
+}
+}
+
+# ----- module init -----
+
+set modsource(init) {
+# Copyright (c) 2010 WorkWare Systems http://www.workware.net.au/
+# All rights reserved
+
+# Module to help create auto.def and configure
+
+proc autosetup_init {} {
+	set create_configure 1
+	if {[file exists configure]} {
+		if {!$::autosetup(force)} {
+			# Could this be an autosetup configure?
+			if {![string match "*\nWRAPPER=*" [readfile configure]]} {
+				puts "I see configure, but not created by autosetup, so I won't overwrite it."
+				puts "Use autosetup --init --force to overwrite."
+				set create_configure 0
+			}
+		} else {
+			puts "I will overwrite the existing configure because you used --force."
+		}
+	} else {
+		puts "I don't see configure, so I will create it."
+	}
+	if {$create_configure} {
+		if {!$::autosetup(installed)} {
+			user-notice "Warning: Initialising from the development version of autosetup"
+
+			writefile configure "#!/bin/sh\nWRAPPER=\"\$0\" exec $::autosetup(dir)/autosetup \"\$@\"\n"
+		} else {
+			writefile configure \
+{#!/bin/sh
+dir="$(dirname "$0")/autosetup"
+WRAPPER="$0" exec $("$dir/find-tclsh" || echo false) "$dir/autosetup" "$@"
+}
+		}
+		catch {exec chmod 755 configure}
+	}
+	if {![file exists auto.def]} {
+		puts "I don't see auto.def, so I will create a default one."
+		writefile auto.def {# Initial auto.def created by 'autosetup --init'
+
+use cc
+
+# Add any user options here
+options {
+}
+
+make-autoconf-h config.h
+make-template Makefile.in
+}
+	}
+	if {![file exists Makefile.in]} {
+		puts "Note: I don't see Makefile.in. You will probably need to create one."
+	}
+
+	exit 0
+}
+}
+
+# ----- module install -----
+
+set modsource(install) {
+# Copyright (c) 2006-2010 WorkWare Systems http://www.workware.net.au/
+# All rights reserved
+
+# Module which can install autosetup
+
+proc autosetup_install {} {
+	if {[catch {
+		file mkdir autosetup
+
+		set f [open autosetup/autosetup w]
+
+		set publicmodules {}
+
+		# First the main script, but only up until "CUT HERE"
+		set in [open $::autosetup(dir)/autosetup]
+		while {[gets $in buf] >= 0} {
+			if {$buf ne "##-- CUT HERE --##"} {
+				puts $f $buf
+				continue
+			}
+
+			# Insert the static modules here
+			# i.e. those which don't contain @MODULE
+			puts $f "set autosetup(installed) 1"
+			foreach file [glob $::autosetup(libdir)/*.tcl] {
+				set buf [readfile $file]
+				if {[string match "*\n# @MODULE*" $buf]} {
+					lappend publicmodules $file
+					continue
+				}
+				set modname [file rootname [file tail $file]]
+				puts $f "# ----- module $modname -----"
+				puts $f "\nset modsource($modname) \{"
+				puts $f $buf
+				puts $f "\}\n"
+			}
+		}
+		close $in
+		close $f
+		exec chmod 755 autosetup/autosetup
+
+		# Install public modules
+		foreach file $publicmodules {
+			autosetup_install_file $file autosetup
+		}
+
+		# Install support files
+		foreach file {config.guess config.sub jimsh0.c find-tclsh LICENCE} {
+			autosetup_install_file $::autosetup(dir)/$file autosetup
+		}
+		exec chmod 755 autosetup/config.sub autosetup/config.guess autosetup/find-tclsh
+
+		writefile autosetup/README.autosetup "This is [autosetup_version]. See http://autosetup.workware.net.au/\n"
+
+	} error]} {
+		user-error "Failed to install autosetup: $error"
+	}
+	puts "Installed [autosetup_version] to autosetup/"
+	catch {exec [info nameofexecutable] autosetup/autosetup --init} result
+	puts $result
+
+	exit 0
+}
+
+# Append the contents of $file to filehandle $f
+proc autosetup_install_append {f file} {
+	set in [open $file]
+	puts $f [read $in]
+	close $in
+}
+
+proc autosetup_install_file {file dir} {
+	writefile [file join $dir [file tail $file]] [readfile $file]\n
+}
+
+if {$::autosetup(installed)} {
+	user-error "autosetup can only be installed from development source, not from installed copy"
+}
+}
+
+# ----- module misc -----
+
+set modsource(misc) {
+# Copyright (c) 2007-2010 WorkWare Systems http://www.workware.net.au/
+# All rights reserved
+
+# Module containing misc procs useful to modules
+
+set ::autosetup(istcl) [info exists ::tcl_library]
+
+# Tcl doesn't have the env command
+if {$::autosetup(istcl)} {
+	proc env {var args} {
+		if {[info exists ::env($var)]} {
+			return $::env($var)
+		}
+		if {[llength $args]} {
+			return [lindex $args 0]
+		}
+		return -code error "environment variable \"$var\" does not exist"
+	}
+}
+
+# In case 'file normalize' doesn't exist
+#
+proc file-normalize {path} {
+	if {[catch {file normalize $path} result]} {
+		if {$path eq ""} {
+			return ""
+		}
+		set oldpwd [pwd]
+		if {[file isdir $path]} {
+			cd $path
+			set result [pwd]
+		} else {
+			cd [file dirname $path]
+			set result [file join [pwd] [file tail $path]]
+		}
+		cd $oldpwd
+	}
+	return $result
+}
+
+# If everything is working properly, the only errors which occur
+# should be generated in user code (e.g. auto.def).
+# By default, we only want to show the error location in user code.
+# We use [info frame] to achieve this, but it works differently on Tcl and Jim.
+#
+# This is designed to be called for incorrect usage in auto.def, via autosetup-error
+#
+proc error-location {msg} {
+	# Search back through the stack trace for the first error in a .def file
+	for {set i 1} {$i < [info level]} {incr i} {
+		if {$::autosetup(istcl)} {
+			array set info [info frame -$i]
+		} else {
+			lassign [info frame -$i] info(caller) info(file) info(line)
+		}
+		if {[string match *.def $info(file)]} {
+			return "[relative-path $info(file)]:$info(line): Error: $msg"
+		}
+		#puts "Skipping $info(file):$info(line)"
+	}
+	return $msg
+}
+
+# Similar to error-location, but called when user code generates an error
+# In this case we want to show the stack trace in user code, but not in autosetup code
+# (unless --debug is enabled)
+#
+proc error-stacktrace {msg} {
+	if {$::autosetup(istcl)} {
+		if {[regexp {file "([^ ]*)" line ([0-9]*)} $::errorInfo dummy file line]} {
+			return "[relative-path $file]:$line $msg\n$::errorInfo"
+		}
+		return $::errorInfo
+	} else {
+		# Prepend a live stacktrace to the error stacktrace, omitting the current level
+		set stacktrace [concat [info stacktrace] [lrange [stacktrace] 3 end]]
+
+		if {!$::autosetup(debug)} {
+			# Omit any levels from autosetup or with no file
+			set newstacktrace {}
+			foreach {p f l} $stacktrace {
+				if {[string match "*autosetup" $f] || $f eq ""} {
+					#puts "Skipping $p $f:$l"
+					continue
+				}
+				lappend newstacktrace $p $f $l
+			}
+			set stacktrace $newstacktrace
+		}
+
+		# Convert filenames to relative paths
+		set newstacktrace {}
+		foreach {p f l} $stacktrace {
+			lappend newstacktrace $p [relative-path $f] $l
+		}
+		lassign $newstacktrace p f l
+		if {$f ne ""} {
+			set prefix "$f:$l: "
+		} else {
+			set prefix ""
+		}
+
+		return "${prefix}Error: $msg\n[stackdump $newstacktrace]"
+	}
+}
+}
+
+# ----- module text-formatting -----
+
+set modsource(text-formatting) {
+# Copyright (c) 2010 WorkWare Systems http://www.workware.net.au/
+# All rights reserved
+
+# Module which provides text formatting
+
+proc wordwrap {text length {firstprefix ""} {nextprefix ""}} {
+    set len 0
+    set space $firstprefix
+    foreach word [split $text] {
+        set word [string trim $word]
+        if {$word == ""} {
+            continue
+        }
+        if {$len && [string length $space$word] + $len >= $length} {
+            puts ""
+            set len 0
+            set space $nextprefix
+        }
+        incr len [string length $space$word]
+        # Use x^Hx hightlighting for 'quoted' single words
+        if {[regexp {^'(.*)'([^a-zA-Z0-9_]*)$} $word -> bareword dot]} {
+            regsub -all . $bareword "&\010&" word
+            append word $dot
+        }
+        puts -nonewline $space$word
+        set space " "
+    }
+    if {$len} {
+        puts ""
+    }
+}
+proc title {text} {
+    underline [string trim $text] =
+    nl
+}
+proc p {text} {
+    wordwrap $text 80
+    nl
+}
+proc code {text} {
+    # Find the indent of the first non-blank line
+    set indent ""
+    regexp "^\n(\[ \t\]\+)" $text dummy indent
+    set len [string length $indent]
+    # Trim initial newline and trailing space
+    set text [string trimleft $text \n]
+    foreach line [split $text \n] {
+        puts "    [string range $line $len end]"
+    }
+}
+proc nl {} {
+    puts ""
+}
+proc underline {text char} {
+    regexp {^([ \t]*)(.*)} $text -> indent words
+    puts $text
+    puts $indent[string repeat $char [string length $words]]
+}
+proc section {text} {
+    underline "[incr ::section]. [string trim $text]" -
+    set ::subsection 0
+    nl
+}
+proc subsection {text} {
+    underline "$::section.[incr ::subsection]. $text" ~
+    nl
+}
+proc bullet {text} {
+    wordwrap $text 76 "  * " "    "
+}
+proc indent {text} {
+    wordwrap $text 76 "    " "    "
+}
+proc defn {first args} {
+    if {$first ne ""} {
+        underline "    $first" ~
+    }
+    foreach p $args {
+        if {$p ne ""} {
+            indent $p
+        }
+    }
+}
+}
+
+# ----- module wiki-formatting -----
+
+set modsource(wiki-formatting) {
+# Copyright (c) 2010 WorkWare Systems http://www.workware.net.au/
+# All rights reserved
+
+# Module which provides text formatting
+# wiki.tcl.tk format output
+
+proc joinlines {text} {
+    set lines {}
+    foreach l [split [string trim $text] \n] {
+        lappend lines [string trim $l]
+    }
+    join $lines
+}
+proc p {text} {
+    puts [joinlines $text]
+    puts ""
+}
+proc title {text} {
+    puts "*** [joinlines $text] ***"
+    puts ""
+}
+proc code {text} {
+    # If the text begins with newline, skip it
+    regexp {^\n(.*)} $text -> text
+
+    # And trip spaces off the end
+    set text [string trimright $text]
+
+    # Find the indent of the first line
+    # so that can be removed from every line
+    set indent ""
+    regexp "^(\[ \t\]\+)" $text -> indent
+    set len [string length $indent]
+
+    puts "======"
+    foreach line [split $text \n] {
+        puts "  [string range $line $len end]"
+    }
+    puts "======"
+}
+proc nl {} {
+}
+proc section {text} {
+    puts "'''[incr ::section]. $text'''"
+    puts ""
+    set ::subsection 0
+}
+proc subsection {text} {
+    puts "''$::section.[incr ::subsection]. $text''"
+    puts ""
+}
+proc bullet {text} {
+    puts "   * [joinlines $text]"
+}
+proc indent {text} {
+    puts "    :    [joinlines $text]"
+}
+proc defn {first args} {
+    if {$first ne ""} {
+        indent '''$first'''
+    }
+
+    foreach p $args {
+        p $p
+    }
+}
+}
+
+
+##################################################################
+#
+# Entry/Exit
+#
+if {$autosetup(debug)} {
+	main $argv
+	exit 0
+}
+if {[catch {main $argv} msg] == 1} {
+	show-notices
+	puts stderr [error-stacktrace $msg]
+	if {!$autosetup(debug) && !$autosetup(istcl)} {
+		puts stderr "Try: '[file tail $autosetup(exe)] --debug' for a full stack trace"
+	}
+	exit 1
+}
+show-notices

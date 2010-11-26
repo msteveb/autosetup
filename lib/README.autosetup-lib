@@ -1,0 +1,9 @@
+Files in this directory are optional modules which
+can be loaded with the 'use' directive.
+
+Modules which are publically documented (@MODULE ...) are installed
+stand-alone in order to facilitate understanding by autosetup
+end-users.
+
+All other modules are private/internal and are combined with the
+main script when installed.

@@ -1,0 +1,17 @@
+all:
+
+clean:
+	rm -f config.h config.log
+	rm -f template template.in
+
+distclean: clean
+	rm -f Makefile
+
+# Reconfigure if needed
+ifeq ($(findstring clean,$(MAKECMDGOALS)),)
+Makefile: @AUTODEPS@ @srcdir@/Makefile.in
+	@@AUTOREMAKE@
+endif
+
+reconfig:
+	@AUTOREMAKE@

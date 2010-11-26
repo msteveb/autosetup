@@ -1,0 +1,12 @@
+Wed 15 Dec 2010 07:45:05 EST
+----------------------------
+
+This example is from the Jim Tcl project.
+It is a complete example which handles complex
+option processing in an autoconf-compatible way.
+
+The configure wrapper points directly to ../../autosetup
+so changes to autosetup are picked up immediately without
+needing to be installed.
+
+Run: ./configure

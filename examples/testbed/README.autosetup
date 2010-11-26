@@ -1,0 +1,10 @@
+Wed 15 Dec 2010 07:36:36 EST
+----------------------------
+
+A simple example for testing autosetup features.
+
+The configure wrapper points directly to ../../autosetup
+so changes to autosetup are picked up immediately without
+needing to be installed.
+
+Run: ./configure

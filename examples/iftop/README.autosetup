@@ -1,0 +1,11 @@
+Mon 13 Dec 2010 11:02:23 EST
+----------------------------
+
+This is an example of rewriting the iftop configure.in for autosetup
+
+This is not complete, since configure.in attempts to run a number of tests
+which autosetup does not allow.
+
+Also, iftop uses automake, so there is no standalone Makefile.in
+
+Run autosetup --install; ./configure

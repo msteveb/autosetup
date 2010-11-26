@@ -1,0 +1,65 @@
+# vim:se syn=tcl:
+#
+# Example auto.def which shows how to use various commands
+# and features.
+#
+
+use cc
+
+options {
+	shared    => "Create a shared library"
+	utf8=1    => "Disable utf8 support"
+}
+
+# In general, the cc-check-* commands return true
+# if all the tests succeed.
+if {[cc-check-types "long long"]} {
+	cc-check-sizeof "long long"
+}
+
+# Create our own test for 'volatile'
+msg-checking "Checking for volatile..."
+if {[cctest -code {volatile int _x = 0;}]} {
+	msg-result ok
+	define-feature volatile
+} else {
+	msg-result no
+	define-feature volatile 0
+}
+
+# Or even simpler. Compile the code and define 'const' appropriately
+check-feature const {
+	cctest -code {const int _x = 0;}
+}
+
+define EXTRA_CFLAGS ""
+
+# Does the C compiler understand -std=c99?
+check-feature -std=c99 {
+	cctest -cflags {-std=c99}
+}
+# Could check the return code of check-feature instead
+if {[have-feature -std=c99]} {
+	define-append EXTRA_CFLAGS -std=c99
+}
+
+# Note that autosetup will complain about the use of the following headers
+# if they haven't been checked, so check them now.
+cc-check-includes sys/socket.h sys/stat.h
+cc-check-members {-includes sys/socket.h} "struct msghdr.msg_control"
+cc-check-members {-includes sys/stat.h} "struct stat.st_mtime" "struct stat.st_atime" "struct stat.st_size"
+cc-check-function-in-lib percent_m wrap
+
+make-autoconf-h config.h
+make-template Makefile.in
+
+# For illustration purposes, create a template containing all known variables
+
+set f [open template.in w]
+foreach n [lsort [array names ::define]] {
+	puts $f "$n=@$n@"
+}
+close $f
+
+# And process the template
+make-template template.in

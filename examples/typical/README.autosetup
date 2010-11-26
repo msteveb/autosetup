@@ -1,0 +1,10 @@
+Wed 15 Dec 2010 07:40:23 EST
+----------------------------
+
+This is a somewhat realistic example of using autosetup.
+
+It uses an installed version of autosetup in the autosetup/ directory
+and includes a Makefile.in which allows a library to be built either
+static or shared.
+
+Run: ./configure

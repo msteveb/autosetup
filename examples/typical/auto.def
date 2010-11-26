@@ -1,0 +1,42 @@
+# vim:se syn=tcl:
+#
+
+use cc cc-shared
+
+options {
+	shared -> "Build a shared library rather than a static library"
+	utf8=1 -> "Disable UTF-8 support"
+}
+
+define PACKAGE_NAME "testpackage"
+define PACKAGE_VERSION 1.0
+
+if {[cc-check-types "long long"]} {
+	cc-check-sizeof "long long"
+}
+cc-check-sizeof "void *"
+
+cc-check-includes sys/un.h
+
+cc-check-functions regcomp waitpid sigaction sys_signame sys_siglist
+cc-check-functions syslog opendir readlink sleep usleep pipe inet_ntop getaddrinfo
+
+# Find some tools
+cc-check-tools ar ranlib strip
+
+set extra_objs {}
+
+if {[opt-bool utf8]} {
+	msg-result "Enabling UTF-8"
+	define ENABLE_UTF8
+}
+if {[opt-bool shared]} {
+	msg-result "Building shared library"
+	define shared 1
+} else {
+	msg-result "Building static library"
+	define shared ""
+}
+
+make-autoconf-h config.h {HAVE_* SIZEOF_* ENABLE_* PACKAGE_*}
+make-template Makefile.in
