@@ -46,9 +46,53 @@ if {[have-feature -std=c99]} {
 # Note that autosetup will complain about the use of the following headers
 # if they haven't been checked, so check them now.
 cc-check-includes sys/socket.h sys/stat.h
-cc-check-members {-includes sys/socket.h} "struct msghdr.msg_control"
-cc-check-members {-includes sys/stat.h} "struct stat.st_mtime" "struct stat.st_atime" "struct stat.st_size"
+cc-with {-includes sys/socket.h} {
+	cc-check-members "struct msghdr.msg_control"
+}
+cc-with {-includes sys/stat.h} {
+	cc-check-members "struct stat.st_mtime" "struct stat.st_atime" "struct stat.st_size"
+}
 cc-check-function-in-lib percent_m wrap
+
+# Now try some C++ features
+# Does the C compiler understand -fno-rtti?
+check-feature -fno-rtti {
+	cctest -lang c++ -cflags -fno-rtti
+}
+
+# What about general features using the c++ compiler?
+# First C
+cc-with {-cflags -std=c89} {
+	cc-check-types bool
+}
+# Now C++
+cc-with {-lang c++} {
+	cc-check-types bool
+}
+
+# libs are in reverse (nested) order
+# libs will be in this order: -ldl -lc -lm
+cc-with {-libs {-lc -lm}} {
+	cc-with {-libs -ldl} {
+		cc-check-functions dlopen
+	}
+}
+
+# While -includes and -cflags are in the order given
+cc-with {-cflags -DX=1} {
+	cc-with {-cflags -UX} {
+		check-feature flags-order {
+			cctest -code {
+				#ifdef X
+				#error X should not be defined
+				#endif
+			}
+		}
+	}
+}
+
+# And apply these settings for the rest of the file
+cc-with {-lang c++}
 
 make-autoconf-h config.h
 make-template Makefile.in

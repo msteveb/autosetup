@@ -50,9 +50,11 @@ cc-check-function-in-lib inet_pton socket nsl
 
 # C99
 foreach inc {stdlib.h stdint.h sys/inttypes.h} {
-    if {[cc-check-sizeof "-includes $inc" u_int32_t] == 4} {
-        define-feature c99-ints
-        break
+    cc-with "-includes $inc" {
+        if {[cc-check-sizeof u_int32_t] == 4} {
+            define-feature c99-ints
+            break
+        }
     }
 }
 if {![have-feature c99-ints]} {

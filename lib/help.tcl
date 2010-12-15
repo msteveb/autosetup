@@ -387,6 +387,22 @@ proc autosetup_manual {{type text}} {
         See the command reference for details of these built-in checks.
     }
 
+    subsection {Selecting the Language}
+    p {
+        The low level 'cctest' commands provides the '-lang' option to select the
+        language to use for tests. This can be used in conjunction with 'cc-with' to
+        set the language for a series of tests.
+    }
+    code {
+        cc-with {-lang c++} {
+            # All tests now use the C++ compiler -- $(CXX) and $(CXXFLAGS)
+            cc-check-types bool
+        }
+        # Or just set it for the rest of the file
+        cc-with {-lang c++}
+        ...
+    }
+
     subsection {Controlling the build}
     p {
         Once the user options have been processed and the environment checked
@@ -442,7 +458,7 @@ proc autosetup_manual {{type text}} {
     p {
         autosetup includes a number of examples, including:
     }
-    bullet {'examples/typical - A simple, but full feature example}
+    bullet {'examples/typical' - A simple, but full featured example}
     bullet {'examples/minimal' - A minimal example}
     bullet {'examples/jimtcl' - The Jim Tcl project uses autosetup}
     nl
