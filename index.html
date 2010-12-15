@@ -610,7 +610,7 @@ Intended to replace all possible uses of autoconf
 --install        install autosetup to the current directory
 --init           create an initial 'configure' script if none exists</tt></pre>
 </div></div>
-<div class="paragraph"><p>Settings are of the form <em>name=value</em> and must be after any options. These settings allow the default values to be overridded for variables such as <em>CC</em> and <em>CFLAGS</em>.</p></div>
+<div class="paragraph"><p>Settings are of the form <em>name=value</em> and must be after any options. These settings allow the default values to be overridden for variables such as <em>CC</em> and <em>CFLAGS</em>.</p></div>
 <div class="paragraph"><p>Optional modules may support additional options. For example, the cc module supports the following additional options.</p></div>
 <div class="literalblock">
 <div class="content">
@@ -634,7 +634,7 @@ Intended to replace all possible uses of autoconf
 <div class="sect2">
 <h3 id="_3_1_configuration_descriptions_are_tcl">3.1. Configuration Descriptions are Tcl</h3>
 <div class="paragraph"><p>Configuration requirements are given in an <em>auto.def</em> file and are written in <em>Tcl</em>, a language slightly less obscure than <em>m4</em>! As a full language, there are no additional dependencies on the host system such as <em>awk</em>, <em>sed</em> and <em>bash</em>.</p></div>
-<div class="paragraph"><p>Tcl is widely available on modern development platforms. Configuration descriptions are designed to look more like declarations than code. It is easy to write autosetup configuation descriptions with no knowledge of Tcl.</p></div>
+<div class="paragraph"><p>Tcl is widely available on modern development platforms. Configuration descriptions are designed to look more like declarations than code. It is easy to write autosetup configuration descriptions with no knowledge of Tcl.</p></div>
 </div>
 <div class="sect2">
 <h3 id="_3_2_simple_configuration_descriptions">3.2. Simple Configuration Descriptions</h3>
@@ -854,7 +854,7 @@ WRAPPER="$0" exec $("$dir/find-tclsh" || echo false) "$dir/autosetup" "$@"</tt><
 </div>
 <div class="sect2">
 <h3 id="_4_6_checking_features">4.6. Checking Features</h3>
-<div class="paragraph"><p>Apart from checking user options, the primary purpose of autosetup and <em>auto.def</em> is to check for the availablity of features in the environment. The <em>cc</em> module provides commands to check various settings by compiling small test programs with the specified C compiler. The following is a typical example:</p></div>
+<div class="paragraph"><p>Apart from checking user options, the primary purpose of autosetup and <em>auto.def</em> is to check for the availability of features in the environment. The <em>cc</em> module provides commands to check various settings by compiling small test programs with the specified C compiler. The following is a typical example:</p></div>
 <div class="literalblock">
 <div class="content">
 <pre><tt>use cc
@@ -864,10 +864,24 @@ cc-check-includes sys/un.h
 cc-check-functions regcomp waitpid sigaction
 cc-check-tools ar ranlib strip</tt></pre>
 </div></div>
-<div class="paragraph"><p>See the command reference for details of these builtin checks.</p></div>
+<div class="paragraph"><p>See the command reference for details of these built-in checks.</p></div>
 </div>
 <div class="sect2">
-<h3 id="_4_7_controlling_the_build">4.7. Controlling the build</h3>
+<h3 id="_4_7_selecting_the_language">4.7. Selecting the Language</h3>
+<div class="paragraph"><p>The low level <em>cctest</em> commands provides the <em>-lang</em> option to select the language to use for tests. This can be used in conjunction with <em>cc-with</em> to set the language for a series of tests.</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><tt>cc-with {-lang c++} {
+    # All tests now use the C++ compiler -- $(CXX) and $(CXXFLAGS)
+    cc-check-types bool
+}
+# Or just set it for the rest of the file
+cc-with {-lang c++}
+...</tt></pre>
+</div></div>
+</div>
+<div class="sect2">
+<h3 id="_4_8_controlling_the_build">4.8. Controlling the build</h3>
 <div class="paragraph"><p>Once the user options have been processed and the environment checked for supported features, it is necessary to use this information to control the build. The <em>cc</em> module provides two mechanisms for this:</p></div>
 <div class="ulist"><ul>
 <li>
@@ -885,7 +899,7 @@ cc-check-tools ar ranlib strip</tt></pre>
 <div class="paragraph"><p>autosetup has far more control over generating files to control the build than autoconf since the configuration variables are directly accessible in <em>Tcl</em> from <em>auto.def</em>. See <em>all-defines</em> and <em>examples/testbed/auto.def</em>.</p></div>
 </div>
 <div class="sect2">
-<h3 id="_4_8_a_standard_makefile_in">4.8. A "standard" Makefile.in</h3>
+<h3 id="_4_9_a_standard_makefile_in">4.9. A "standard" Makefile.in</h3>
 <div class="paragraph"><p>If autosetup is being used to control a make-based build system, the use of a a <em>Makefile.in</em> with a standard structure will provide behaviour similar to that provided by autoconf/automake systems. autosetup provides a typical <em>Makefile.in</em> in <em>examples/typical/Makefile.in</em>. This example provides the following:</p></div>
 <div class="ulist"><ul>
 <li>
@@ -920,8 +934,8 @@ Automatically reconfigure if auto.def changes
 <div class="sect1">
 <h2 id="_5_command_reference">5. Command Reference</h2>
 <div class="sectionbody">
-<div class="paragraph"><p>autosetup provides a number of builtin commands which are documented below. These may be used from <em>auto.def</em> to test for features, define variables create files from templates and other similar actions.</p></div>
-<div class="paragraph"><p>This commands are all implemented as Tcl procedures. Custom commands may be added simpy by defining additional Tcl procedures in the <em>auto.def</em> file, and custom modules may be added by creating files with a <em>.tcl</em> extension in the autosetup directory.</p></div>
+<div class="paragraph"><p>autosetup provides a number of built-in commands which are documented below. These may be used from <em>auto.def</em> to test for features, define variables create files from templates and other similar actions.</p></div>
+<div class="paragraph"><p>This commands are all implemented as Tcl procedures. Custom commands may be added simply by defining additional Tcl procedures in the <em>auto.def</em> file, and custom modules may be added by creating files with a <em>.tcl</em> extension in the autosetup directory.</p></div>
 <div class="sect2">
 <h3 id="_5_1_core_commands">5.1. Core Commands</h3>
 <div class="dlist"><dl>
@@ -1151,10 +1165,44 @@ LD_LIBRARY_PATH   Environment variable which specifies path to shared libraries<
 </dt>
 <dd>
 <p>
-This module supports checking various <em>features</em> of the C
+This module supports checking various <em>features</em> of the C or C++
 compiler/linker environment. Common commands are cc-check-includes,
-cc-check-types, cc-check-functions, make-autoconf-h and make-template.
+cc-check-types, cc-check-functions, cc-with, make-autoconf-h and make-template.
 </p>
+</dd>
+<dt class="hdlist1">
+ 
+</dt>
+<dd>
+<p>
+The following environment variables are used if set:
+</p>
+<div class="literalblock">
+<div class="content">
+<pre><tt>CC       - C compiler
+CXX      - C++ compiler
+CFLAGS   - Additional C compiler flags
+CXXFLAGS - Additional C++ compiler flags
+LDFLAGS  - Additional compiler flags during linking
+LIBS     - Additional libraries to use (for all tests)
+CROSS    - Tool prefix for cross compilation</tt></pre>
+</div></div>
+</dd>
+<dt class="hdlist1">
+ 
+</dt>
+<dd>
+<p>
+The following variables are defined from the corresponding
+environment variables if set.
+</p>
+<div class="literalblock">
+<div class="content">
+<pre><tt>CPPFLAGS
+LINKFLAGS
+CC_FOR_BUILD
+LD</tt></pre>
+</div></div>
 </dd>
 <dt class="hdlist1">
 have-feature name ?default=0?
@@ -1194,11 +1242,11 @@ e.g. sys/stat.h becomes HAVE_SYS_STAT_H.
 </dt>
 <dd>
 <p>
-Converts * to P and all non-alphanumumeric to underscore.
+Converts * to P and all non-alphanumeric to underscore.
 </p>
 </dd>
 <dt class="hdlist1">
-cc-check-sizeof ?-args? type &#8230;
+cc-check-sizeof type &#8230;
 </dt>
 <dd>
 <p>
@@ -1206,44 +1254,39 @@ Checks the size of the given types (between 2 and 32).
 Defines a variable with the size determined, or "unknown" otherwise.
 e.g. for type <em>long long</em>, defines SIZEOF_LONG_LONG.
 Returns the size of the last type.
-The first arg may be a list of additional arguments to cctest.
 </p>
 </dd>
 <dt class="hdlist1">
-cc-check-includes ?-args? includes &#8230;
+cc-check-includes includes &#8230;
 </dt>
 <dd>
 <p>
 Checks that the given include files can be used
-The first arg may be a list of additional arguments to cctest.
 </p>
 </dd>
 <dt class="hdlist1">
-cc-check-types ?-args? type &#8230;
+cc-check-types type &#8230;
 </dt>
 <dd>
 <p>
 Checks that the types exist.
-The first arg may be a list of additional arguments to cctest.
 </p>
 </dd>
 <dt class="hdlist1">
-cc-check-functions ?-args? function &#8230;
+cc-check-functions function &#8230;
 </dt>
 <dd>
 <p>
 Checks that the given functions exist (can be linked)
-The first arg may be a list of additional arguments to cctest.
 </p>
 </dd>
 <dt class="hdlist1">
-cc-check-members ?-args? type.member &#8230;
+cc-check-members type.member &#8230;
 </dt>
 <dd>
 <p>
 Checks that the given type/structure members exist.
 A structure member is of the form "struct stat.st_mtime"
-The first arg may be a list of additional arguments to cctest.
 </p>
 </dd>
 <dt class="hdlist1">
@@ -1306,7 +1349,7 @@ into account any cross compilation prefix.
 <dd>
 <p>
 For example, when checking for "ar", first AR is checked on the command
-simply "ar" is assumed depending upone whether cross compiling.
+simply "ar" is assumed depending upon whether cross compiling.
 The path is searched for this executable, and if found AR is defined
 to the executable name.
 </p>
@@ -1346,6 +1389,54 @@ Returns 1 if all programs were found, or 0 otherwise.
 </p>
 </dd>
 <dt class="hdlist1">
+cc-with settings ?{ script }?
+</dt>
+<dd>
+<p>
+Sets the given <em>cctest</em> settings and then runs the tests in <em>script</em>.
+Note that settings such as -lang replace the current setting, while
+those such as -includes are appended to the existing setting.
+</p>
+</dd>
+<dt class="hdlist1">
+ 
+</dt>
+<dd>
+<p>
+If no script is given, the settings become the default for the remainder
+of the auto.def file.
+</p>
+<div class="literalblock">
+<div class="content">
+<pre><tt>cc-with {-lang c++} {
+  # This will check with the C++ compiler
+  cc-check-types bool
+  cc-with {-includes signal.h} {
+    # This will check with the C++ compiler, signal.h and any existing includes.
+    ...
+  }
+  # back to just the C++ compiler
+}</tt></pre>
+</div></div>
+</dd>
+<dt class="hdlist1">
+ 
+</dt>
+<dd>
+<p>
+The -libs setting is special in that newer values are added <strong>before</strong> earlier ones.
+</p>
+<div class="literalblock">
+<div class="content">
+<pre><tt>cc-with {-libs {-lc -lm}} {
+  cc-with {-libs -ldl} {
+    cctest -libs -lsocket ...
+    # libs will be in this order: -lsocket -ldl -lc -lm
+  }
+}</tt></pre>
+</div></div>
+</dd>
+<dt class="hdlist1">
 cctest ?settings?
 </dt>
 <dd>
@@ -1367,6 +1458,7 @@ Supported settings are:
 -includes list      A list of includes, e.g. {stdlib.h stdio.h}
 -declare code       Code to declare before main()
 -link 1             Don't just compile, link too
+-lang c|c++         Use the C (default) or C++ compiler
 -libs liblist       List of libraries to link, e.g. {-ldl -lm}
 -code code          Code to compile in the body of main()
 -source code        Compile a complete program. Ignore -includes, -declare and -code
@@ -1415,7 +1507,7 @@ Any failures are recorded in <em>config.log</em>
 <div class="ulist"><ul>
 <li>
 <p>
-'examples/typical - A simple, but full feature example
+<em>examples/typical</em> - A simple, but full featured example
 </p>
 </li>
 <li>
@@ -1532,7 +1624,7 @@ foreach f {strtod backtrace} {
 <div class="content">
 <pre><tt>./configure --host=arm-linux</tt></pre>
 </div></div>
-<div class="paragraph"><p>If additional compiler options are needed, such as -mbig-endian, these can be specfied with <em>CFLAGS</em>. In this case, the default <em>CFLAGS</em> of "-g -O2" won&#8217;t be used so the desired debugging and optimisation flags should also be added.</p></div>
+<div class="paragraph"><p>If additional compiler options are needed, such as -mbig-endian, these can be specified with <em>CFLAGS</em>. In this case, the default <em>CFLAGS</em> of "-g -O2" won&#8217;t be used so the desired debugging and optimisation flags should also be added.</p></div>
 <div class="literalblock">
 <div class="content">
 <pre><tt>./configure --host=arm-linux CFLAGS="-mbig-endian -msoft-float -static-libgcc -g -Os"</tt></pre>
@@ -1758,7 +1850,7 @@ Requires a multi-stage process of aclocal &#8658; autoheader &#8658; autoconf &#
 <div class="paragraph"><p>autosetup is released under the "2-clause FreeBSD Licence" as follows.</p></div>
 <div class="literalblock">
 <div class="content">
-<pre><tt>autosetup - An environment autoconfigurator</tt></pre>
+<pre><tt>autosetup - An environment "autoconfigurator"</tt></pre>
 </div></div>
 <div class="literalblock">
 <div class="content">
@@ -1806,7 +1898,7 @@ official policies, either expressed or implied, of WorkWare Systems.</tt></pre>
 <div id="footnotes"><hr /></div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2010-12-15 15:39:43 EST
+Last updated 2010-12-16 08:00:07 EST
 </div>
 </div>
 </body>
