@@ -610,7 +610,7 @@ Intended to replace all possible uses of autoconf
 --install        install autosetup to the current directory
 --init           create an initial 'configure' script if none exists</tt></pre>
 </div></div>
-<div class="paragraph"><p>Settings are of the form <em>name=value</em> and must be after any options. These settings allow the default values to be overridded for variables such as CC and CFLAGS.</p></div>
+<div class="paragraph"><p>Settings are of the form <em>name=value</em> and must be after any options. These settings allow the default values to be overridded for variables such as <em>CC</em> and <em>CFLAGS</em>.</p></div>
 <div class="paragraph"><p>Optional modules may support additional options. For example, the cc module supports the following additional options.</p></div>
 <div class="literalblock">
 <div class="content">
@@ -632,9 +632,9 @@ Intended to replace all possible uses of autoconf
 <h2 id="_3_features">3. Features</h2>
 <div class="sectionbody">
 <div class="sect2">
-<h3 id="_3_1_configuration_descriptions_are_tcl">3.1. Configuration descriptions are Tcl</h3>
+<h3 id="_3_1_configuration_descriptions_are_tcl">3.1. Configuration Descriptions are Tcl</h3>
 <div class="paragraph"><p>Configuration requirements are given in an <em>auto.def</em> file and are written in <em>Tcl</em>, a language slightly less obscure than <em>m4</em>! As a full language, there are no additional dependencies on the host system such as <em>awk</em>, <em>sed</em> and <em>bash</em>.</p></div>
-<div class="paragraph"><p>Tcl is widely available on modern development platforms.</p></div>
+<div class="paragraph"><p>Tcl is widely available on modern development platforms. Configuration descriptions are designed to look more like declarations than code. It is easy to write autosetup configuation descriptions with no knowledge of Tcl.</p></div>
 </div>
 <div class="sect2">
 <h3 id="_3_2_simple_configuration_descriptions">3.2. Simple Configuration Descriptions</h3>
@@ -676,24 +676,24 @@ make-template Makefile.in</tt></pre>
 <div class="content">
 <pre><tt>              autoconf     autosetup
               ---------    ---------
-Linux          4.1s         1.3s
-Mac OS X       6.4s         2.8s
-cygwin        91.5s         9.9s</tt></pre>
+Linux            4.1s         1.3s
+Mac OS X         6.4s         2.8s
+cygwin          91.5s         9.9s</tt></pre>
 </div></div>
 </div>
 <div class="sect2">
 <h3 id="_3_4_deploys_directly_within_a_project">3.4. Deploys directly within a project</h3>
-<div class="paragraph"><p>autosetup is deployed as a single subdirectory, autosetup, at the top level of a project, containing a handful of files. This approach means that there are no dependency issues with different versions of autosetup since an appropriate version is part of the project.</p></div>
+<div class="paragraph"><p>autosetup is deployed as a single subdirectory, autosetup, at the top level of a project, containing a handful of files. This approach (inspired by waf - <a href="http://code.google.com/p/waf/">http://code.google.com/p/waf/</a>) means that there are no dependency issues with different versions of autosetup since an appropriate version is part of the project.</p></div>
 <div class="paragraph"><p>autosetup is written in Tcl, but can run under any of the following Tcl interpreters:</p></div>
 <div class="ulist"><ul>
 <li>
 <p>
-Tcl 8.5 or later (which is widely deployed
+Tcl 8.5 or later
 </p>
 </li>
 <li>
 <p>
-Jim Tcl - small footprint, portable Tcl interpreter
+Jim Tcl - a small footprint, portable Tcl interpreter
 </p>
 </li>
 </ul></div>
@@ -719,18 +719,18 @@ standard autosetup options.</tt></pre>
 </div>
 <div class="sect2">
 <h3 id="_3_5_no_separate_generate_run_step">3.5. No separate generate/run step</h3>
-<div class="paragraph"><p>autosetup parses <em>auto.def</em> and updates the configuration in a single step. This simplifies and speeds development.</p></div>
+<div class="paragraph"><p>autosetup parses <em>auto.def</em> and updates the configuration in a single step. This simplifies and speeds development. It also means that both developers and users (those building the project from source) follow the same configure/build procedure.</p></div>
 </div>
 </div>
 </div>
 <div class="sect1">
 <h2 id="_4_writing_auto_def_files">4. Writing auto.def files</h2>
 <div class="sectionbody">
-<div class="paragraph"><p>auto.def files are generally simple to write, but have the full power of Tcl if required for implementing complex checks or option processing. The <em>auto.def</em> file is structured as follows:</p></div>
+<div class="paragraph"><p><em>auto.def</em> files are generally simple to write, but have the full power of Tcl if required for implementing complex checks or option processing. The <em>auto.def</em> file is structured as follows:</p></div>
 <div class="ulist"><ul>
 <li>
 <p>
-<em>use</em> modules
+<em>use</em> optional modules
 </p>
 </li>
 <li>
@@ -740,7 +740,7 @@ standard autosetup options.</tt></pre>
 </li>
 <li>
 <p>
-checks and option processing
+environment checks and option processing
 </p>
 </li>
 <li>
@@ -751,7 +751,7 @@ template, header file and other output generation
 </ul></div>
 <div class="sect2">
 <h3 id="_4_1_optional_modules">4.1. Optional modules</h3>
-<div class="paragraph"><p>autosetup includes the common, optional modules <em>cc</em> and <em>cc-shared</em>. If these modules are required, declared <strong>before</strong> <em>options</em> so that any module-specific options can be recognised.</p></div>
+<div class="paragraph"><p>autosetup includes the common, optional modules <em>cc</em> and <em>cc-shared</em>. If these modules are required, the <strong>must</strong> be declared <strong>before</strong> <em>options</em> so that any module-specific options can be recognised.</p></div>
 <div class="literalblock">
 <div class="content">
 <pre><tt># This project checks for C/C++ features
@@ -786,27 +786,30 @@ use cc-shared</tt></pre>
 <div class="paragraph"><p>The <em>&#8658;</em> syntax is used to indicate the help description for the option. If an option is not followed by <em>&#8658;</em>, the option is not displayed in <em>--help</em> but is still available.</p></div>
 <div class="paragraph"><p>If the first character of the help description is a newline (as for <em>boolopt4</em>), the description will not be reformatted.</p></div>
 <div class="paragraph"><p>String options can be specified multiple times, and all given values are available. If there is no default value, the value must be specified.</p></div>
-<div class="paragraph"><p>Within auto.def, options are checked with the commands <em>opt-bool</em> and <em>opt-val</em>.</p></div>
+<div class="paragraph"><p>Within <em>auto.def</em>, options are checked with the commands <em>opt-bool</em> and <em>opt-val</em>.</p></div>
 </div>
 <div class="sect2">
 <h3 id="_4_3_setting_options">4.3. Setting Options</h3>
 <div class="paragraph"><p>Boolean options can be enabled or disabled with one of the following forms (some of which are for autoconf compatibility):</p></div>
+<div class="paragraph"><p>To <strong>enable</strong> an option:</p></div>
 <div class="literalblock">
 <div class="content">
-<pre><tt>Enable the option:
---boolopt
+<pre><tt>--boolopt
 --enable-boolopt
 --boolopt=1
---boolopt=yes
-Disable the option:
---disable-boolopt
+--boolopt=yes</tt></pre>
+</div></div>
+<div class="paragraph"><p>To <strong>disable</strong> an option:</p></div>
+<div class="literalblock">
+<div class="content">
+<pre><tt>--disable-boolopt
 --boolopt=0
 --boolopt=no</tt></pre>
 </div></div>
 <div class="paragraph"><p>String options must have a value specified, unless the option has a default value.</p></div>
 <div class="literalblock">
 <div class="content">
-<pre><tt>--stropt          - OK if a default values is given for stropt
+<pre><tt>--stropt          - OK if a default value is given for stropt
 --stropt=value    - Adds the given value for the option</tt></pre>
 </div></div>
 </div>
@@ -846,7 +849,7 @@ RANLIB          - ranlib</tt></pre>
 dir="$(dirname "$0")/autosetup"
 WRAPPER="$0" exec $("$dir/find-tclsh" || echo false) "$dir/autosetup" "$@"</tt></pre>
 </div></div>
-<div class="paragraph"><p>This script invokes autosetup in the autosetup/ subdirectory after setting the WRAPPER environment variable.</p></div>
+<div class="paragraph"><p>This script invokes autosetup in the autosetup/ subdirectory after setting the <em>WRAPPER</em> environment variable.</p></div>
 <div class="paragraph"><p><em>autosetup --init</em> will create this script if it doesn&#8217;t exist.</p></div>
 </div>
 <div class="sect2">
@@ -878,8 +881,8 @@ cc-check-tools ar ranlib strip</tt></pre>
 </p>
 </li>
 </ul></div>
-<div class="paragraph"><p>It is easy to create other file formats based on configuration variables. For example, one system produces configuration files in the Linux kconfig format. It is also possible to output configuration variables in Makefile format.</p></div>
-<div class="paragraph"><p>autosetup has far more control over generating files to control the build since the configuration variables are directly accessible in <em>Tcl</em> from <em>auto.def</em>.</p></div>
+<div class="paragraph"><p>It is easy to create other file formats based on configuration variables. For example, to produce configuration files in the Linux <em>kconfig</em> format. It is also possible to output configuration variables in Makefile format.</p></div>
+<div class="paragraph"><p>autosetup has far more control over generating files to control the build than autoconf since the configuration variables are directly accessible in <em>Tcl</em> from <em>auto.def</em>. See <em>all-defines</em> and <em>examples/testbed/auto.def</em>.</p></div>
 </div>
 <div class="sect2">
 <h3 id="_4_8_a_standard_makefile_in">4.8. A "standard" Makefile.in</h3>
@@ -897,7 +900,7 @@ Install to --prefix, overridable with DESTDIR
 </li>
 <li>
 <p>
-Use of VPATH to support out-of-tree builds
+Use VPATH to support out-of-tree builds
 </p>
 </li>
 <li>
@@ -918,7 +921,9 @@ Automatically reconfigure if auto.def changes
 <h2 id="_5_command_reference">5. Command Reference</h2>
 <div class="sectionbody">
 <div class="paragraph"><p>autosetup provides a number of builtin commands which are documented below. These may be used from <em>auto.def</em> to test for features, define variables create files from templates and other similar actions.</p></div>
-<div class="paragraph"><p>This commands are all implemented as Tcl procedures. Custom commands may be added simpy by defining additional Tcl procedures in the <em>auto.def</em> file.</p></div>
+<div class="paragraph"><p>This commands are all implemented as Tcl procedures. Custom commands may be added simpy by defining additional Tcl procedures in the <em>auto.def</em> file, and custom modules may be added by creating files with a <em>.tcl</em> extension in the autosetup directory.</p></div>
+<div class="sect2">
+<h3 id="_5_1_core_commands">5.1. Core Commands</h3>
 <div class="dlist"><dl>
 <dt class="hdlist1">
 opt-bool option &#8230;
@@ -987,6 +992,23 @@ is-defined name
 <dd>
 <p>
 Returns 1 if the given variable is defined.
+</p>
+</dd>
+<dt class="hdlist1">
+all-defines
+</dt>
+<dd>
+<p>
+Returns a dictionary (name value list) of all defined variables.
+</p>
+</dd>
+<dt class="hdlist1">
+ 
+</dt>
+<dd>
+<p>
+This is suitable for use with <em>dict</em>, <em>array set</em> or <em>foreach</em>
+and allows for arbitrary processing of the defined variables.
 </p>
 </dd>
 <dt class="hdlist1">
@@ -1096,8 +1118,13 @@ Load the given library modules.
 e.g. use cc cc-shared
 </p>
 </dd>
+</dl></div>
+</div>
+<div class="sect2">
+<h3 id="_5_2_module_cc_shared">5.2. Module: cc-shared</h3>
+<div class="dlist"><dl>
 <dt class="hdlist1">
-MODULE: use cc-shared
+ 
 </dt>
 <dd>
 <p>
@@ -1114,8 +1141,13 @@ SH_LINKFLAGS      Flags to use linking an executable which will load shared obje
 LD_LIBRARY_PATH   Environment variable which specifies path to shared libraries</tt></pre>
 </div></div>
 </dd>
+</dl></div>
+</div>
+<div class="sect2">
+<h3 id="_5_3_module_cc">5.3. Module: cc</h3>
+<div class="dlist"><dl>
 <dt class="hdlist1">
-MODULE: use cc
+ 
 </dt>
 <dd>
 <p>
@@ -1321,10 +1353,14 @@ cctest ?settings?
 Low level C compiler checker. Compiles and or links a small C program
 according to the arguments and returns 1 if OK, or 0 if not.
 </p>
-<div class="literalblock">
-<div class="content">
-<pre><tt>Supported settings are:</tt></pre>
-</div></div>
+</dd>
+<dt class="hdlist1">
+ 
+</dt>
+<dd>
+<p>
+Supported settings are:
+</p>
 <div class="literalblock">
 <div class="content">
 <pre><tt>-cflags cflags      A list of flags to pass to the compiler
@@ -1336,6 +1372,14 @@ according to the arguments and returns 1 if OK, or 0 if not.
 -source code        Compile a complete program. Ignore -includes, -declare and -code
 -sourcefile file    Shorthand for -source [readfile [get-define srcdir]/$file]</tt></pre>
 </div></div>
+</dd>
+<dt class="hdlist1">
+ 
+</dt>
+<dd>
+<p>
+Unless -source or -sourcefile is specified, the C program looks like:
+</p>
 <div class="literalblock">
 <div class="content">
 <pre><tt>#include &lt;firstinclude&gt;   /* same for remaining includes in the list */</tt></pre>
@@ -1363,6 +1407,7 @@ Any failures are recorded in <em>config.log</em>
 </dl></div>
 </div>
 </div>
+</div>
 <div class="sect1">
 <h2 id="_6_examples">6. Examples</h2>
 <div class="sectionbody">
@@ -1370,17 +1415,17 @@ Any failures are recorded in <em>config.log</em>
 <div class="ulist"><ul>
 <li>
 <p>
-typical - A simple, but full feature example
+'examples/typical - A simple, but full feature example
 </p>
 </li>
 <li>
 <p>
-minimal - A minimal example
+<em>examples/minimal</em> - A minimal example
 </p>
 </li>
 <li>
 <p>
-jim - The Jim Tcl project uses autosetup
+<em>examples/jimtcl</em> - The Jim Tcl project uses autosetup
 </p>
 </li>
 </ul></div>
@@ -1419,13 +1464,10 @@ jim - The Jim Tcl project uses autosetup
 <div class="sect2">
 <h3 id="_7_7_modern_platform_assumption">7.7. Modern Platform Assumption</h3>
 <div class="paragraph"><p>autoconf includes support for many old and obsolete platforms. Most of these are no longer relevant. autosetup assumes that the build environment is somewhat POSIX compliant. This includes both cygwin and mingw on Windows.</p></div>
+<div class="paragraph"><p>Thus, there is no need to check for standard headers such as stdlib.h, string.h, etc.</p></div>
 </div>
 <div class="sect2">
-<h3 id="_7_8_thus_no_need_to_check_for_standard_headers">7.8. Thus, no need to check for standard headers</h3>
-<div class="paragraph"><p>such as stdlib.h, string.h, etc.</p></div>
-</div>
-<div class="sect2">
-<h3 id="_7_9_no_ac_prog_xxxx">7.9. No AC_PROG_xxxx</h3>
+<h3 id="_7_8_no_ac_prog_xxxx">7.8. No AC_PROG_xxxx</h3>
 <div class="paragraph"><p>Use the generic <em>cc-check-progs</em></p></div>
 <div class="literalblock">
 <div class="content">
@@ -1442,11 +1484,11 @@ foreach prog {gawk mawk nawk awk} {
 </div></div>
 </div>
 <div class="sect2">
-<h3 id="_7_10_no_ac_func_xxx">7.10. No AC_FUNC_xxx</h3>
+<h3 id="_7_9_no_ac_func_xxx">7.9. No AC_FUNC_xxx</h3>
 <div class="paragraph"><p>Use the generic <em>cc-check-functions</em> instead</p></div>
 </div>
 <div class="sect2">
-<h3 id="_7_11_no_special_commands_to_use_replacement_functions">7.11. No special commands to use replacement functions</h3>
+<h3 id="_7_10_no_special_commands_to_use_replacement_functions">7.10. No special commands to use replacement functions</h3>
 <div class="paragraph"><p>Instead consider something like the following.</p></div>
 <div class="literalblock">
 <div class="content">
@@ -1473,12 +1515,12 @@ foreach f {strtod backtrace} {
 </div></div>
 </div>
 <div class="sect2">
-<h3 id="_7_12_default_checks_do_not_use_any_include_files">7.12. Default checks do not use any include files.</h3>
+<h3 id="_7_11_default_checks_do_not_use_any_include_files">7.11. Default checks do not use any include files.</h3>
 <div class="paragraph"><p>autoconf normally adds certain include files to every test build, such as stdio.h. This can cause problems where declarations in these standard headers conflict with the code being tested. For this reason, autosetup compile tests uses no standard headers. If headers are required, they should be added explicitly.</p></div>
 </div>
 <div class="sect2">
-<h3 id="_7_13_checking_for_includes">7.13. Checking for includes</h3>
-<div class="paragraph"><p>When adding includes with <em>-includes</em>, these are not checked for existence first</p></div>
+<h3 id="_7_12_checking_for_includes">7.12. Checking for includes</h3>
+<div class="paragraph"><p>When adding includes to a test, <em>cctest</em> will automatically omit any include files which have been checked and do not exist. If any includes have been specified but not checked, a warning is given.</p></div>
 </div>
 </div>
 </div>
@@ -1490,7 +1532,7 @@ foreach f {strtod backtrace} {
 <div class="content">
 <pre><tt>./configure --host=arm-linux</tt></pre>
 </div></div>
-<div class="paragraph"><p>If additional compiler options are needed, such as -mbig-endian, these can be specfied with CFLAGS. In this case, the default CFLAGS of "-g -O2" won&#8217;t be used so the desired debugging and optimisation flags should also be added.</p></div>
+<div class="paragraph"><p>If additional compiler options are needed, such as -mbig-endian, these can be specfied with <em>CFLAGS</em>. In this case, the default <em>CFLAGS</em> of "-g -O2" won&#8217;t be used so the desired debugging and optimisation flags should also be added.</p></div>
 <div class="literalblock">
 <div class="content">
 <pre><tt>./configure --host=arm-linux CFLAGS="-mbig-endian -msoft-float -static-libgcc -g -Os"</tt></pre>
@@ -1585,7 +1627,7 @@ Explicit C++ support
 </li>
 <li>
 <p>
-pkg-config support
+pkg-config support (although pkg-config has poor support for cross compiling)
 </p>
 </li>
 <li>
@@ -1691,11 +1733,8 @@ Requires a multi-stage process of aclocal &#8658; autoheader &#8658; autoconf &#
 </li>
 </ul></div>
 </div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_16_alternative_autoconf_alternatives">16. Alternative autoconf Alternatives</h2>
-<div class="sectionbody">
+<div class="sect2">
+<h3 id="_15_2_alternative_autoconf_alternatives">15.2. Alternative autoconf Alternatives</h3>
 <div class="ulist"><ul>
 <li>
 <p>
@@ -1710,8 +1749,9 @@ Requires a multi-stage process of aclocal &#8658; autoheader &#8658; autoconf &#
 </ul></div>
 </div>
 </div>
+</div>
 <div class="sect1">
-<h2 id="_17_copyright_author_and_licence">17. Copyright, Author and Licence</h2>
+<h2 id="_16_copyright_author_and_licence">16. Copyright, Author and Licence</h2>
 <div class="sectionbody">
 <div class="paragraph"><p>autosetup is Copyright (c) 2010 WorkWare Systems <a href="http://workware.net.au/">http://workware.net.au/</a></p></div>
 <div class="paragraph"><p>autosetup was written by Steve Bennett &lt;<a href="mailto:steveb@workware.net.au">steveb@workware.net.au</a>&gt;</p></div>
@@ -1766,7 +1806,7 @@ official policies, either expressed or implied, of WorkWare Systems.</tt></pre>
 <div id="footnotes"><hr /></div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2010-12-15 08:25:06 EST
+Last updated 2010-12-15 15:39:43 EST
 </div>
 </div>
 </body>
