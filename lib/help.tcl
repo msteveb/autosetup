@@ -85,7 +85,7 @@ proc autosetup_manual {{type text}} {
     }
     p {
         Settings are of the form 'name=value' and must be after any options.
-        These settings allow the default values to be overridded for variables such
+        These settings allow the default values to be overridden for variables such
         as 'CC' and 'CFLAGS'.
     }
     p {
@@ -123,7 +123,7 @@ proc autosetup_manual {{type text}} {
     p {
         Tcl is widely available on modern development platforms. Configuration descriptions
         are designed to look more like declarations than code. It is easy to write
-        autosetup configuation descriptions with no knowledge of Tcl.
+        autosetup configuration descriptions with no knowledge of Tcl.
     }
 
     subsection {Simple Configuration Descriptions}
@@ -371,7 +371,7 @@ proc autosetup_manual {{type text}} {
     subsection {Checking Features}
     p {
         Apart from checking user options, the primary purpose of autosetup and 'auto.def'
-        is to check for the availablity of features in the environment. The 'cc' module
+        is to check for the availability of features in the environment. The 'cc' module
         provides commands to check various settings by compiling small test programs with the
         specified C compiler. The following is a typical example:
     }
@@ -384,7 +384,7 @@ proc autosetup_manual {{type text}} {
         cc-check-tools ar ranlib strip
     }
     p {
-        See the command reference for details of these builtin checks.
+        See the command reference for details of these built-in checks.
     }
 
     subsection {Controlling the build}
@@ -424,14 +424,14 @@ proc autosetup_manual {{type text}} {
 
     section {Command Reference}
     p {
-        autosetup provides a number of builtin commands which
+        autosetup provides a number of built-in commands which
         are documented below. These may be used from 'auto.def' to test
         for features, define variables create files from templates and
         other similar actions.
     }
     p {
         This commands are all implemented as Tcl procedures. Custom commands
-        may be added simpy by defining additional Tcl procedures in the 'auto.def' file,
+        may be added simply by defining additional Tcl procedures in the 'auto.def' file,
         and custom modules may be added by creating files with a '.tcl' extension
         in the autosetup directory.
     }
@@ -562,7 +562,7 @@ proc autosetup_manual {{type text}} {
     }
     p {
         If additional compiler options are needed, such as -mbig-endian,
-        these can be specfied with 'CFLAGS'. In this case, the default 'CFLAGS'
+        these can be specified with 'CFLAGS'. In this case, the default 'CFLAGS'
         of "-g -O2" won't be used so the desired debugging and optimisation
         flags should also be added.
     }
@@ -722,7 +722,7 @@ proc autosetup_manual {{type text}} {
         autosetup is released under the "2-clause FreeBSD Licence" as follows.
     }
     code {
-        autosetup - An environment autoconfigurator
+        autosetup - An environment "autoconfigurator"
 
         Copyright 2010 Steve Bennett <steveb@workware.net.au>
 

@@ -66,7 +66,7 @@ proc feature-checked {name} {
 # Converts a name to the corresponding define,
 # e.g. sys/stat.h becomes HAVE_SYS_STAT_H.
 #
-# Converts * to P and all non-alphanumumeric to underscore.
+# Converts * to P and all non-alphanumeric to underscore.
 #
 proc feature-define-name {name {prefix HAVE_}} {
 	string toupper $prefix[regsub -all {[^a-zA-Z0-9]} [regsub -all {[*]} $name p] _]
@@ -240,7 +240,7 @@ proc cc-check-function-in-lib {function libs {otherlibs {}}} {
 #
 # For example, when checking for "ar", first AR is checked on the command
 # line and then in the environment. If not found, "${host}-ar" or
-# simply "ar" is assumed depending upone whether cross compiling.
+# simply "ar" is assumed depending upon whether cross compiling.
 # The path is searched for this executable, and if found AR is defined
 # to the executable name.
 #

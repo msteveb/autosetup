@@ -33,4 +33,4 @@ Try: ./autosetup --help or ./autosetup --manual
 
 Or view the manual on github at:
 
-  http://msteveb.github.com/autosetup/
+  <http://msteveb.github.com/autosetup/>
