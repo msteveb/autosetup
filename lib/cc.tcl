@@ -11,6 +11,7 @@
 #
 ## CC       - C compiler
 ## CXX      - C++ compiler
+## CCACHE   - Set to "" to disable automatic use of ccache
 ## CFLAGS   - Additional C compiler flags
 ## CXXFLAGS - Additional C++ compiler flags
 ## LDFLAGS  - Additional compiler flags during linking
@@ -443,6 +444,7 @@ proc cctest {args} {
 
 	# Build the command line
 	set cmdline {}
+	lappend cmdline {*}[get-define CCACHE]
 	switch -exact -- $opts(-lang) {
 		c++ {
 			lappend cmdline {*}[get-define CXX] {*}[get-define CXXFLAGS]
@@ -629,6 +631,8 @@ define CXXFLAGS [get-env CXXFLAGS [get-define CFLAGS]]
 
 cc-check-tools ld
 
+define CCACHE [find-an-executable [get-env CCACHE ccache]]
+
 # Windows vs. non-Windows
 switch -glob -- [get-define host] {
 	*-*-ming* - *-*-cygwin {
@@ -645,7 +649,10 @@ cc-store-settings {-cflags {} -includes {} -declare {} -link 0 -lang c -libs {} 
 
 puts "Host System...[get-define host]"
 puts "Build System...[get-define build]"
-puts "C compiler...[get-define CC] [get-define CFLAGS]"
+puts "C compiler...[get-define CCACHE] [get-define CC] [get-define CFLAGS]"
+if {[get-define CXX] ne "false"} {
+	puts "C++ compiler...[get-define CCACHE] [get-define CXX] [get-define CXXFLAGS]"
+}
 
 if {![cc-check-includes stdlib.h]} {
 	user-error "Compiler does not work. See config.log"

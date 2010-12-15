@@ -455,9 +455,13 @@ proc quote-argv {argv} {
 # @find-executable name
 #
 # Searches the path for an executable with the given name.
+# Note that the name may include some parameters, e.g. "cc -mbig-endian",
+# in which case the parameters are ignored.
 # Returns 1 if found, or 0 if not.
 #
 proc find-executable {name} {
+	# Ignore any parameters
+	set name [lindex $name 0]
 	foreach p [split [env PATH .] :] {
 		set exec [file join $p $name]
 		if {[file executable $exec]} {
