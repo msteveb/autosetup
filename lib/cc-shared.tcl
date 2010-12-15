@@ -1,7 +1,7 @@
 # Copyright (c) 2010 WorkWare Systems http://www.workware.net.au/
 # All rights reserved
 
-# @MODULE: use cc-shared
+# @synopsis:
 #
 # Module which provides support for shared libraries and shared objects.
 # Defines the following variables:

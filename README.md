@@ -1,5 +1,5 @@
-From the autosetup v0.6.0 User Manual
-=====================================
+From the autosetup v0.6.0 User Manual...
+========================================
 
 autosetup is a tool, similar to autoconf, to configure a build system for
 the appropriate environment, according to the system capabilities and the user
@@ -30,3 +30,7 @@ autosetup is *not*:
   * Intended to replace all possible uses of autoconf
 
 Try: ./autosetup --help or ./autosetup --manual
+
+Or view the manual on github at:
+
+  http://msteveb.github.com/autosetup/

@@ -86,7 +86,7 @@ proc autosetup_manual {{type text}} {
     p {
         Settings are of the form 'name=value' and must be after any options.
         These settings allow the default values to be overridded for variables such
-        as CC and CFLAGS.
+        as 'CC' and 'CFLAGS'.
     }
     p {
         Optional modules may support additional options. For example, the cc module
@@ -112,7 +112,7 @@ proc autosetup_manual {{type text}} {
 
     section {Features}
 
-    subsection {Configuration descriptions are Tcl}
+    subsection {Configuration Descriptions are Tcl}
 
     p {
         Configuration requirements are given in an 'auto.def' file and are
@@ -121,7 +121,9 @@ proc autosetup_manual {{type text}} {
         host system such as 'awk', 'sed' and 'bash'.
     }
     p {
-        Tcl is widely available on modern development platforms.
+        Tcl is widely available on modern development platforms. Configuration descriptions
+        are designed to look more like declarations than code. It is easy to write
+        autosetup configuation descriptions with no knowledge of Tcl.
     }
 
     subsection {Simple Configuration Descriptions}
@@ -160,24 +162,25 @@ proc autosetup_manual {{type text}} {
     code {
                       autoconf     autosetup
                       ---------    ---------
-        Linux          4.1s         1.3s
-        Mac OS X       6.4s         2.8s
-        cygwin        91.5s         9.9s
+        Linux            4.1s         1.3s
+        Mac OS X         6.4s         2.8s
+        cygwin          91.5s         9.9s
     }
 
     subsection {Deploys directly within a project}
     p {
-        autosetup is deployed as a single subdirectory, autosetup, at the
-        top level of a project, containing a handful of files. This approach
-        means that there are no dependency issues with different versions
-        of autosetup since an appropriate version is part of the project.
+        autosetup is deployed as a single subdirectory, autosetup,
+        at the top level of a project, containing a handful of
+        files. This approach (inspired by waf - http://code.google.com/p/waf/)
+        means that there are no dependency issues with different versions of
+        autosetup since an appropriate version is part of the project.
     }
     p {
         autosetup is written in Tcl, but can run under any of the following
         Tcl interpreters:
     }
-    bullet {Tcl 8.5 or later (which is widely deployed}
-    bullet {Jim Tcl - small footprint, portable Tcl interpreter}
+    bullet {Tcl 8.5 or later}
+    bullet {Jim Tcl - a small footprint, portable Tcl interpreter}
     nl
     p {
         The source code for Jim Tcl is included directly within
@@ -201,26 +204,27 @@ proc autosetup_manual {{type text}} {
     subsection {No separate generate/run step}
     p {
         autosetup parses 'auto.def' and updates the configuration in a single step.
-        This simplifies and speeds development.
+        This simplifies and speeds development. It also means that both developers
+        and users (those building the project from source) follow the same configure/build
+        procedure.
     }
 
     section {Writing auto.def files}
-
     p {
-        auto.def files are generally simple to write, but have the full
+        'auto.def' files are generally simple to write, but have the full
         power of Tcl if required for implementing complex checks or
         option processing. The 'auto.def' file is structured as follows:
     }
-    bullet {'use' modules}
+    bullet {'use' optional modules}
     bullet {'options' declaration}
-    bullet {checks and option processing}
+    bullet {environment checks and option processing}
     bullet {template, header file and other output generation}
     nl
 
     subsection {Optional modules}
     p {
         autosetup includes the common, optional modules 'cc' and 'cc-shared'.
-        If these modules are required, declared *before* 'options' so that
+        If these modules are required, the *must* be declared *before* 'options' so that
         any module-specific options can be recognised.
     }
     code {
@@ -270,7 +274,7 @@ proc autosetup_manual {{type text}} {
         If there is no default value, the value must be specified.
     }
     p {
-        Within auto.def, options are checked with the commands 'opt-bool' and 'opt-val'.
+        Within 'auto.def', options are checked with the commands 'opt-bool' and 'opt-val'.
     }
 
     subsection {Setting Options}
@@ -278,13 +282,19 @@ proc autosetup_manual {{type text}} {
         Boolean options can be enabled or disabled with one of the following forms
         (some of which are for autoconf compatibility):
     }
+    p {
+        To *enable* an option:
+    }
     code {
-        Enable the option:
         --boolopt
         --enable-boolopt
         --boolopt=1
         --boolopt=yes
-        Disable the option:
+    }
+    p {
+        To *disable* an option:
+    }
+    code {
         --disable-boolopt
         --boolopt=0
         --boolopt=no
@@ -293,7 +303,7 @@ proc autosetup_manual {{type text}} {
         String options must have a value specified, unless the option has a default value.
     }
     code {
-        --stropt          - OK if a default values is given for stropt
+        --stropt          - OK if a default value is given for stropt
         --stropt=value    - Adds the given value for the option
     }
 
@@ -351,7 +361,7 @@ proc autosetup_manual {{type text}} {
         WRAPPER="$0" exec $("$dir/find-tclsh" || echo false) "$dir/autosetup" "$@"
     }
     p {
-        This script invokes autosetup in the autosetup/ subdirectory after setting the WRAPPER
+        This script invokes autosetup in the autosetup/ subdirectory after setting the 'WRAPPER'
         environment variable.
     }
     p {
@@ -388,13 +398,14 @@ proc autosetup_manual {{type text}} {
     bullet {'make-autoconf-h' creates a C/C++ header file based on the configuration variables}
     nl
     p {
-        It is easy to create other file formats based on configuration variables. For example, one system
-        produces configuration files in the Linux kconfig format. It is also possible to output configuration
+        It is easy to create other file formats based on configuration variables. For example, to
+        produce configuration files in the Linux 'kconfig' format. It is also possible to output configuration
         variables in Makefile format.
     }
     p {
-        autosetup has far more control over generating files to control the build since the
-        configuration variables are directly accessible in 'Tcl' from 'auto.def'.
+        autosetup has far more control over generating files to control the build than autoconf
+        since the configuration variables are directly accessible in 'Tcl' from 'auto.def'.
+        See 'all-defines' and 'examples/testbed/auto.def'.
     }
 
     subsection {A "standard" Makefile.in}
@@ -406,9 +417,10 @@ proc autosetup_manual {{type text}} {
     }
     bullet {Use CC, AR, RANLIB as determined by cross compiler settings or user overrides}
     bullet {Install to --prefix, overridable with DESTDIR}
-    bullet {Use of VPATH to support out-of-tree builds}
+    bullet {Use VPATH to support out-of-tree builds}
     bullet {Dummy automake targets to allow for use as a subproject with automake}
     bullet {Automatically reconfigure if auto.def changes}
+    nl
 
     section {Command Reference}
     p {
@@ -419,7 +431,9 @@ proc autosetup_manual {{type text}} {
     }
     p {
         This commands are all implemented as Tcl procedures. Custom commands
-        may be added simpy by defining additional Tcl procedures in the 'auto.def' file.
+        may be added simpy by defining additional Tcl procedures in the 'auto.def' file,
+        and custom modules may be added by creating files with a '.tcl' extension
+        in the autosetup directory.
     }
 
     automf_command_reference
@@ -428,9 +442,9 @@ proc autosetup_manual {{type text}} {
     p {
         autosetup includes a number of examples, including:
     }
-    bullet {typical - A simple, but full feature example}
-    bullet {minimal - A minimal example}
-    bullet {jim - The Jim Tcl project uses autosetup}
+    bullet {'examples/typical - A simple, but full feature example}
+    bullet {'examples/minimal' - A minimal example}
+    bullet {'examples/jimtcl' - The Jim Tcl project uses autosetup}
     nl
     p {
         These examples can be found along with the autosetup source at
@@ -484,8 +498,8 @@ proc autosetup_manual {{type text}} {
         are no longer relevant. autosetup assumes that the build environment is somewhat POSIX compliant.
         This includes both cygwin and mingw on Windows.
     }
-    subsection {Thus, no need to check for standard headers}
-    p {such as stdlib.h, string.h, etc.}
+    p {Thus, there is no need to check for standard headers such as stdlib.h, string.h, etc.}
+
     subsection {No AC_PROG_xxxx}
     p {Use the generic 'cc-check-progs'}
     code {
@@ -531,7 +545,11 @@ proc autosetup_manual {{type text}} {
         If headers are required, they should be added explicitly.
     }
     subsection {Checking for includes}
-    p {When adding includes with '-includes', these are not checked for existence first}
+    p {
+        When adding includes to a test, 'cctest' will automatically omit any include files
+        which have been checked and do not exist. If any includes have been specified
+        but not checked, a warning is given.
+    }
 
     section {Cross Compiling}
     p {
@@ -544,7 +562,7 @@ proc autosetup_manual {{type text}} {
     }
     p {
         If additional compiler options are needed, such as -mbig-endian,
-        these can be specfied with CFLAGS. In this case, the default CFLAGS
+        these can be specfied with 'CFLAGS'. In this case, the default 'CFLAGS'
         of "-g -O2" won't be used so the desired debugging and optimisation
         flags should also be added.
     }
@@ -644,7 +662,7 @@ proc autosetup_manual {{type text}} {
         changes to the core 'autosetup'.
     }
     bullet {Explicit C++ support}
-    bullet {pkg-config support}
+    bullet {pkg-config support (although pkg-config has poor support for cross compiling)}
     bullet {More fully-featured shared library support}
     bullet {Support for additional languages}
     bullet {libtool support (if we must!)}
@@ -688,7 +706,7 @@ proc autosetup_manual {{type text}} {
     bullet {http://www.airs.com/blog/archives/95}
     nl
 
-    section {Alternative autoconf Alternatives}
+    subsection {Alternative autoconf Alternatives}
     bullet {http://pmk.sourceforge.net/faq.php - PMK}
     bullet {https://e-reports-ext.llnl.gov/pdf/315457.pdf - autokonf}
     nl
@@ -752,7 +770,8 @@ proc accumulate_reference_line {statename type str} {
         }
         code,none - code,defn - code,desc {
             dputs "   => code"
-            code [join $state(buf) \n]
+            # Need to add an initial newline so that indenting is preserved
+            code \n[join $state(buf) \n]
             nl
             if {$type eq "desc"} {
                 set state(buf) [list "" $str]
@@ -786,10 +805,16 @@ proc automf_command_reference {} {
     if {!$::autosetup(installed)} {
         lappend files {*}[lsort [glob -nocomplain $::autosetup(libdir)/*.tcl]]
     }
+    subsection {Core Commands}
     foreach file $files {
         set state(buf) [list]
         set state(type) none
         foreach line [split [readfile $file] \n] {
+            if {[regexp {^# @synopsis:$} $line -> str]} {
+                subsection "Module: [file rootname [file tail $file]]"
+                set state(type) desc
+                continue
+            }
             if {[regexp {^##($| .*)} $line -> str]} {
                 accumulate_reference_line state code $str
                 continue

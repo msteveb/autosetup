@@ -3,6 +3,8 @@
 
 # Module which provides text formatting
 
+use formatting
+
 proc wordwrap {text length {firstprefix ""} {nextprefix ""}} {
     set len 0
     set space $firstprefix
@@ -17,9 +19,18 @@ proc wordwrap {text length {firstprefix ""} {nextprefix ""}} {
             set space $nextprefix
         }
         incr len [string length $space$word]
-        # Use x^Hx hightlighting for 'quoted' single words
+
+        # Use man-page conventions for highlighting 'quoted' and *quoted*
+        # single words.
+        # Use x^Hx for *bold* and _^Hx for 'underline'.
+        #
+        # less and more will both understand this.
+        # Pipe through 'col -b' to remove them.
         if {[regexp {^'(.*)'([^a-zA-Z0-9_]*)$} $word -> bareword dot]} {
-            regsub -all . $bareword "&\010&" word
+            regsub -all . $bareword "_\b&" word
+            append word $dot
+        } elseif {[regexp {^[*](.*)[*]([^a-zA-Z0-9_]*)$} $word -> bareword dot]} {
+            regsub -all . $bareword "&\b&" word
             append word $dot
         }
         puts -nonewline $space$word
@@ -38,21 +49,16 @@ proc p {text} {
     nl
 }
 proc code {text} {
-    # Find the indent of the first non-blank line
-    set indent ""
-    regexp "^\n(\[ \t\]\+)" $text dummy indent
-    set len [string length $indent]
-    # Trim initial newline and trailing space
-    set text [string trimleft $text \n]
-    foreach line [split $text \n] {
-        puts "    [string range $line $len end]"
+    foreach line [parse_code_block $text] {
+        puts "    $line"
     }
+    nl
 }
 proc nl {} {
     puts ""
 }
 proc underline {text char} {
-    regexp {^([ \t]*)(.*)} $text -> indent words
+    regexp "^(\[ \t\]*)(.*)" $text -> indent words
     puts $text
     puts $indent[string repeat $char [string length $words]]
 }

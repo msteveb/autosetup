@@ -56,7 +56,8 @@ make-template Makefile.in
 # For illustration purposes, create a template containing all known variables
 
 set f [open template.in w]
-foreach n [lsort [array names ::define]] {
+# We want these sorted.
+foreach n [lsort [dict keys [all-defines]]] {
 	puts $f "$n=@$n@"
 }
 close $f

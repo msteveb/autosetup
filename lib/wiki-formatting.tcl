@@ -4,6 +4,8 @@
 # Module which provides text formatting
 # wiki.tcl.tk format output
 
+use formatting
+
 proc joinlines {text} {
     set lines {}
     foreach l [split [string trim $text] \n] {
@@ -20,21 +22,9 @@ proc title {text} {
     puts ""
 }
 proc code {text} {
-    # If the text begins with newline, skip it
-    regexp {^\n(.*)} $text -> text
-
-    # And trip spaces off the end
-    set text [string trimright $text]
-
-    # Find the indent of the first line
-    # so that can be removed from every line
-    set indent ""
-    regexp "^(\[ \t\]\+)" $text -> indent
-    set len [string length $indent]
-
     puts "======"
-    foreach line [split $text \n] {
-        puts "  [string range $line $len end]"
+    foreach line [parse_code_block $text] {
+        puts "    $line"
     }
     puts "======"
 }

@@ -1,7 +1,7 @@
 # Copyright (c) 2010 WorkWare Systems http://www.workware.net.au/
 # All rights reserved
 
-# @MODULE: use cc
+# @synopsis:
 #
 # This module supports checking various 'features' of the C
 # compiler/linker environment. Common commands are cc-check-includes,
@@ -289,8 +289,8 @@ proc cc-check-progs {args} {
 # Low level C compiler checker. Compiles and or links a small C program
 # according to the arguments and returns 1 if OK, or 0 if not.
 #
-## Supported settings are:
-##
+# Supported settings are:
+#
 ## -cflags cflags      A list of flags to pass to the compiler
 ## -includes list      A list of includes, e.g. {stdlib.h stdio.h}
 ## -declare code       Code to declare before main()
@@ -299,8 +299,8 @@ proc cc-check-progs {args} {
 ## -code code          Code to compile in the body of main()
 ## -source code        Compile a complete program. Ignore -includes, -declare and -code
 ## -sourcefile file    Shorthand for -source [readfile [get-define srcdir]/$file]
-
-# The C program looks like:
+#
+# Unless -source or -sourcefile is specified, the C program looks like:
 #
 ## #include <firstinclude>   /* same for remaining includes in the list */
 ##

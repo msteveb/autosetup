@@ -133,6 +133,9 @@ proc main {argv} {
 	source $autosetup(autodef)
 
 	# Could warn here if options {} was not specified
+
+	show-notices
+
 	exit 0
 }
 
@@ -382,6 +385,18 @@ proc get-define {name {default 0}} {
 proc is-defined {name} {
 	info exists ::define($name)
 }
+
+# @all-defines
+#
+# Returns a dictionary (name value list) of all defined variables.
+#
+# This is suitable for use with 'dict', 'array set' or 'foreach'
+# and allows for arbitrary processing of the defined variables.
+#
+proc all-defines {} {
+	array get ::define
+}
+
 
 # @get-env name default
 #
@@ -703,7 +718,6 @@ set autosetup(msg-checking) 0
 #
 if {$autosetup(debug)} {
 	main $argv
-	exit 0
 }
 if {[catch {main $argv} msg] == 1} {
 	show-notices
@@ -713,4 +727,3 @@ if {[catch {main $argv} msg] == 1} {
 	}
 	exit 1
 }
-show-notices

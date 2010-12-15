@@ -2,6 +2,9 @@
 # All rights reserved
 
 # Module which provides text formatting
+# asciidoc format
+
+use formatting
 
 proc para {text} {
     regsub -all "\[ \t\n\]+" [string trim $text] " "
@@ -15,20 +18,8 @@ proc p {text} {
     nl
 }
 proc code {text} {
-    # If the text begins with newline, skip it
-    regexp {^\n(.*)} $text -> text
-
-    # And trip spaces off the end
-    set text [string trimright $text]
-
-    # Find the indent of the first line
-    # so that can be removed from every line
-    set indent ""
-    regexp "^(\[ \t\]\+)" $text -> indent
-    set len [string length $indent]
-
-    foreach line [split $text \n] {
-        puts "    [string range $line $len end]"
+    foreach line [parse_code_block $text] {
+        puts "    $line"
     }
     nl
 }
