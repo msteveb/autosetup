@@ -54,6 +54,7 @@ proc main {argv} {
 	set autosetup(cmdline) {}
 	set autosetup(options) {}
 	set autosetup(optionhelp) {}
+	set autosetup(showhelp) 0
 
 	# Parse options
 	use getopt
@@ -65,7 +66,7 @@ proc main {argv} {
 		option-checking=1
 
 		"-C dir"   =>  "change to the given directory before running autosetup"
-		help       =>  "display help and options"
+		help:=local  =>  "display help and options. Optionally specify a module name, such as --help=system"
 		version    =>  "display the version of autosetup"
 		manual:=text => "display the autosetup manual. Alternative formats are 'wiki' and 'asciidoc'"
 		debug       =>  "display debugging output as autosetup runs"
@@ -83,9 +84,10 @@ proc main {argv} {
 	incr autosetup(debug) [opt-bool debug]
 	incr autosetup(force) [opt-bool force]
 
-	if {[opt-bool help]} {
+	if {[opt-val help] ne ""} {
+		incr autosetup(showhelp)
 		use help
-		autosetup_help
+		autosetup_help [opt-val help]
 	}
 
 	if {[opt-val manual] ne ""} {
@@ -176,7 +178,7 @@ proc option-check-names {args} {
 # Parse the option definition in $opts and update
 # ::useropts() and ::autosetup(optionhelp) appropriately
 #
-proc options-add {opts} {
+proc options-add {opts {header ""}} {
 	global useropts autosetup
 
 	for {set i 0} {$i < [llength $opts]} {incr i} {
@@ -184,6 +186,7 @@ proc options-add {opts} {
 		if {[string match =* $opt]} {
 			# This is a special heading
 			lappend autosetup(optionhelp) $opt ""
+			set header {}
 			continue
 		}
 
@@ -234,6 +237,10 @@ proc options-add {opts} {
 		if {[lindex $opts $i+1] eq "=>"} {
 			set desc [lindex $opts $i+2]
 			#string match \n* $desc
+			if {$header ne ""} {
+				lappend autosetup(optionhelp) $header ""
+				set header ""
+			}
 			# A multi-line description
 			lappend autosetup(optionhelp) $opthelp $desc
 			incr i 2
@@ -242,8 +249,13 @@ proc options-add {opts} {
 }
 
 proc module-options {opts} {
-	options-add $opts
-	if {[opt-bool help]} {
+	set header ""
+	if {$::autosetup(showhelp) > 1 && [llength $opts]} {
+		set header "Module Options:"
+	}
+	options-add $opts $header
+
+	if {$::autosetup(showhelp)} {
 		# Ensure that the module isn't executed on --help
 		# We are running under eval or source, so use break
 		# to prevent further execution
@@ -307,10 +319,9 @@ proc options-show {} {
 
 proc options {optlist} {
 	# Allow options as a list or args
-	options-add {"=Local Options:"}
-	options-add $optlist
+	options-add $optlist "Local Options:"
 
-	if {[opt-bool help]} {
+	if {$::autosetup(showhelp)} {
 		options-show
 		exit 0
 	}

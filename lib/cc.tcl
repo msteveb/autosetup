@@ -26,69 +26,13 @@
 ## CC_FOR_BUILD
 ## LD
 
-# "=Module Options: cc"
-module-options {
-	host:host-alias =>		{a complete or partial cpu-vendor-opsys for the system where
-							the application will run (defaults to the same value as --build)}
-	build:build-alias =>	{a complete or partial cpu-vendor-opsys for the system
-							where the application will be built (defaults to the
-							result of running config.guess)}
-	prefix:dir =>			{the target directory for the build (defaults to /usr/local)}
-}
+use system
 
-
-# Returns 1 if exists, or 0 if  not
-#
-proc check-feature {name code} {
-	msg-checking "Checking for $name..."
-	set r [uplevel 1 $code]
-	define-feature $name $r
-	if {$r} {
-		msg-result "ok"
-	} else {
-		msg-result "not found"
-	}
-	return $r
-}
+module-options {}
 
 # Note that the return code is not meaningful
 proc cc-check-something {name code} {
 	uplevel 1 $code
-}
-
-# @have-feature name ?default=0?
-#
-# Returns the value of the feature if defined, or $default if not.
-#
-proc have-feature {name {default 0}} {
-	get-define [feature-define-name $name] $default
-}
-
-# @define-feature name ?value=1?
-#
-# Sets the feature 'define' to the given value.
-#
-proc define-feature {name {value 1}} {
-	define [feature-define-name $name] $value
-}
-
-# @feature-checked name
-#
-# Returns 1 if the feature has been checked, whether true or not
-#
-proc feature-checked {name} {
-	is-defined [feature-define-name $name]
-}
-
-# @feature-define-name name ?prefix=HAVE_?
-#
-# Converts a name to the corresponding define,
-# e.g. sys/stat.h becomes HAVE_SYS_STAT_H.
-#
-# Converts * to P and all non-alphanumeric to underscore.
-#
-proc feature-define-name {name {prefix HAVE_}} {
-	string toupper $prefix[regsub -all {[^a-zA-Z0-9]} [regsub -all {[*]} $name p] _]
 }
 
 # Checks for the existence of the given function by linking
@@ -567,53 +511,6 @@ proc make-template {template {out {}}} {
 	msg-result "Created $out from $template"
 }
 
-# build/host tuples and cross-compilation prefix
-set build [opt-val build]
-define build_alias $build
-if {$build eq ""} {
-	define build [config_guess]
-} else {
-	define build [config_sub $build]
-}
-
-set host [opt-val host]
-if {$host eq ""} {
-	set host $build
-}
-define host_alias $host
-if {$host eq ""} {
-	define host [get-define build]
-	set cross ""
-} else {
-	define host [config_sub $host]
-	set cross $host-
-}
-define cross [get-env CROSS $cross]
-
-set prefix [opt-val prefix /usr/local]
-
-# These are for compatibility with autoconf
-define prefix $prefix
-define builddir [pwd]
-define srcdir $autosetup(srcdir)
-define target [get-define host]
-define exec_prefix \${prefix}
-define bindir \${exec_prefix}/bin
-define sbindir \${exec_prefix}/sbin
-define libexecdir \${exec_prefix}/libexec
-define datadir \${prefix}/share
-define sysconfdir \${prefix}/etc
-define sharedstatedir \${prefix}/com
-define localstatedir \${prefix}/var
-define libdir \${exec_prefix}/lib
-define infodir \${prefix}/share/info
-define mandir \${prefix}/share/man
-define includedir \${prefix}/include
-
-# Display
-msg-result "Host System...[get-define host]"
-msg-result "Build System...[get-define build]"
-
 # Initialise some values from the environment or commandline or default settings
 foreach i {LDFLAGS LIBS CPPFLAGS LINKFLAGS {CFLAGS "-g -O2"} {CC_FOR_BUILD cc}} {
 	lassign $i var default
@@ -648,17 +545,6 @@ define CXXFLAGS [get-env CXXFLAGS [get-define CFLAGS]]
 cc-check-tools ld
 
 define CCACHE [find-an-executable [get-env CCACHE ccache]]
-
-# Windows vs. non-Windows
-switch -glob -- [get-define host] {
-	*-*-ming* - *-*-cygwin {
-		define-feature windows
-		define EXEEXT .exe
-	}
-	default {
-		define EXEEXT ""
-	}
-}
 
 # Initial cctest settings
 cc-store-settings {-cflags {} -includes {} -declare {} -link 0 -lang c -libs {} -code {}}

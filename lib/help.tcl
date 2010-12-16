@@ -3,19 +3,28 @@
 
 # Module which provides usage, help and the manual
 
-proc autosetup_help {} {
+proc autosetup_help {what} {
     puts "Usage: [file tail $::autosetup(exe)] \[options\] \[settings\]"
     puts \
 {
    This is autosetup, a faster, better alternative to autoconf.
    Use the --manual option for the full autosetup manual.
 }
-    if {[file exists $::autosetup(autodef)]} {
-        # This relies on auto.def having a call to 'options'
-        # which will display options and quit
-        source $::autosetup(autodef)
+    if {$what eq "local"} {
+        if {[file exists $::autosetup(autodef)]} {
+            # This relies on auto.def having a call to 'options'
+            # which will display options and quit
+            source $::autosetup(autodef)
+        } else {
+            options-show
+        }
     } else {
-        options-show
+        incr ::autosetup(showhelp)
+        if {[catch {use $what}]} {
+            user-error "Unknown module: $what"
+        } else {
+            options-show
+        }
     }
     exit 0
 }
