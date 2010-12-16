@@ -1,0 +1,48 @@
+# Just the system module
+
+use system
+
+options {}
+
+define CYGPATH [find-an-executable "cygpath -w" echo]
+set exeext [get-define EXEEXT]
+
+# Look for a tclsh "by hand" in the following dirs:
+#		${prefix}/bin
+#		${TCL_BIN_DIR}
+#		${TCL_BIN_DIR}/../bin
+#		${PATH}
+set path {}
+lappend path [opt-val prefix /usr/local]/bin
+if {[info exists ::env(TCL_BIN_DIR)]} {
+	lappend path [env TCL_BIN_DIR] [env TCL_BIN_DIR]/../bin
+}
+lappend path {*}[split [env PATH] :]
+
+msg-checking "Checking for tclsh..."
+set found 0
+foreach dir $path {
+	foreach tclsh [glob -nocomplain $dir/tclsh\[8-9\]*$exeext] {
+		if {[file executable $tclsh]} {
+			define TCLSH_PROG $tclsh
+			msg-result $tclsh
+			incr found
+			break
+		}
+	}
+	if {$found} {
+		break
+	}
+}
+if {!$found} {
+	user-error "No tclsh found in PATH: [join $path]"
+}
+
+set sak [get-define srcdir]/sak.tcl
+define PACKAGE [exec $tclsh $sak name]
+set major [exec $tclsh $sak major]
+set minor [exec $tclsh $sak minor]
+
+define VERSION $major.$minor
+
+make-template Makefile.in

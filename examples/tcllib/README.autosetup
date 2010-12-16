@@ -1,0 +1,14 @@
+Thu 16 Dec 2010 14:13:14 EST
+----------------------------
+
+This example is from tcllib 1.7
+
+The configure script here really doesn't do very much, but
+is notable in that it does not use any checks based on the C compiler.
+
+The development version of autosetup is installed.
+
+The Makefile.in was tweaked slightly to reconfigure with autosetup
+rather than config.status
+
+Run: ./configure
