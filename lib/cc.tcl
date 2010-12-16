@@ -214,12 +214,14 @@ proc cc-check-function-in-lib {function libs {otherlibs {}}} {
 			incr found
 		} else {
 			foreach lib $libs {
-				if {[cctest_function $function]} {
-					msg-result $lib
-					define lib_$function -l$lib
-					define-append LIBS -l$lib
-					incr found
-					break
+				cc-with [list -libs -l$lib] {
+					if {[cctest_function $function]} {
+						msg-result $lib
+						define lib_$function -l$lib
+						define-append LIBS -l$lib
+						incr found
+						break
+					}
 				}
 			}
 		}
@@ -309,9 +311,7 @@ proc cc-add-settings {settings} {
 			}
 			-libs {
 				# Note that new libraries are added before previous libraries
-				set libs $value
-				lappend libs {*}$new($name)
-				set new($name) $libs
+				set new($name) [list {*}$value {*}$new($name)]
 			}
 			-link - -lang {
 				set new($name) $value
@@ -559,7 +559,7 @@ proc make-template {template {out {}}} {
 	}
 
 	set mapping {}
-	foreach {n v} [array get ::define] {
+	foreach {n v} [all-defines] {
 		lappend mapping @$n@ $v
 	}
 	writefile $out [string map $mapping [readfile $infile]]\n
@@ -610,21 +610,37 @@ define infodir \${prefix}/share/info
 define mandir \${prefix}/share/man
 define includedir \${prefix}/include
 
+# Display
+msg-result "Host System...[get-define host]"
+msg-result "Build System...[get-define build]"
+
 # Initialise some values from the environment or commandline or default settings
 foreach i {LDFLAGS LIBS CPPFLAGS LINKFLAGS {CFLAGS "-g -O2"} {CC_FOR_BUILD cc}} {
 	lassign $i var default
 	define $var [get-env $var $default]
 }
 
-define CC [find-an-executable [get-env CC [get-define cross]cc] [get-define cross]gcc]
+if {[env-is-set CC]} {
+	# Set by the user, so don't try anything else
+	set try [get-env CC ""]
+} else {
+	# Try some reasonable options
+	set try [list [get-define cross]cc [get-define cross]gcc]
+}
+define CC [find-an-executable {*}$try]
 if {[get-define CC] eq ""} {
-	user-error "Could not find a C compiler such as [get-define cross]gcc"
+	user-error "Could not find a C compiler. Tried: [join $try ", "]"
 }
 
 define CPP [get-env CPP "[get-define CC] -E"]
 
 # XXX: Could avoid looking for a C++ compiler until requested
-define CXX [find-an-executable [get-env CXX [get-define cross]c++] [get-define cross]g++ false]
+# Note that if CXX isn't found, we just set it to "false". It might not be needed.
+if {[env-is-set CXX]} {
+	define CXX [find-an-executable -required [get-env CXX ""]]
+} else {
+	define CXX [find-an-executable [get-define cross]c++ [get-define cross]g++ false]
+}
 
 # CXXFLAGS default to CFLAGS if not specified
 define CXXFLAGS [get-env CXXFLAGS [get-define CFLAGS]]
@@ -647,11 +663,9 @@ switch -glob -- [get-define host] {
 # Initial cctest settings
 cc-store-settings {-cflags {} -includes {} -declare {} -link 0 -lang c -libs {} -code {}}
 
-puts "Host System...[get-define host]"
-puts "Build System...[get-define build]"
-puts "C compiler...[get-define CCACHE] [get-define CC] [get-define CFLAGS]"
+msg-result "C compiler...[get-define CCACHE] [get-define CC] [get-define CFLAGS]"
 if {[get-define CXX] ne "false"} {
-	puts "C++ compiler...[get-define CCACHE] [get-define CXX] [get-define CXXFLAGS]"
+	msg-result "C++ compiler...[get-define CCACHE] [get-define CXX] [get-define CXXFLAGS]"
 }
 
 if {![cc-check-includes stdlib.h]} {

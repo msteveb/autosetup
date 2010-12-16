@@ -411,6 +411,17 @@ proc get-env {name default} {
 	env $name $default
 }
 
+# @env-is-set name
+#
+# Returns 1 if the $name was specified on the command line or in the environment.
+#
+proc env-is-set {name} {
+	if {[dict exists $::autosetup(cmdline) $name]} {
+		return 1
+	}
+	info exists ::env($name)
+}
+
 # @readfile filename ?default=""?
 #
 # Return the contents of the file, without the trailing newline.
@@ -462,9 +473,13 @@ proc quote-argv {argv} {
 proc find-executable {name} {
 	# Ignore any parameters
 	set name [lindex $name 0]
+	if {$name eq ""} {
+		# The empty string is never a valid executable
+		return 0
+	}
 	foreach p [split [env PATH .] :] {
 		set exec [file join $p $name]
-		if {[file executable $exec]} {
+		if {[file isfile $exec] && [file executable $exec]} {
 			dputs "Found $name -> $exec"
 			return 1
 		}
@@ -485,6 +500,7 @@ proc find-an-executable {args} {
 	set required 0
 	if {[lindex $args 0] eq "-required"} {
 		set args [lrange $args 1 end]
+		incr required
 	}
 	foreach name $args {
 		if {[find-executable $name]} {
@@ -492,7 +508,11 @@ proc find-an-executable {args} {
 		}
 	}
 	if {$required} {
-		user-error "failed to find one of: $args"
+		if {[llength $args] == 1} {
+			user-error "failed to find: [join $args]"
+		} else {
+			user-error "failed to find one of: [join $args]"
+		}
 	}
 	return ""
 }
