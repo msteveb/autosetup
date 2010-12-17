@@ -385,8 +385,6 @@ proc cctest {args} {
 		set lines [join $source \n]
 	}
 
-	writefile $src $lines\n
-
 	# Build the command line
 	set cmdline {}
 	lappend cmdline {*}[get-define CCACHE]
@@ -415,6 +413,22 @@ proc cctest {args} {
 	}
 	lappend cmdline $src -o $tmp {*}$opts(-libs)
 
+	# At this point we have the complete command line and the
+	# complete source to be compiled. Get the result from cache if
+	# we can
+	if {[info exists ::cc_cache($cmdline,$lines)]} {
+		set ok $::cc_cache($cmdline,$lines)
+		if {$::autosetup(debug)} {
+			configlog "From cache (ok=$ok): [join $cmdline]"
+			configlog "============"
+			configlog $lines
+			configlog "============"
+		}
+		return $ok
+	}
+
+	writefile $src $lines\n
+
 	set ok 1
 	if {[catch {exec {*}$cmdline 2>@1} result errinfo]} {
 		configlog "Failed: [join $cmdline]"
@@ -432,6 +446,10 @@ proc cctest {args} {
 	}
 	file delete $src
 	file delete $tmp
+
+	# cache it
+	set ::cc_cache($cmdline,$lines) $ok
+
 	return $ok
 }
 
