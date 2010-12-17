@@ -361,6 +361,7 @@ proc config_sub {alias} {
 #
 proc define {name {value 1}} {
 	set ::define($name) $value
+	#dputs "$name <= $value"
 }
 
 # @define-append name value
@@ -375,6 +376,7 @@ proc define-append {name value} {
 	} else {
 		set ::define($name) $value
 	}
+	#dputs "$name += $value => $::define($name)"
 }
 
 # @get-define name ?default=0?
@@ -384,8 +386,10 @@ proc define-append {name value} {
 #
 proc get-define {name {default 0}} {
 	if {[info exists ::define($name)]} {
+		#dputs "$name => $::define($name)"
 		return $::define($name)
 	}
+	#dputs "$name => $default"
 	return $default
 }
 
@@ -544,8 +548,10 @@ proc configlog {msg} {
 # Writes the message with no newline to stdout.
 #
 proc msg-checking {msg} {
-	puts -nonewline $msg
-	set ::autosetup(msg-checking) 1
+	if {$::autosetup(msg-quiet) == 0} {
+		puts -nonewline $msg
+		set ::autosetup(msg-checking) 1
+	}
 }
 
 # @msg-result msg
@@ -553,9 +559,25 @@ proc msg-checking {msg} {
 # Writes the message to stdout.
 #
 proc msg-result {msg} {
-	puts $msg
-	set ::autosetup(msg-checking) 0
-	show-notices
+	if {$::autosetup(msg-quiet) == 0} {
+		puts $msg
+		set ::autosetup(msg-checking) 0
+		show-notices
+	}
+}
+
+# @msg-quiet command ...
+#
+# msg-quiet evaluates it's arguments as a command with output
+# from msg-checking and msg-result suppressed.
+#
+# This is useful if a check needs to run a subcheck which isn't
+# of interest to the user.
+proc msg-quiet {args} {
+	incr ::autosetup(msg-quiet)
+	set rc [uplevel 1 $args]
+	incr ::autosetup(msg-quiet) -1
+	return $rc
 }
 
 # Will be overridden by 'use misc'
@@ -743,6 +765,7 @@ set autosetup(exe) $::argv0
 set autosetup(istcl) 1
 set autosetup(installed) 0
 set autosetup(msg-checking) 0
+set autosetup(msg-quiet) 0
 
 # Embedded modules are inserted below here
 ##-- CUT HERE --##
