@@ -46,6 +46,9 @@ proc file-normalize {path} {
 # This is designed to be called for incorrect usage in auto.def, via autosetup-error
 #
 proc error-location {msg} {
+	if {$::autosetup(debug)} {
+		return -code error $msg
+	}
 	# Search back through the stack trace for the first error in a .def file
 	for {set i 1} {$i < [info level]} {incr i} {
 		if {$::autosetup(istcl)} {
