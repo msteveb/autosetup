@@ -55,7 +55,7 @@ proc cctest_member {struct_member} {
 
 # @cc-check-sizeof type ...
 #
-# Checks the size of the given types (between 2 and 32).
+# Checks the size of the given types (between 1 and 32, inclusive).
 # Defines a variable with the size determined, or "unknown" otherwise.
 # e.g. for type 'long long', defines SIZEOF_LONG_LONG.
 # Returns the size of the last type.
@@ -64,11 +64,12 @@ proc cc-check-sizeof {args} {
 	foreach type $args {
 		msg-checking "Checking for sizeof $type..."
 		set size unknown
-		foreach i {2 4 8 16 32} {
-			if {[cctest -code "static int _x\[sizeof($type) - $i + 1\];"] == 0} {
+		# Try the most common sizes first
+		foreach i {4 8 1 2 16 32} {
+			if {[cctest -code "static int _x\[sizeof($type) == $i ? 1 : -1\] = { 1 };"]} {
+				set size $i
 				break
 			}
-			set size $i
 		}
 		msg-result $size
 		set define [feature-define-name $type SIZEOF_]
