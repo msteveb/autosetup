@@ -242,7 +242,7 @@ proc cc-add-settings {settings} {
 	# conversion of $prev to a list
 	llength $prev
 
-	set new $prev
+	array set new $prev
 
 	foreach {name value} $settings {
 		switch -exact -- $name {
