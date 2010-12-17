@@ -9,6 +9,7 @@ use cc
 options {
 	shared    => "Create a shared library"
 	utf8=1    => "Disable utf8 support"
+	largefile=1 => "Disable large file support"
 }
 
 # In general, the cc-check-* commands return true
@@ -54,6 +55,20 @@ cc-with {-includes sys/stat.h} {
 }
 cc-check-function-in-lib percent_m wrap
 
+# The equivalent of the AC_SYS_LARGEFILE macro
+if {[opt-bool largefile]} {
+	cc-check-includes sys/types.h
+	msg-checking "Checking if -DFILE_OFFSET_BITS=64 is needed..."
+	if {[msg-quiet cc-with {-includes sys/types.h} {cc-check-sizeof off_t}] == 8} {
+		msg-result no
+	} elseif {[msg-quiet cc-with {-includes sys/types.h -cflags -D_FILE_OFFSET_BITS=64} {cc-check-sizeof off_t}] == 8} {
+		define _FILE_OFFSET_BITS 64
+		msg-result yes
+	} else {
+		user-error "LFS not available"
+	}
+}
+
 # Now try some C++ features
 # Does the C compiler understand -fno-rtti?
 check-feature -fno-rtti {
@@ -94,7 +109,7 @@ cc-with {-cflags -DX=1} {
 # And apply these settings for the rest of the file
 cc-with {-lang c++}
 
-make-autoconf-h config.h
+make-autoconf-h config.h {HAVE_* SIZEOF_* _*}
 make-template Makefile.in
 
 # For illustration purposes, create a template containing all known variables
