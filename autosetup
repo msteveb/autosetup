@@ -34,7 +34,7 @@ proc main {argv} {
 	# Now set up the environment
 	set autosetup(dir) [realdir [file dirname [realpath $::argv0]]]
 	set autosetup(prog) [file join $autosetup(dir) [file tail $::argv0]]
-	set autosetup(deps) [list $autosetup(prog)]
+	autosetup_add_dep $autosetup(prog)
 	if {$autosetup(installed)} {
 		set autosetup(libdir) $autosetup(dir)
 	} else {
@@ -121,7 +121,7 @@ proc main {argv} {
 		}
 	}
 
-	lappend autosetup(deps) $autosetup(autodef)
+	autosetup_add_dep $autosetup(autodef)
 
 	set cmd "$autosetup(exe)"
 	foreach arg $autosetup(argv) {
@@ -729,6 +729,13 @@ proc autosetup_check_directory {argvname} {
 	}
 }
 
+# Add filename as a dependency to rerun autosetup
+# The name will be normalised (converted to a full path)
+#
+proc autosetup_add_dep {filename} {
+	lappend ::autosetup(deps) [file-normalize $filename]
+}
+
 ##################################################################
 #
 # Library module support
@@ -750,8 +757,8 @@ proc use {args} {
 		} else {
 			set source $::autosetup(libdir)/${m}.tcl
 			if {[file exists $source]} {
-				lappend ::autosetup(deps) $source
 				uplevel #0 [list source $source]
+				autosetup_add_dep $source
 			} else {
 				puts "Looking for $source"
 				autosetup-error "use: No such module: $m"
