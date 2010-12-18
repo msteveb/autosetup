@@ -101,8 +101,11 @@ proc make-template {template {out {}}} {
 		if {[file ext $template] ne ".in"} {
 			autosetup-error "make_template $template has no target file and can't guess"
 		}
-		set out [file tail [file rootname $template]]
+		set out [file rootname $template]
 	}
+
+	# Make sure the directory exists
+	file mkdir [file dirname $out]
 
 	set mapping {}
 	foreach {n v} [array get ::define] {

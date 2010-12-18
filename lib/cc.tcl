@@ -453,20 +453,9 @@ proc cctest {args} {
 	return $ok
 }
 
-# If $file doesn't exist, or it's contents are different than $buf,
-# the file is written and $script is executed.
-# Otherwise a "file is unchanged" message is displayed.
-proc write-if-changed {file buf {script {}}} {
-	set old [readfile $file ""]
-	if {$old eq $buf && [file exists $file]} {
-		msg-result "$file is unchanged"
-	} else {
-		writefile $file $buf\n
-		uplevel 1 $script
-	}
-}
-
-# Examines all defines which match the given patterns
+# @make-autoconf-h outfile ?patternlist?
+#
+# Examines all defined variables which match the given patterns
 # and writes an include file, $file, which defines each of these.
 # - defines which have the value "0" are ignored.
 # - defines which have integer values are defined as the integer value.
@@ -495,39 +484,6 @@ proc make-autoconf-h {file {patterns {HAVE_* SIZEOF_*}}} {
 	write-if-changed $file $buf {
 		msg-result "Created $file"
 	}
-}
-
-# Reads the input file <srcdir>/$template and writes the output file $out.
-# If $out is blank/omitted, $template should end with ".in" which
-# is removed to create the output file name.
-#
-# Each pattern of the form @define@ is replaced the the corresponding
-# define, if it exists, or left unchanged if not.
-# 
-proc make-template {template {out {}}} {
-	set infile [file join $::autosetup(srcdir) $template]
-
-	if {![file exists $infile]} {
-		user-error "Template $template is missing"
-	}
-
-	# Define this as late as possible
-	define AUTODEPS $::autosetup(deps)
-
-	if {$out eq ""} {
-		if {[file ext $template] ne ".in"} {
-			autosetup-error "make_template $template has no target file and can't guess"
-		}
-		set out [file tail [file rootname $template]]
-	}
-
-	set mapping {}
-	foreach {n v} [all-defines] {
-		lappend mapping @$n@ $v
-	}
-	writefile $out [string map $mapping [readfile $infile]]\n
-
-	msg-result "Created $out from $template"
 }
 
 # Initialise some values from the environment or commandline or default settings

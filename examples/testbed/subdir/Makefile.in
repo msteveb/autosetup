@@ -1,0 +1,2 @@
+# Just a fake Makefile.in
+CC = @CC@

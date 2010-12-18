@@ -111,6 +111,8 @@ cc-with {-lang c++}
 
 make-autoconf-h config.h {HAVE_* SIZEOF_* _*}
 make-template Makefile.in
+# And a template in a subdir too
+make-template subdir/Makefile.in
 
 # For illustration purposes, create a template containing all known variables
 
