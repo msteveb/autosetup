@@ -41,8 +41,9 @@ check-feature -std=c99 {
 }
 # Could check the return code of check-feature instead
 if {[have-feature -std=c99]} {
-	define-append EXTRA_CFLAGS -std=c99
+	define-append EXTRA_CFLAGS -std=c99 -fpedantic {-Dversion="my version"}
 }
+define version1 "with spaces"
 
 # Note that autosetup will complain about the use of the following headers
 # if they haven't been checked, so check them now.
@@ -124,4 +125,4 @@ foreach n [lsort [dict keys [all-defines]]] {
 close $f
 
 # And process the template
-make-template template.in
+make-template [get-define builddir]/template.in

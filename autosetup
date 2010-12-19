@@ -365,19 +365,20 @@ proc define {name {value 1}} {
 	#dputs "$name <= $value"
 }
 
-# @define-append name value
+# @define-append name value ...
 #
-# Appends the given value to the given 'defined' variable.
+# Appends the given value(s) to the given 'defined' variable.
 # If the variable is not defined or empty, it is set to $value.
 # Otherwise the value is appended, separated by a space.
+# Any extra values are also appended
 #
-proc define-append {name value} {
+proc define-append {name args} {
 	if {[info exists ::define($name)] && $::define($name) ne ""} {
-		append ::define($name) " " $value
+		append ::define($name) " " [join $args]
 	} else {
-		set ::define($name) $value
+		set ::define($name) [join $args]
 	}
-	#dputs "$name += $value => $::define($name)"
+	#dputs "$name += [join $args] => $::define($name)"
 }
 
 # @get-define name ?default=0?
