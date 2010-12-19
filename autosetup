@@ -124,7 +124,7 @@ proc main {argv} {
 
 	autosetup_add_dep $autosetup(autodef)
 
-	set cmd "$autosetup(exe)"
+	set cmd [file-normalize $autosetup(exe)]
 	foreach arg $autosetup(argv) {
 		append cmd " [quote-if-needed $arg]"
 	}
