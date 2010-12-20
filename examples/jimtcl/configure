@@ -1,2 +1,3 @@
 #!/bin/sh
-WRAPPER="$0" exec ../../autosetup "$@"
+dir="$(dirname "$0")/../.."
+WRAPPER="$0" exec $("$dir/find-tclsh" || echo false) "$dir/autosetup" "$@"

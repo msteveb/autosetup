@@ -1,2 +1,6 @@
 # Just a fake Makefile.in
 CC = @CC@
+
+# This one is special in that it will be relative
+# to where this file is created
+srcdir = @srcdir@

@@ -679,41 +679,46 @@ proc realpath {path} {
 }
 
 # Convert absolute path, $path into a path relative
-# to the given directory and return it.
+# to the given directory (or the current dir, if not given).
 #
-proc relative-path {path} {
+proc relative-path {path {pwd {}}} {
 	set diff 0
 	set same 0
 	set newf {}
 	set prefix {}
 	set path [file-normalize $path]
-	set pwd [pwd]
+	if {$pwd eq ""} {
+		set pwd [pwd]
+	} else {
+		set pwd [file-normalize $pwd]
+	}
+
+	if {$path eq $pwd} {
+		return .
+	}
 
 	# Try to make the filename relative to the current dir
 	foreach p [split $pwd /] f [split $path /] {
 		if {$p ne $f} {
-			if {$f == ""} {
-				# pwd is longer than path
-				return $path
-			}
 			incr diff
 		} elseif {!$diff} {
 			incr same
 		}
 		if {$diff} {
 			if {$p ne ""} {
-				# Add .. for sibling dir
+				# Add .. for sibling or parent dir
 				lappend prefix ..
 			}
-			lappend newf $f
+			if {$f ne ""} {
+				lappend newf $f
+			}
 		}
 	}
-	# Note: Only allow up to 3 .. entries.
-	if {$diff == 0 || $same == 1 || [llength $prefix] > 3} {
+	if {$same == 1 || [llength $prefix] > 3} {
 		return $path
 	}
 
-	join [concat $prefix $newf] /
+	file join [join $prefix /] [join $newf /]
 }
 
 # Check for the -C option

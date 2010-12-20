@@ -93,6 +93,10 @@ proc write-if-changed {file buf {script {}}} {
 # Each pattern of the form @define@ is replaced the the corresponding
 # define, if it exists, or left unchanged if not.
 # 
+# The special value @srcdir@ is subsituted with the relative
+# path to the source directory from the directory where the output
+# file is created. Use @top_srcdir@ for the absolute path.
+#
 proc make-template {template {out {}}} {
 	set infile [file join $::autosetup(srcdir) $template]
 
@@ -112,6 +116,9 @@ proc make-template {template {out {}}} {
 
 	# Make sure the directory exists
 	file mkdir [file dirname $out]
+
+	# Set up srcdir to be relative to the target dir
+	define srcdir [relative-path $::autosetup(srcdir) [file dirname $out]]
 
 	set mapping {}
 	foreach {n v} [array get ::define] {
@@ -151,7 +158,7 @@ set prefix [opt-val prefix /usr/local]
 define target [get-define host]
 define prefix $prefix
 define builddir [pwd]
-define srcdir [file-normalize $autosetup(srcdir)]
+define srcdir $autosetup(srcdir)
 # Allow this to come from the environment
 define top_srcdir [get-env top_srcdir [get-define srcdir]]
 
