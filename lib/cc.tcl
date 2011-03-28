@@ -494,7 +494,7 @@ foreach i {LDFLAGS LIBS CPPFLAGS LINKFLAGS {CFLAGS "-g -O2"} {CC_FOR_BUILD cc}} 
 
 if {[env-is-set CC]} {
 	# Set by the user, so don't try anything else
-	set try [get-env CC ""]
+	set try [list [get-env CC ""]]
 } else {
 	# Try some reasonable options
 	set try [list [get-define cross]cc [get-define cross]gcc]
