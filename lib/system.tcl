@@ -80,8 +80,10 @@ proc write-if-changed {file buf {script {}}} {
 	}
 }
 
-# Reads the input file <srcdir>/$template and writes the output file $out.
-# If $out is blank/omitted, $template should end with ".in" which
+# @make-template template ?outfile?
+#
+# Reads the input file <srcdir>/$template and writes the output file $outfile.
+# If $outfile is blank/omitted, $template should end with ".in" which
 # is removed to create the output file name.
 #
 # Each pattern of the form @define@ is replaced the the corresponding
