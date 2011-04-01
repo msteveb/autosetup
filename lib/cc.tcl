@@ -318,9 +318,9 @@ proc cc-with {settings args} {
 		autosetup-error "usage: cc-with settings ?script?"
 	} else {
 		set save [cc-add-settings $settings]
-		set rc [uplevel 1 [lindex $args 0]]
+		set rc [catch {uplevel 1 [lindex $args 0]} msg info]
 		cc-store-settings $save
-		return $rc
+		return $rc -code [dict get $info -code]
 	}
 }
 
