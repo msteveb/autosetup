@@ -50,6 +50,7 @@ cc-check-function-in-lib inet_pton socket nsl
 
 # C99
 foreach inc {stdlib.h stdint.h sys/inttypes.h} {
+    cc-check-includes $inc
     cc-with "-includes $inc" {
         if {[cc-check-sizeof u_int32_t] == 4} {
             define-feature c99-ints
@@ -137,7 +138,7 @@ if {!$ok} {
 # Are we on a system (like Solaris) that requires promiscuous mode in order to
 # see any outgoing packets?
 
-if {[opt-bool default-promiscuous] || [string match *-solaris* [get-define host]} {
+if {[opt-bool default-promiscuous] || [string match *-solaris* [get-define host]]} {
     define NEED_PROMISCUOUS_FOR_OUTGOING
 }
 
