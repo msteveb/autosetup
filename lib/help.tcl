@@ -38,6 +38,14 @@ proc autosetup_manual {{type text}} {
         default {use text-formatting}
     }
 
+    # If not already paged and stdout is a tty, pipe the output through the pager
+    if {![opt-bool nopager] && [env PAGER ""] ne "" && ![string match "not a tty" [exec tty]]} {
+        catch {
+            exec [info nameofexecutable] $::argv0 {*}$::argv --nopager | [env PAGER] >@stdout <@stdin 2>/dev/null
+        }
+        exit 0
+    }
+
     title "[autosetup_version] -- User Manual"
 
     section {Introduction}

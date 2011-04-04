@@ -68,6 +68,7 @@ proc main {argv} {
 		"-C dir"   =>  "change to the given directory before running autosetup"
 		help:=local  =>  "display help and options. Optionally specify a module name, such as --help=system"
 		version    =>  "display the version of autosetup"
+		nopager
 		manual:=text => "display the autosetup manual. Alternative formats are 'wiki' and 'asciidoc'"
 		debug       =>  "display debugging output as autosetup runs"
 		install     =>  "install autosetup to the current directory (in the 'autosetup/' subdirectory)"
