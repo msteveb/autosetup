@@ -827,9 +827,7 @@ proc accumulate_reference_line {statename type str} {
 # Generate a command reference from inline documentation
 proc automf_command_reference {} {
     lappend files $::autosetup(prog)
-    if {!$::autosetup(installed)} {
-        lappend files {*}[lsort [glob -nocomplain $::autosetup(libdir)/*.tcl]]
-    }
+    lappend files {*}[lsort [glob -nocomplain $::autosetup(libdir)/*.tcl]]
     subsection {Core Commands}
     foreach file $files {
         set state(buf) [list]
