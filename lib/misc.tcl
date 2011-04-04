@@ -38,6 +38,22 @@ proc file-normalize {path} {
 	return $result
 }
 
+# bootstrap jim doesn't provide glob, but does provide readdir,
+# so create a poor-man's glob here
+if {[info commands glob] eq ""} {
+	proc glob {args path_pattern} {
+		set path [file dirname $path_pattern]
+		set pattern [file tail $path_pattern]
+		set result {}
+		foreach file [readdir $path] {
+			if {[string match $pattern $file]} {
+				lappend result [file join $path $file]
+			}
+		}
+		return $result
+	}
+}
+
 # If everything is working properly, the only errors which occur
 # should be generated in user code (e.g. auto.def).
 # By default, we only want to show the error location in user code.
