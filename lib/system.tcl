@@ -35,6 +35,8 @@ proc check-feature {name code} {
 # @have-feature name ?default=0?
 #
 # Returns the value of the feature if defined, or $default if not.
+# See 'feature-define-name' for how the feature name
+# is translated into the define name.
 #
 proc have-feature {name {default 0}} {
 	get-define [feature-define-name $name] $default
@@ -43,6 +45,8 @@ proc have-feature {name {default 0}} {
 # @define-feature name ?value=1?
 #
 # Sets the feature 'define' to the given value.
+# See 'feature-define-name' for how the feature name
+# is translated into the define name.
 #
 proc define-feature {name {value 1}} {
 	define [feature-define-name $name] $value
