@@ -4,6 +4,8 @@
 # Module which provides usage, help and the manual
 
 proc autosetup_help {what} {
+    use_pager
+
     puts "Usage: [file tail $::autosetup(exe)] \[options\] \[settings\]"
     puts \
 {
@@ -29,21 +31,26 @@ proc autosetup_help {what} {
     exit 0
 }
 
+# If not already paged and stdout is a tty, pipe the output through the pager
+# This is done by reinvoking autosetup with --nopager added
+proc use_pager {} {
+    if {![opt-bool nopager] && [env PAGER ""] ne "" && ![string match "not a tty" [exec tty]]} {
+        catch {
+            exec [info nameofexecutable] $::argv0 --nopager {*}$::argv | [env PAGER] >@stdout <@stdin 2>/dev/null
+        }
+        exit 0
+    }
+}
+
 # Outputs the autosetup manual in one of several formats
 proc autosetup_manual {{type text}} {
+
+    use_pager
 
     switch -glob -- $type {
         wiki {use wiki-formatting}
         ascii* {use asciidoc-formatting}
         default {use text-formatting}
-    }
-
-    # If not already paged and stdout is a tty, pipe the output through the pager
-    if {![opt-bool nopager] && [env PAGER ""] ne "" && ![string match "not a tty" [exec tty]]} {
-        catch {
-            exec [info nameofexecutable] $::argv0 {*}$::argv --nopager | [env PAGER] >@stdout <@stdin 2>/dev/null
-        }
-        exit 0
     }
 
     title "[autosetup_version] -- User Manual"
