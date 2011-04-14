@@ -114,7 +114,7 @@ proc main {argv} {
 
 	# Parse extra arguments into autosetup(cmdline)
 	foreach arg $argv {
-		if {[regexp {(.*)=(.*)} $arg -> n v]} {
+		if {[regexp {([^=]*)=(.*)} $arg -> n v]} {
 			dict set autosetup(cmdline) $n $v
 			define $n $v
 		} else {
