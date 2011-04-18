@@ -6,6 +6,8 @@ if {[catch {info version} version] == 0} {
 	if {$version >= 0.70} {
 		exit 0
 	}
+	# Ensure that at least regexp works
+	regexp a a
 } elseif {[catch {info tclversion} version] == 0} {
 	if {$version >= 8.5} {
 		exit 0
