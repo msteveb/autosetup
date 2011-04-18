@@ -2,10 +2,13 @@
 # Looks for a suitable tclsh or jimsh in the PATH
 # If not found, builds a bootstrap jimsh from source
 PATH="$PATH:$(pwd)"
-tclsh=$(which jimsh 2>/dev/null || which tclsh8.5 2>/dev/null || which tclsh8.6 2>/dev/null || which jimsh0 2>/dev/null)
-if [ -z "$tclsh" ]; then
-	echo 1>&2 "No installed jimsh or tclsh, building local bootstrap jimsh0"
-	${CC_FOR_BUILD:-cc} -o $(pwd)/jimsh0 $(dirname "$0")/jimsh0.c || exit 1
-	tclsh="$(pwd)/jimsh0"
-fi
-echo $tclsh
+for tclsh in jimsh tclsh8.5 tclsh8.6 jimsh0; do
+	$tclsh $(dirname "$0")/test-tclsh 2>/dev/null
+	if [ $? -eq 0 ]; then
+		echo $(which $tclsh)
+		exit 0
+	fi
+done
+echo 1>&2 "No installed jimsh or tclsh, building local bootstrap jimsh0"
+${CC_FOR_BUILD:-cc} -o $(pwd)/jimsh0 $(dirname "$0")/jimsh0.c || exit 1
+echo "$(pwd)/jimsh0"

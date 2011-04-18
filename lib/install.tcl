@@ -45,7 +45,7 @@ proc autosetup_install {} {
 		}
 
 		# Install support files
-		foreach file {config.guess config.sub jimsh0.c find-tclsh LICENCE} {
+		foreach file {config.guess config.sub jimsh0.c find-tclsh test-tclsh LICENCE} {
 			autosetup_install_file $::autosetup(dir)/$file autosetup
 		}
 		exec chmod 755 autosetup/config.sub autosetup/config.guess autosetup/find-tclsh

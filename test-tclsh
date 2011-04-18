@@ -1,0 +1,14 @@
+# A small Tcl script to verify that the chosen
+# interpreter works. Sometimes we might e.g. pick up
+# an interpreter for a different arch.
+
+if {[catch {info version} version] == 0} {
+	if {$version >= 0.70} {
+		exit 0
+	}
+} elseif {[catch {info tclversion} version] == 0} {
+	if {$version >= 8.5} {
+		exit 0
+	}
+}
+exit 1
