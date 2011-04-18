@@ -11,7 +11,7 @@
 #
 ## CC       - C compiler
 ## CXX      - C++ compiler
-## CCACHE   - Set to "" to disable automatic use of ccache
+## CCACHE   - Set to "none" to disable automatic use of ccache
 ## CFLAGS   - Additional C compiler flags
 ## CXXFLAGS - Additional C++ compiler flags
 ## LDFLAGS  - Additional compiler flags during linking
