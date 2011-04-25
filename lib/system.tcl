@@ -139,9 +139,6 @@ if {$build eq ""} {
 }
 
 set host [opt-val host]
-if {$host eq ""} {
-	set host $build
-}
 define host_alias $host
 if {$host eq ""} {
 	define host [get-define build]
