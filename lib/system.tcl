@@ -9,6 +9,8 @@
 # It also support the 'feature' naming convention, where searching
 # for a feature such as sys/type.h defines HAVE_SYS_TYPES_H
 
+# Note that the hidden options are supported for autoconf compatibility
+
 module-options {
 	host:host-alias =>		{a complete or partial cpu-vendor-opsys for the system where
 							the application will run (defaults to the same value as --build)}
@@ -16,6 +18,16 @@ module-options {
 							where the application will be built (defaults to the
 							result of running config.guess)}
 	prefix:dir =>			{the target directory for the build (defaults to /usr/local)}
+
+	includedir:
+	mandir:
+	infodir:
+	libexecdir:
+	sysconfdir:
+	localstatedir:
+
+	maintainer-mode=0
+	dependency-tracking=0
 }
 
 # Returns 1 if exists, or 0 if  not
@@ -163,15 +175,15 @@ define top_srcdir [get-env top_srcdir [get-define srcdir]]
 define exec_prefix \${prefix}
 define bindir \${exec_prefix}/bin
 define sbindir \${exec_prefix}/sbin
-define libexecdir \${exec_prefix}/libexec
+define libexecdir [get-env libexecdir \${exec_prefix}/libexec]
 define datadir \${prefix}/share
-define sysconfdir \${prefix}/etc
+define sysconfdir [get-env sysconfdir \${prefix}/etc]
 define sharedstatedir \${prefix}/com
-define localstatedir \${prefix}/var
+define localstatedir [get-env localstatedir \${prefix}/var]
 define libdir \${exec_prefix}/lib
-define infodir \${prefix}/share/info
-define mandir \${prefix}/share/man
-define includedir \${prefix}/include
+define infodir [get-env infodir \${prefix}/share/info]
+define mandir [get-env mandir \${prefix}/share/man]
+define includedir [get-env includdir \${prefix}/include]
 
 define SHELL [get-env SHELL [find-an-executable sh bash ksh]]
 
