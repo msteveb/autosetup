@@ -69,7 +69,7 @@ proc main {argv} {
 		help:=local  =>  "display help and options. Optionally specify a module name, such as --help=system"
 		version    =>  "display the version of autosetup"
 		nopager
-		manual:=text => "display the autosetup manual. Alternative formats are 'wiki' and 'asciidoc'"
+		manual:=text => "display the autosetup manual. Other formats: 'wiki', 'asciidoc', 'markdown'"
 		debug       =>  "display debugging output as autosetup runs"
 		install     =>  "install autosetup to the current directory (in the 'autosetup/' subdirectory)"
 		force init  =>  "create an initial 'configure' script if none exists"

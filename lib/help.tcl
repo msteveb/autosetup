@@ -50,6 +50,7 @@ proc autosetup_manual {{type text}} {
     switch -glob -- $type {
         wiki {use wiki-formatting}
         ascii* {use asciidoc-formatting}
+        md - markdown {use markdown-formatting}
         default {use text-formatting}
     }
 
@@ -710,6 +711,7 @@ proc autosetup_manual {{type text}} {
         Subdirectory support. Need to resolve how options are parsed, and
         how variables interact between subdirectories.
     }
+    nl
 
     section {Motivation}
     p {
