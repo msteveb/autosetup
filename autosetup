@@ -14,7 +14,7 @@ set autosetup(debug) 0
 # Main flow of control, option handling
 #
 proc main {argv} {
-	global autosetup
+	global autosetup define
 
 	# There are two directories, builddir and srcdir
 	# - srcdir is where auto.def lives
@@ -73,6 +73,7 @@ proc main {argv} {
 		debug       =>  "display debugging output as autosetup runs"
 		install     =>  "install autosetup to the current directory (in the 'autosetup/' subdirectory)"
 		force init  =>  "create an initial 'configure' script if none exists"
+		quiet
 	}
 
 	#parray ::useropts
@@ -84,6 +85,7 @@ proc main {argv} {
 	# Debugging output (set this early)
 	incr autosetup(debug) [opt-bool debug]
 	incr autosetup(force) [opt-bool force]
+	incr autosetup(msg-quiet) [opt-bool quiet]
 
 	if {[opt-val help] ne ""} {
 		incr autosetup(showhelp)
@@ -138,6 +140,10 @@ proc main {argv} {
 	# Could warn here if options {} was not specified
 
 	show-notices
+
+	if {$autosetup(debug)} {
+		parray define
+	}
 
 	exit 0
 }
@@ -292,7 +298,6 @@ proc options-wrap-desc {text length firstprefix nextprefix initial} {
 			set space $nextprefix
 		}
 		incr len [string length $space$word]
-		# Use x^Hx hightlighting for 'quoted' single words
 		puts -nonewline $space$word
 		set space " "
 	}
