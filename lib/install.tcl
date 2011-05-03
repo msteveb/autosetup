@@ -56,8 +56,7 @@ proc autosetup_install {} {
 		user-error "Failed to install autosetup: $error"
 	}
 	puts "Installed [autosetup_version] to autosetup/"
-	catch {exec [info nameofexecutable] autosetup/autosetup --init} result
-	puts $result
+	catch {exec [info nameofexecutable] autosetup/autosetup --init >@stdout 2>@stderr}
 
 	exit 0
 }
