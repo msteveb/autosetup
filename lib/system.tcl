@@ -138,7 +138,7 @@ proc make-template {template {out {}}} {
 	}
 	writefile $out [string map $mapping [readfile $infile]]\n
 
-	msg-result "Created $out from $template"
+	msg-result "Created [relative-path $out] from [relative-path $template]"
 }
 
 # build/host tuples and cross-compilation prefix
