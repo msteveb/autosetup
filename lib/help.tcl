@@ -101,7 +101,6 @@ proc autosetup_manual {{type text}} {
         Some important core options are:
     }
     code {
-        -C dir           change to the given directory before running autosetup
         --help           display help and options
         --version        display the version of autosetup
         --manual?=text?  display the autosetup manual. Alternative formats are 'wiki' and 'asciidoc'

@@ -166,7 +166,7 @@ set prefix [opt-val prefix /usr/local]
 # These are for compatibility with autoconf
 define target [get-define host]
 define prefix $prefix
-define builddir [pwd]
+define builddir $autosetup(builddir)
 define srcdir $autosetup(srcdir)
 # Allow this to come from the environment
 define top_srcdir [get-env top_srcdir [get-define srcdir]]

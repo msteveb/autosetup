@@ -16,40 +16,57 @@ set autosetup(debug) 0
 proc main {argv} {
 	global autosetup define
 
-	# There are two directories, builddir and srcdir
-	# - srcdir is where auto.def lives
-	# - builddir is where output files are created
-	# Normally both are [pwd], but:
-	# - If WRAPPER is set, srcdir is set to the directory containing that file
-	# - If -C <dir> is given, srcdir and builddir are both set to that dir
+	# There are 3 potential directories involved:
+	# 1. The directory containing autosetup (this script)
+	# 2. The directory containing auto.def
+	# 3. The current directory
+
+	# From this we need to determine:
+	# a. The path to this script (and related support files)
+	# b. The path to auto.def
+	# c. The build directory, where output files are created
+
+	# This is also complicated by the fact that autosetup may
+	# have been run via the configure wrapper ([env WRAPPER] is set)
+
+	# Here are the rules.
+	# a. This script is $::argv0
+	#    => dir, prog, exe, libdir
+	# b. auto.def is in the directory containing the configure wrapper,
+	#    otherwise it is in the current directory.
+	#    => srcdir, autodef
+	# c. The build directory is the current directory
+	#    => builddir, [pwd]
 
 	# 'misc' is needed before we can do anything, so set a temporary libdir
 	# in case this is the development version
 	set autosetup(libdir) [file dirname $::argv0]/lib
 	use misc
 
-	# Need a special check for -C because it affects the environment
-	autosetup_check_directory argv
-
-	# Now set up the environment
+	# (a)
 	set autosetup(dir) [realdir [file dirname [realpath $::argv0]]]
 	set autosetup(prog) [file join $autosetup(dir) [file tail $::argv0]]
-	autosetup_add_dep $autosetup(prog)
+	set autosetup(exe) [env WRAPPER $autosetup(prog)]
 	if {$autosetup(installed)} {
 		set autosetup(libdir) $autosetup(dir)
 	} else {
 		set autosetup(libdir) [file join $autosetup(dir) lib]
 	}
+	autosetup_add_dep $autosetup(prog)
+
+	# (b)
 	if {[env WRAPPER ""] eq ""} {
 		# Invoked directly
-		set autosetup(exe) $autosetup(prog)
 		set autosetup(srcdir) [pwd]
 	} else {
 		# Invoked via the configure wrapper
-		set autosetup(exe) [env WRAPPER]
 		set autosetup(srcdir) [file dirname $autosetup(exe)]
 	}
 	set autosetup(autodef) [relative-path $autosetup(srcdir)/auto.def]
+
+	# (c)
+	set autosetup(builddir) [pwd]
+
 	set autosetup(argv) $argv
 	set autosetup(cmdline) {}
 	set autosetup(options) {}
@@ -63,16 +80,15 @@ proc main {argv} {
 
 	#"=Core Options:"
 	options-add {
-		option-checking=1
-
-		"-C dir"   =>  "change to the given directory before running autosetup"
-		help:=local  =>  "display help and options. Optionally specify a module name, such as --help=system"
-		version    =>  "display the version of autosetup"
-		nopager
+		help:=local  => "display help and options. Optionally specify a module name, such as --help=system"
+		version      => "display the version of autosetup"
 		manual:=text => "display the autosetup manual. Other formats: 'wiki', 'asciidoc', 'markdown'"
-		debug       =>  "display debugging output as autosetup runs"
-		install     =>  "install autosetup to the current directory (in the 'autosetup/' subdirectory)"
-		force init  =>  "create an initial 'configure' script if none exists"
+		debug        => "display debugging output as autosetup runs"
+		install      => "install autosetup to the current directory (in the 'autosetup/' subdirectory)"
+		force init   => "create an initial 'configure' script if none exists"
+		# Undocumented options
+		option-checking=1
+		nopager
 		quiet
 	}
 
@@ -734,20 +750,6 @@ proc relative-path {path {pwd {}}} {
 	}
 
 	file join [join $prefix /] [join $newf /]
-}
-
-# Check for the -C option
-proc autosetup_check_directory {argvname} {
-	upvar $argvname argv
-	set i [lsearch -exact $argv -C]
-	if {$i >= 0} {
-		set dir [lindex $argv $i+1]
-		if {$dir ne ""} {
-			set ::argv0 [file-normalize $::argv0]
-			cd $dir
-			set argv [lreplace $argv $i $i+1]
-		}
-	}
 }
 
 # Add filename as a dependency to rerun autosetup
