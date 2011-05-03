@@ -90,6 +90,7 @@ proc main {argv} {
 		option-checking=1
 		nopager
 		quiet
+		timing
 	}
 
 	#parray ::useropts
@@ -102,6 +103,7 @@ proc main {argv} {
 	incr autosetup(debug) [opt-bool debug]
 	incr autosetup(force) [opt-bool force]
 	incr autosetup(msg-quiet) [opt-bool quiet]
+	incr autosetup(msg-timing) [opt-bool timing]
 
 	if {[opt-val help] ne ""} {
 		incr autosetup(showhelp)
@@ -581,6 +583,7 @@ proc configlog {msg} {
 #
 proc msg-checking {msg} {
 	if {$::autosetup(msg-quiet) == 0} {
+		maybe-show-timestamp
 		puts -nonewline $msg
 		set ::autosetup(msg-checking) 1
 	}
@@ -592,6 +595,7 @@ proc msg-checking {msg} {
 #
 proc msg-result {msg} {
 	if {$::autosetup(msg-quiet) == 0} {
+		maybe-show-timestamp
 		puts $msg
 		set ::autosetup(msg-checking) 0
 		show-notices
@@ -674,6 +678,12 @@ proc show-notices {} {
 	if {[info exists ::autosetup(notices)]} {
 		puts stderr [join $::autosetup(notices) \n]
 		unset ::autosetup(notices)
+	}
+}
+
+proc maybe-show-timestamp {} {
+	if {$::autosetup(msg-timing) && $::autosetup(msg-checking) == 0} {
+		puts -nonewline [format {[%6.2f] } [expr {([clock millis] - $::autosetup(start)) % 10000 / 1000.0}]]
 	}
 }
 
@@ -793,6 +803,7 @@ proc use {args} {
 # Initial settings
 set autosetup(exe) $::argv0
 set autosetup(istcl) 1
+set autosetup(start) [clock millis]
 set autosetup(installed) 0
 set autosetup(msg-checking) 0
 set autosetup(msg-quiet) 0
