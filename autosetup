@@ -182,6 +182,15 @@ proc option-check-names {args} {
 proc options-add {opts {header ""}} {
 	global useropts autosetup
 
+	# First weed out comment lines
+	set realopts {}
+	foreach line [split $opts \n] {
+		if {![string match "#*" [string trimleft $line]]} {
+			append realopts $line \n
+		}
+	}
+	set opts $realopts
+
 	for {set i 0} {$i < [llength $opts]} {incr i} {
 		set opt [lindex $opts $i]
 		if {[string match =* $opt]} {

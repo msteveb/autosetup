@@ -274,6 +274,7 @@ proc autosetup_manual {{type text}} {
     }
     code {
         options {
+            # Comment lines begin with a hash
             boolopt            => "a boolean option which defaults to disabled"
             boolopt2=1         => "a boolean option which defaults to enabled"
             stringopt:         => "an option which takes an argument, e.g. --stringopt=value"

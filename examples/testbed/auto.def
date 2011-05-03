@@ -7,9 +7,11 @@
 use cc
 
 options {
+	# Comment lines are allowed in options
 	shared    => "Create a shared library"
 	utf8=1    => "Disable utf8 support"
-	largefile=1 => "Disable large file support"
+	# --lfs is a synonym for --largefile
+	lfs=1 largefile=1 => "Disable large file support"
 }
 
 # In general, the cc-check-* commands return true
@@ -57,7 +59,7 @@ cc-with {-includes sys/stat.h} {
 cc-check-function-in-lib percent_m wrap
 
 # The equivalent of the AC_SYS_LARGEFILE macro
-if {[opt-bool largefile]} {
+if {[opt-bool largefile] && [opt-bool lfs]} {
 	cc-check-includes sys/types.h
 	msg-checking "Checking if -DFILE_OFFSET_BITS=64 is needed..."
 	if {[msg-quiet cc-with {-includes sys/types.h} {cc-check-sizeof off_t}] == 8} {
@@ -68,6 +70,8 @@ if {[opt-bool largefile]} {
 	} else {
 		user-error "LFS not available"
 	}
+} else {
+	msg-result "LFS disabled by user"
 }
 
 # Now try some C++ features
