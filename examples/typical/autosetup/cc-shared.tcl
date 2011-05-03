@@ -1,7 +1,7 @@
 # Copyright (c) 2010 WorkWare Systems http://www.workware.net.au/
 # All rights reserved
 
-# @MODULE: use cc-shared
+# @synopsis:
 #
 # Module which provides support for shared libraries and shared objects.
 # Defines the following variables:
@@ -24,9 +24,9 @@ define LD_LIBRARY_PATH LD_LIBRARY_PATH
 switch -glob -- [get-define host] {
 	*-*-darwin* {
 		define SH_CFLAGS -dynamic
-		define SH_LDFLAGS "-dynamiclib -undefined suppress -flat_namespace"
+		define SH_LDFLAGS "-dynamiclib"
 		define SHOBJ_CFLAGS "-dynamic -fno-common"
-		define SHOBJ_LDFLAGS "-bundle -undefined dynamic_lookup -flat_namespace"
+		define SHOBJ_LDFLAGS "-bundle -undefined dynamic_lookup"
 		define LD_LIBRARY_PATH DYLD_LIBRARY_PATH
 	}
 	*-*-ming* {

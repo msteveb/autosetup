@@ -4,7 +4,7 @@
 # \
 exec $($(dirname "$0")/find-tclsh || echo false) "$0" "$@"
 
-set autosetup(version) 0.6.0
+set autosetup(version) 0.6.1
 
 # Can be set to 1 to debug early-init problems
 set autosetup(debug) 0
@@ -14,46 +14,64 @@ set autosetup(debug) 0
 # Main flow of control, option handling
 #
 proc main {argv} {
-	global autosetup
+	global autosetup define
 
-	# There are two directories, builddir and srcdir
-	# - srcdir is where auto.def lives
-	# - builddir is where output files are created
-	# Normally both are [pwd], but:
-	# - If WRAPPER is set, srcdir is set to the directory containing that file
-	# - If -C <dir> is given, srcdir and builddir are both set to that dir
+	# There are 3 potential directories involved:
+	# 1. The directory containing autosetup (this script)
+	# 2. The directory containing auto.def
+	# 3. The current directory
+
+	# From this we need to determine:
+	# a. The path to this script (and related support files)
+	# b. The path to auto.def
+	# c. The build directory, where output files are created
+
+	# This is also complicated by the fact that autosetup may
+	# have been run via the configure wrapper ([env WRAPPER] is set)
+
+	# Here are the rules.
+	# a. This script is $::argv0
+	#    => dir, prog, exe, libdir
+	# b. auto.def is in the directory containing the configure wrapper,
+	#    otherwise it is in the current directory.
+	#    => srcdir, autodef
+	# c. The build directory is the current directory
+	#    => builddir, [pwd]
 
 	# 'misc' is needed before we can do anything, so set a temporary libdir
 	# in case this is the development version
 	set autosetup(libdir) [file dirname $::argv0]/lib
 	use misc
 
-	# Need a special check for -C because it affects the environment
-	autosetup_check_directory argv
-
-	# Now set up the environment
+	# (a)
 	set autosetup(dir) [realdir [file dirname [realpath $::argv0]]]
 	set autosetup(prog) [file join $autosetup(dir) [file tail $::argv0]]
-	set autosetup(deps) [list $autosetup(prog)]
+	set autosetup(exe) [env WRAPPER $autosetup(prog)]
 	if {$autosetup(installed)} {
 		set autosetup(libdir) $autosetup(dir)
 	} else {
 		set autosetup(libdir) [file join $autosetup(dir) lib]
 	}
+	autosetup_add_dep $autosetup(prog)
+
+	# (b)
 	if {[env WRAPPER ""] eq ""} {
 		# Invoked directly
-		set autosetup(exe) $autosetup(prog)
 		set autosetup(srcdir) [pwd]
 	} else {
 		# Invoked via the configure wrapper
-		set autosetup(exe) [env WRAPPER]
 		set autosetup(srcdir) [file dirname $autosetup(exe)]
 	}
 	set autosetup(autodef) [relative-path $autosetup(srcdir)/auto.def]
+
+	# (c)
+	set autosetup(builddir) [pwd]
+
 	set autosetup(argv) $argv
 	set autosetup(cmdline) {}
 	set autosetup(options) {}
 	set autosetup(optionhelp) {}
+	set autosetup(showhelp) 0
 
 	# Parse options
 	use getopt
@@ -62,15 +80,17 @@ proc main {argv} {
 
 	#"=Core Options:"
 	options-add {
+		help:=local  => "display help and options. Optionally specify a module name, such as --help=system"
+		version      => "display the version of autosetup"
+		manual:=text => "display the autosetup manual. Other formats: 'wiki', 'asciidoc', 'markdown'"
+		debug        => "display debugging output as autosetup runs"
+		install      => "install autosetup to the current directory (in the 'autosetup/' subdirectory)"
+		force init   => "create an initial 'configure' script if none exists"
+		# Undocumented options
 		option-checking=1
-
-		"-C dir"   =>  "change to the given directory before running autosetup"
-		help       =>  "display help and options"
-		version    =>  "display the version of autosetup"
-		manual:=text => "display the autosetup manual. Alternative formats are 'wiki' and 'asciidoc'"
-		debug       =>  "display debugging output as autosetup runs"
-		install     =>  "install autosetup to the current directory (in the 'autosetup/' subdirectory)"
-		force init  =>  "create an initial 'configure' script if none exists"
+		nopager
+		quiet
+		timing
 	}
 
 	#parray ::useropts
@@ -82,10 +102,13 @@ proc main {argv} {
 	# Debugging output (set this early)
 	incr autosetup(debug) [opt-bool debug]
 	incr autosetup(force) [opt-bool force]
+	incr autosetup(msg-quiet) [opt-bool quiet]
+	incr autosetup(msg-timing) [opt-bool timing]
 
-	if {[opt-bool help]} {
+	if {[opt-val help] ne ""} {
+		incr autosetup(showhelp)
 		use help
-		autosetup_help
+		autosetup_help [opt-val help]
 	}
 
 	if {[opt-val manual] ne ""} {
@@ -111,7 +134,7 @@ proc main {argv} {
 
 	# Parse extra arguments into autosetup(cmdline)
 	foreach arg $argv {
-		if {[regexp {(.*)=(.*)} $arg -> n v]} {
+		if {[regexp {([^=]*)=(.*)} $arg -> n v]} {
 			dict set autosetup(cmdline) $n $v
 			define $n $v
 		} else {
@@ -119,9 +142,9 @@ proc main {argv} {
 		}
 	}
 
-	lappend autosetup(deps) $autosetup(autodef)
+	autosetup_add_dep $autosetup(autodef)
 
-	set cmd "$autosetup(exe)"
+	set cmd [file-normalize $autosetup(exe)]
 	foreach arg $autosetup(argv) {
 		append cmd " [quote-if-needed $arg]"
 	}
@@ -133,6 +156,13 @@ proc main {argv} {
 	source $autosetup(autodef)
 
 	# Could warn here if options {} was not specified
+
+	show-notices
+
+	if {$autosetup(debug)} {
+		parray define
+	}
+
 	exit 0
 }
 
@@ -173,14 +203,24 @@ proc option-check-names {args} {
 # Parse the option definition in $opts and update
 # ::useropts() and ::autosetup(optionhelp) appropriately
 #
-proc options-add {opts} {
+proc options-add {opts {header ""}} {
 	global useropts autosetup
+
+	# First weed out comment lines
+	set realopts {}
+	foreach line [split $opts \n] {
+		if {![string match "#*" [string trimleft $line]]} {
+			append realopts $line \n
+		}
+	}
+	set opts $realopts
 
 	for {set i 0} {$i < [llength $opts]} {incr i} {
 		set opt [lindex $opts $i]
 		if {[string match =* $opt]} {
 			# This is a special heading
 			lappend autosetup(optionhelp) $opt ""
+			set header {}
 			continue
 		}
 
@@ -231,6 +271,10 @@ proc options-add {opts} {
 		if {[lindex $opts $i+1] eq "=>"} {
 			set desc [lindex $opts $i+2]
 			#string match \n* $desc
+			if {$header ne ""} {
+				lappend autosetup(optionhelp) $header ""
+				set header ""
+			}
 			# A multi-line description
 			lappend autosetup(optionhelp) $opthelp $desc
 			incr i 2
@@ -239,8 +283,13 @@ proc options-add {opts} {
 }
 
 proc module-options {opts} {
-	options-add $opts
-	if {[opt-bool help]} {
+	set header ""
+	if {$::autosetup(showhelp) > 1 && [llength $opts]} {
+		set header "Module Options:"
+	}
+	options-add $opts $header
+
+	if {$::autosetup(showhelp)} {
 		# Ensure that the module isn't executed on --help
 		# We are running under eval or source, so use break
 		# to prevent further execution
@@ -267,7 +316,6 @@ proc options-wrap-desc {text length firstprefix nextprefix initial} {
 			set space $nextprefix
 		}
 		incr len [string length $space$word]
-		# Use x^Hx hightlighting for 'quoted' single words
 		puts -nonewline $space$word
 		set space " "
 	}
@@ -304,10 +352,9 @@ proc options-show {} {
 
 proc options {optlist} {
 	# Allow options as a list or args
-	options-add {"=Local Options:"}
-	options-add $optlist
+	options-add $optlist "Local Options:"
 
-	if {[opt-bool help]} {
+	if {$::autosetup(showhelp)} {
 		options-show
 		exit 0
 	}
@@ -347,20 +394,23 @@ proc config_sub {alias} {
 #
 proc define {name {value 1}} {
 	set ::define($name) $value
+	#dputs "$name <= $value"
 }
 
-# @define-append name value
+# @define-append name value ...
 #
-# Appends the given value to the given 'defined' variable.
+# Appends the given value(s) to the given 'defined' variable.
 # If the variable is not defined or empty, it is set to $value.
 # Otherwise the value is appended, separated by a space.
+# Any extra values are also appended
 #
-proc define-append {name value} {
+proc define-append {name args} {
 	if {[info exists ::define($name)] && $::define($name) ne ""} {
-		append ::define($name) " " $value
+		append ::define($name) " " [join $args]
 	} else {
-		set ::define($name) $value
+		set ::define($name) [join $args]
 	}
+	#dputs "$name += [join $args] => $::define($name)"
 }
 
 # @get-define name ?default=0?
@@ -370,8 +420,10 @@ proc define-append {name value} {
 #
 proc get-define {name {default 0}} {
 	if {[info exists ::define($name)]} {
+		#dputs "$name => $::define($name)"
 		return $::define($name)
 	}
+	#dputs "$name => $default"
 	return $default
 }
 
@@ -382,6 +434,18 @@ proc get-define {name {default 0}} {
 proc is-defined {name} {
 	info exists ::define($name)
 }
+
+# @all-defines
+#
+# Returns a dictionary (name value list) of all defined variables.
+#
+# This is suitable for use with 'dict', 'array set' or 'foreach'
+# and allows for arbitrary processing of the defined variables.
+#
+proc all-defines {} {
+	array get ::define
+}
+
 
 # @get-env name default
 #
@@ -394,6 +458,17 @@ proc get-env {name default} {
 		return [dict get $::autosetup(cmdline) $name]
 	}
 	env $name $default
+}
+
+# @env-is-set name
+#
+# Returns 1 if the $name was specified on the command line or in the environment.
+#
+proc env-is-set {name} {
+	if {[dict exists $::autosetup(cmdline) $name]} {
+		return 1
+	}
+	info exists ::env($name)
 }
 
 # @readfile filename ?default=""?
@@ -440,12 +515,20 @@ proc quote-argv {argv} {
 # @find-executable name
 #
 # Searches the path for an executable with the given name.
+# Note that the name may include some parameters, e.g. "cc -mbig-endian",
+# in which case the parameters are ignored.
 # Returns 1 if found, or 0 if not.
 #
 proc find-executable {name} {
+	# Ignore any parameters
+	set name [lindex $name 0]
+	if {$name eq ""} {
+		# The empty string is never a valid executable
+		return 0
+	}
 	foreach p [split [env PATH .] :] {
 		set exec [file join $p $name]
-		if {[file executable $exec]} {
+		if {[file isfile $exec] && [file executable $exec]} {
 			dputs "Found $name -> $exec"
 			return 1
 		}
@@ -466,6 +549,7 @@ proc find-an-executable {args} {
 	set required 0
 	if {[lindex $args 0] eq "-required"} {
 		set args [lrange $args 1 end]
+		incr required
 	}
 	foreach name $args {
 		if {[find-executable $name]} {
@@ -473,7 +557,11 @@ proc find-an-executable {args} {
 		}
 	}
 	if {$required} {
-		user-error "failed to find one of: $args"
+		if {[llength $args] == 1} {
+			user-error "failed to find: [join $args]"
+		} else {
+			user-error "failed to find one of: [join $args]"
+		}
 	}
 	return ""
 }
@@ -494,8 +582,11 @@ proc configlog {msg} {
 # Writes the message with no newline to stdout.
 #
 proc msg-checking {msg} {
-	puts -nonewline $msg
-	set ::autosetup(msg-checking) 1
+	if {$::autosetup(msg-quiet) == 0} {
+		maybe-show-timestamp
+		puts -nonewline $msg
+		set ::autosetup(msg-checking) 1
+	}
 }
 
 # @msg-result msg
@@ -503,9 +594,26 @@ proc msg-checking {msg} {
 # Writes the message to stdout.
 #
 proc msg-result {msg} {
-	puts $msg
-	set ::autosetup(msg-checking) 0
-	show-notices
+	if {$::autosetup(msg-quiet) == 0} {
+		maybe-show-timestamp
+		puts $msg
+		set ::autosetup(msg-checking) 0
+		show-notices
+	}
+}
+
+# @msg-quiet command ...
+#
+# msg-quiet evaluates it's arguments as a command with output
+# from msg-checking and msg-result suppressed.
+#
+# This is useful if a check needs to run a subcheck which isn't
+# of interest to the user.
+proc msg-quiet {args} {
+	incr ::autosetup(msg-quiet)
+	set rc [uplevel 1 $args]
+	incr ::autosetup(msg-quiet) -1
+	return $rc
 }
 
 # Will be overridden by 'use misc'
@@ -573,6 +681,12 @@ proc show-notices {} {
 	}
 }
 
+proc maybe-show-timestamp {} {
+	if {$::autosetup(msg-timing) && $::autosetup(msg-checking) == 0} {
+		puts -nonewline [format {[%6.2f] } [expr {([clock millis] - $::autosetup(start)) % 10000 / 1000.0}]]
+	}
+}
+
 proc autosetup_version {} {
 	return "autosetup v$::autosetup(version)"
 }
@@ -606,55 +720,53 @@ proc realpath {path} {
 }
 
 # Convert absolute path, $path into a path relative
-# to the given directory and return it.
+# to the given directory (or the current dir, if not given).
 #
-proc relative-path {path} {
+proc relative-path {path {pwd {}}} {
 	set diff 0
 	set same 0
 	set newf {}
 	set prefix {}
 	set path [file-normalize $path]
-	set pwd [pwd]
+	if {$pwd eq ""} {
+		set pwd [pwd]
+	} else {
+		set pwd [file-normalize $pwd]
+	}
+
+	if {$path eq $pwd} {
+		return .
+	}
 
 	# Try to make the filename relative to the current dir
 	foreach p [split $pwd /] f [split $path /] {
 		if {$p ne $f} {
-			if {$f == ""} {
-				# pwd is longer than path
-				return $path
-			}
 			incr diff
 		} elseif {!$diff} {
 			incr same
 		}
 		if {$diff} {
 			if {$p ne ""} {
-				# Add .. for sibling dir
+				# Add .. for sibling or parent dir
 				lappend prefix ..
 			}
-			lappend newf $f
+			if {$f ne ""} {
+				lappend newf $f
+			}
 		}
 	}
-	# Note: Only allow up to 3 .. entries.
-	if {$diff == 0 || $same == 1 || [llength $prefix] > 3} {
+	if {$same == 1 || [llength $prefix] > 3} {
 		return $path
 	}
 
-	join [concat $prefix $newf] /
+	file join [join $prefix /] [join $newf /]
 }
 
-# Check for the -C option
-proc autosetup_check_directory {argvname} {
-	upvar $argvname argv
-	set i [lsearch -exact $argv -C]
-	if {$i >= 0} {
-		set dir [lindex $argv $i+1]
-		if {$dir ne ""} {
-			set ::argv0 [file-normalize $::argv0]
-			cd $dir
-			set argv [lreplace $argv $i $i+1]
-		}
-	}
+# Add filename as a dependency to rerun autosetup
+# The name will be normalised (converted to a full path)
+#
+proc autosetup_add_dep {filename} {
+	lappend ::autosetup(deps) [file-normalize $filename]
 }
 
 ##################################################################
@@ -678,8 +790,8 @@ proc use {args} {
 		} else {
 			set source $::autosetup(libdir)/${m}.tcl
 			if {[file exists $source]} {
-				lappend ::autosetup(deps) $source
 				uplevel #0 [list source $source]
+				autosetup_add_dep $source
 			} else {
 				puts "Looking for $source"
 				autosetup-error "use: No such module: $m"
@@ -691,8 +803,10 @@ proc use {args} {
 # Initial settings
 set autosetup(exe) $::argv0
 set autosetup(istcl) 1
+set autosetup(start) [clock millis]
 set autosetup(installed) 0
 set autosetup(msg-checking) 0
+set autosetup(msg-quiet) 0
 
 # Embedded modules are inserted below here
 set autosetup(installed) 1
@@ -703,6 +817,9 @@ set modsource(asciidoc-formatting) {
 # All rights reserved
 
 # Module which provides text formatting
+# asciidoc format
+
+use formatting
 
 proc para {text} {
     regsub -all "\[ \t\n\]+" [string trim $text] " "
@@ -716,20 +833,8 @@ proc p {text} {
     nl
 }
 proc code {text} {
-    # If the text begins with newline, skip it
-    regexp {^\n(.*)} $text -> text
-
-    # And trip spaces off the end
-    set text [string trimright $text]
-
-    # Find the indent of the first line
-    # so that can be removed from every line
-    set indent ""
-    regexp "^(\[ \t\]\+)" $text -> indent
-    set len [string length $indent]
-
-    foreach line [split $text \n] {
-        puts "    [string range $line $len end]"
+    foreach line [parse_code_block $text] {
+        puts "    $line"
     }
     nl
 }
@@ -767,6 +872,63 @@ proc defn {first args} {
     set defn [string trim [join $args \n]]
     regsub -all "\n\n" $defn "\n ::\n" defn
     puts $defn
+}
+}
+
+# ----- module formatting -----
+
+set modsource(formatting) {
+# Copyright (c) 2010 WorkWare Systems http://www.workware.net.au/
+# All rights reserved
+
+# Module which provides common text formatting
+
+# This is designed for documenation which looks like:
+# code {...}
+# or
+# code {
+#    ...
+#    ...
+# }
+# In the second case, we need to work out the indenting
+# and strip it from all lines but preserve the remaining indenting.
+# Note that all lines need to be indented with the same initial
+# spaces/tabs.
+#
+# Returns a list of lines with the indenting removed.
+#
+proc parse_code_block {text} {
+    # If the text begins with newline, take the following text,
+    # otherwise just return the original
+    if {![regexp "^\n(.*)" $text -> text]} {
+        return [list [string trim $text]]
+    }
+
+    # And trip spaces off the end
+    set text [string trimright $text]
+
+    set min 100
+    # Examine each line to determine the minimum indent
+    foreach line [split $text \n] {
+        if {$line eq ""} {
+            # Ignore empty lines for the indent calculation
+            continue
+        }
+        regexp "^(\[ \t\]*)" $line -> indent
+        set len [string length $indent]
+        if {$len < $min} {
+            set min $len
+        }
+    }
+
+    # Now make a list of lines with this indent removed
+    set lines {}
+    foreach line [split $text \n] {
+        lappend lines [string range $line $min end]
+    }
+
+    # Return the result
+    return $lines
 }
 }
 
@@ -854,34 +1016,59 @@ proc opt_bool {optarrayname args} {
 # ----- module help -----
 
 set modsource(help) {
-# Copyright (c) 2010 WorkWare Systems http://www.workware.net.au/
+# Copyright (c) 2010 WorkWare Systems http://workware.net.au/
 # All rights reserved
 
 # Module which provides usage, help and the manual
 
-proc autosetup_help {} {
+proc autosetup_help {what} {
+    use_pager
+
     puts "Usage: [file tail $::autosetup(exe)] \[options\] \[settings\]"
     puts \
 {
    This is autosetup, a faster, better alternative to autoconf.
    Use the --manual option for the full autosetup manual.
 }
-    if {[file exists $::autosetup(autodef)]} {
-        # This relies on auto.def having a call to 'options'
-        # which will display options and quit
-        source $::autosetup(autodef)
+    if {$what eq "local"} {
+        if {[file exists $::autosetup(autodef)]} {
+            # This relies on auto.def having a call to 'options'
+            # which will display options and quit
+            source $::autosetup(autodef)
+        } else {
+            options-show
+        }
     } else {
-        options-show
+        incr ::autosetup(showhelp)
+        if {[catch {use $what}]} {
+            user-error "Unknown module: $what"
+        } else {
+            options-show
+        }
     }
     exit 0
+}
+
+# If not already paged and stdout is a tty, pipe the output through the pager
+# This is done by reinvoking autosetup with --nopager added
+proc use_pager {} {
+    if {![opt-bool nopager] && [env PAGER ""] ne "" && ![string match "not a tty" [exec tty]]} {
+        catch {
+            exec [info nameofexecutable] $::argv0 --nopager {*}$::argv | [env PAGER] >@stdout <@stdin 2>/dev/null
+        }
+        exit 0
+    }
 }
 
 # Outputs the autosetup manual in one of several formats
 proc autosetup_manual {{type text}} {
 
+    use_pager
+
     switch -glob -- $type {
         wiki {use wiki-formatting}
         ascii* {use asciidoc-formatting}
+        md - markdown {use markdown-formatting}
         default {use text-formatting}
     }
 
@@ -932,7 +1119,6 @@ proc autosetup_manual {{type text}} {
         Some important core options are:
     }
     code {
-        -C dir           change to the given directory before running autosetup
         --help           display help and options
         --version        display the version of autosetup
         --manual?=text?  display the autosetup manual. Alternative formats are 'wiki' and 'asciidoc'
@@ -941,8 +1127,8 @@ proc autosetup_manual {{type text}} {
     }
     p {
         Settings are of the form 'name=value' and must be after any options.
-        These settings allow the default values to be overridded for variables such
-        as CC and CFLAGS.
+        These settings allow the default values to be overridden for variables such
+        as 'CC' and 'CFLAGS'.
     }
     p {
         Optional modules may support additional options. For example, the cc module
@@ -968,7 +1154,7 @@ proc autosetup_manual {{type text}} {
 
     section {Features}
 
-    subsection {Configuration descriptions are Tcl}
+    subsection {Configuration Descriptions are Tcl}
 
     p {
         Configuration requirements are given in an 'auto.def' file and are
@@ -977,7 +1163,9 @@ proc autosetup_manual {{type text}} {
         host system such as 'awk', 'sed' and 'bash'.
     }
     p {
-        Tcl is widely available on modern development platforms.
+        Tcl is widely available on modern development platforms. Configuration descriptions
+        are designed to look more like declarations than code. It is easy to write
+        autosetup configuration descriptions with no knowledge of Tcl.
     }
 
     subsection {Simple Configuration Descriptions}
@@ -1016,24 +1204,25 @@ proc autosetup_manual {{type text}} {
     code {
                       autoconf     autosetup
                       ---------    ---------
-        Linux          4.1s         1.3s
-        Mac OS X       6.4s         2.8s
-        cygwin        91.5s         9.9s
+        Linux            4.1s         1.3s
+        Mac OS X         6.4s         2.8s
+        cygwin          91.5s         9.9s
     }
 
     subsection {Deploys directly within a project}
     p {
-        autosetup is deployed as a single subdirectory, autosetup, at the
-        top level of a project, containing a handful of files. This approach
-        means that there are no dependency issues with different versions
-        of autosetup since an appropriate version is part of the project.
+        autosetup is deployed as a single subdirectory, autosetup,
+        at the top level of a project, containing a handful of
+        files. This approach (inspired by waf - http://code.google.com/p/waf/)
+        means that there are no dependency issues with different versions of
+        autosetup since an appropriate version is part of the project.
     }
     p {
         autosetup is written in Tcl, but can run under any of the following
         Tcl interpreters:
     }
-    bullet {Tcl 8.5 or later (which is widely deployed}
-    bullet {Jim Tcl - small footprint, portable Tcl interpreter}
+    bullet {Tcl 8.5 or later}
+    bullet {Jim Tcl - a small footprint, portable Tcl interpreter}
     nl
     p {
         The source code for Jim Tcl is included directly within
@@ -1057,26 +1246,27 @@ proc autosetup_manual {{type text}} {
     subsection {No separate generate/run step}
     p {
         autosetup parses 'auto.def' and updates the configuration in a single step.
-        This simplifies and speeds development.
+        This simplifies and speeds development. It also means that both developers
+        and users (those building the project from source) follow the same configure/build
+        procedure.
     }
 
     section {Writing auto.def files}
-
     p {
-        auto.def files are generally simple to write, but have the full
+        'auto.def' files are generally simple to write, but have the full
         power of Tcl if required for implementing complex checks or
         option processing. The 'auto.def' file is structured as follows:
     }
-    bullet {'use' modules}
+    bullet {'use' optional modules}
     bullet {'options' declaration}
-    bullet {checks and option processing}
+    bullet {environment checks and option processing}
     bullet {template, header file and other output generation}
     nl
 
     subsection {Optional modules}
     p {
         autosetup includes the common, optional modules 'cc' and 'cc-shared'.
-        If these modules are required, declared *before* 'options' so that
+        If these modules are required, the *must* be declared *before* 'options' so that
         any module-specific options can be recognised.
     }
     code {
@@ -1101,6 +1291,7 @@ proc autosetup_manual {{type text}} {
     }
     code {
         options {
+            # Comment lines begin with a hash
             boolopt            => "a boolean option which defaults to disabled"
             boolopt2=1         => "a boolean option which defaults to enabled"
             stringopt:         => "an option which takes an argument, e.g. --stringopt=value"
@@ -1126,7 +1317,7 @@ proc autosetup_manual {{type text}} {
         If there is no default value, the value must be specified.
     }
     p {
-        Within auto.def, options are checked with the commands 'opt-bool' and 'opt-val'.
+        Within 'auto.def', options are checked with the commands 'opt-bool' and 'opt-val'.
     }
 
     subsection {Setting Options}
@@ -1134,13 +1325,19 @@ proc autosetup_manual {{type text}} {
         Boolean options can be enabled or disabled with one of the following forms
         (some of which are for autoconf compatibility):
     }
+    p {
+        To *enable* an option:
+    }
     code {
-        Enable the option:
         --boolopt
         --enable-boolopt
         --boolopt=1
         --boolopt=yes
-        Disable the option:
+    }
+    p {
+        To *disable* an option:
+    }
+    code {
         --disable-boolopt
         --boolopt=0
         --boolopt=no
@@ -1149,7 +1346,7 @@ proc autosetup_manual {{type text}} {
         String options must have a value specified, unless the option has a default value.
     }
     code {
-        --stropt          - OK if a default values is given for stropt
+        --stropt          - OK if a default value is given for stropt
         --stropt=value    - Adds the given value for the option
     }
 
@@ -1207,7 +1404,7 @@ proc autosetup_manual {{type text}} {
         WRAPPER="$0" exec $("$dir/find-tclsh" || echo false) "$dir/autosetup" "$@"
     }
     p {
-        This script invokes autosetup in the autosetup/ subdirectory after setting the WRAPPER
+        This script invokes autosetup in the autosetup/ subdirectory after setting the 'WRAPPER'
         environment variable.
     }
     p {
@@ -1217,7 +1414,7 @@ proc autosetup_manual {{type text}} {
     subsection {Checking Features}
     p {
         Apart from checking user options, the primary purpose of autosetup and 'auto.def'
-        is to check for the availablity of features in the environment. The 'cc' module
+        is to check for the availability of features in the environment. The 'cc' module
         provides commands to check various settings by compiling small test programs with the
         specified C compiler. The following is a typical example:
     }
@@ -1230,7 +1427,23 @@ proc autosetup_manual {{type text}} {
         cc-check-tools ar ranlib strip
     }
     p {
-        See the command reference for details of these builtin checks.
+        See the command reference for details of these built-in checks.
+    }
+
+    subsection {Selecting the Language}
+    p {
+        The low level 'cctest' commands provides the '-lang' option to select the
+        language to use for tests. This can be used in conjunction with 'cc-with' to
+        set the language for a series of tests.
+    }
+    code {
+        cc-with {-lang c++} {
+            # All tests now use the C++ compiler -- $(CXX) and $(CXXFLAGS)
+            cc-check-types bool
+        }
+        # Or just set it for the rest of the file
+        cc-with {-lang c++}
+        ...
     }
 
     subsection {Controlling the build}
@@ -1244,13 +1457,14 @@ proc autosetup_manual {{type text}} {
     bullet {'make-autoconf-h' creates a C/C++ header file based on the configuration variables}
     nl
     p {
-        It is easy to create other file formats based on configuration variables. For example, one system
-        produces configuration files in the Linux kconfig format. It is also possible to output configuration
+        It is easy to create other file formats based on configuration variables. For example, to
+        produce configuration files in the Linux 'kconfig' format. It is also possible to output configuration
         variables in Makefile format.
     }
     p {
-        autosetup has far more control over generating files to control the build since the
-        configuration variables are directly accessible in 'Tcl' from 'auto.def'.
+        autosetup has far more control over generating files to control the build than autoconf
+        since the configuration variables are directly accessible in 'Tcl' from 'auto.def'.
+        See 'all-defines' and 'examples/testbed/auto.def'.
     }
 
     subsection {A "standard" Makefile.in}
@@ -1262,20 +1476,23 @@ proc autosetup_manual {{type text}} {
     }
     bullet {Use CC, AR, RANLIB as determined by cross compiler settings or user overrides}
     bullet {Install to --prefix, overridable with DESTDIR}
-    bullet {Use of VPATH to support out-of-tree builds}
+    bullet {Use VPATH to support out-of-tree builds}
     bullet {Dummy automake targets to allow for use as a subproject with automake}
     bullet {Automatically reconfigure if auto.def changes}
+    nl
 
     section {Command Reference}
     p {
-        autosetup provides a number of builtin commands which
+        autosetup provides a number of built-in commands which
         are documented below. These may be used from 'auto.def' to test
         for features, define variables create files from templates and
         other similar actions.
     }
     p {
         This commands are all implemented as Tcl procedures. Custom commands
-        may be added simpy by defining additional Tcl procedures in the 'auto.def' file.
+        may be added simply by defining additional Tcl procedures in the 'auto.def' file,
+        and custom modules may be added by creating files with a '.tcl' extension
+        in the autosetup directory.
     }
 
     automf_command_reference
@@ -1284,13 +1501,13 @@ proc autosetup_manual {{type text}} {
     p {
         autosetup includes a number of examples, including:
     }
-    bullet {typical - A simple, but full feature example}
-    bullet {minimal - A minimal example}
-    bullet {jim - The Jim Tcl project uses autosetup}
+    bullet {'examples/typical' - A simple, but full featured example}
+    bullet {'examples/minimal' - A minimal example}
+    bullet {'examples/jimtcl' - The Jim Tcl project uses autosetup}
     nl
     p {
         These examples can be found along with the autosetup source at
-        http://repo.or.cz/w/autosetup.git
+        https://github.com/msteveb/autosetup
     }
 
     section {Tips on moving from autoconf}
@@ -1340,8 +1557,8 @@ proc autosetup_manual {{type text}} {
         are no longer relevant. autosetup assumes that the build environment is somewhat POSIX compliant.
         This includes both cygwin and mingw on Windows.
     }
-    subsection {Thus, no need to check for standard headers}
-    p {such as stdlib.h, string.h, etc.}
+    p {Thus, there is no need to check for standard headers such as stdlib.h, string.h, etc.}
+
     subsection {No AC_PROG_xxxx}
     p {Use the generic 'cc-check-progs'}
     code {
@@ -1387,7 +1604,11 @@ proc autosetup_manual {{type text}} {
         If headers are required, they should be added explicitly.
     }
     subsection {Checking for includes}
-    p {When adding includes with '-includes', these are not checked for existence first}
+    p {
+        When adding includes to a test, 'cctest' will automatically omit any include files
+        which have been checked and do not exist. If any includes have been specified
+        but not checked, a warning is given.
+    }
 
     section {Cross Compiling}
     p {
@@ -1400,7 +1621,7 @@ proc autosetup_manual {{type text}} {
     }
     p {
         If additional compiler options are needed, such as -mbig-endian,
-        these can be specfied with CFLAGS. In this case, the default CFLAGS
+        these can be specified with 'CFLAGS'. In this case, the default 'CFLAGS'
         of "-g -O2" won't be used so the desired debugging and optimisation
         flags should also be added.
     }
@@ -1500,7 +1721,7 @@ proc autosetup_manual {{type text}} {
         changes to the core 'autosetup'.
     }
     bullet {Explicit C++ support}
-    bullet {pkg-config support}
+    bullet {pkg-config support (although pkg-config has poor support for cross compiling)}
     bullet {More fully-featured shared library support}
     bullet {Support for additional languages}
     bullet {libtool support (if we must!)}
@@ -1508,6 +1729,7 @@ proc autosetup_manual {{type text}} {
         Subdirectory support. Need to resolve how options are parsed, and
         how variables interact between subdirectories.
     }
+    nl
 
     section {Motivation}
     p {
@@ -1544,14 +1766,14 @@ proc autosetup_manual {{type text}} {
     bullet {http://www.airs.com/blog/archives/95}
     nl
 
-    section {Alternative autoconf Alternatives}
+    subsection {Alternative autoconf Alternatives}
     bullet {http://pmk.sourceforge.net/faq.php - PMK}
     bullet {https://e-reports-ext.llnl.gov/pdf/315457.pdf - autokonf}
     nl
 
     section {Copyright, Author and Licence}
     p {
-        autosetup is Copyright (c) 2010 WorkWare Systems http://www.workware.net.au/
+        autosetup is Copyright (c) 2010 WorkWare Systems http://workware.net.au/
     }
     p {
         autosetup was written by Steve Bennett <steveb@workware.net.au>
@@ -1560,7 +1782,7 @@ proc autosetup_manual {{type text}} {
         autosetup is released under the "2-clause FreeBSD Licence" as follows.
     }
     code {
-        autosetup - An environment autoconfigurator
+        autosetup - An environment "autoconfigurator"
 
         Copyright 2010 Steve Bennett <steveb@workware.net.au>
 
@@ -1608,7 +1830,8 @@ proc accumulate_reference_line {statename type str} {
         }
         code,none - code,defn - code,desc {
             dputs "   => code"
-            code [join $state(buf) \n]
+            # Need to add an initial newline so that indenting is preserved
+            code \n[join $state(buf) \n]
             nl
             if {$type eq "desc"} {
                 set state(buf) [list "" $str]
@@ -1639,13 +1862,17 @@ proc accumulate_reference_line {statename type str} {
 # Generate a command reference from inline documentation
 proc automf_command_reference {} {
     lappend files $::autosetup(prog)
-    if {!$::autosetup(installed)} {
-        lappend files {*}[lsort [glob -nocomplain $::autosetup(libdir)/*.tcl]]
-    }
+    lappend files {*}[lsort [glob -nocomplain $::autosetup(libdir)/*.tcl]]
+    subsection {Core Commands}
     foreach file $files {
         set state(buf) [list]
         set state(type) none
         foreach line [split [readfile $file] \n] {
+            if {[regexp {^# @synopsis:$} $line -> str]} {
+                subsection "Module: [file rootname [file tail $file]]"
+                set state(type) desc
+                continue
+            }
             if {[regexp {^##($| .*)} $line -> str]} {
                 accumulate_reference_line state code $str
                 continue
@@ -1749,11 +1976,11 @@ proc autosetup_install {} {
 			}
 
 			# Insert the static modules here
-			# i.e. those which don't contain @MODULE
+			# i.e. those which don't contain @synopsis:
 			puts $f "set autosetup(installed) 1"
 			foreach file [glob $::autosetup(libdir)/*.tcl] {
 				set buf [readfile $file]
-				if {[string match "*\n# @MODULE*" $buf]} {
+				if {[string match "*\n# @synopsis:*" $buf]} {
 					lappend publicmodules $file
 					continue
 				}
@@ -1774,7 +2001,7 @@ proc autosetup_install {} {
 		}
 
 		# Install support files
-		foreach file {config.guess config.sub jimsh0.c find-tclsh LICENCE} {
+		foreach file {config.guess config.sub jimsh0.c find-tclsh test-tclsh LICENCE} {
 			autosetup_install_file $::autosetup(dir)/$file autosetup
 		}
 		exec chmod 755 autosetup/config.sub autosetup/config.guess autosetup/find-tclsh
@@ -1785,8 +2012,7 @@ proc autosetup_install {} {
 		user-error "Failed to install autosetup: $error"
 	}
 	puts "Installed [autosetup_version] to autosetup/"
-	catch {exec [info nameofexecutable] autosetup/autosetup --init} result
-	puts $result
+	catch {exec [info nameofexecutable] autosetup/autosetup --init >@stdout 2>@stderr}
 
 	exit 0
 }
@@ -1804,6 +2030,72 @@ proc autosetup_install_file {file dir} {
 
 if {$::autosetup(installed)} {
 	user-error "autosetup can only be installed from development source, not from installed copy"
+}
+}
+
+# ----- module markdown-formatting -----
+
+set modsource(markdown-formatting) {
+# Copyright (c) 2010 WorkWare Systems http://www.workware.net.au/
+# All rights reserved
+
+# Module which provides text formatting
+# markdown format (kramdown syntax)
+
+use formatting
+
+proc para {text} {
+    regsub -all "\[ \t\n\]+" [string trim $text] " " text
+    regsub -all {([^a-zA-Z])'([^']*)'} $text {\1**`\2`**} text
+    regsub -all {^'([^']*)'} $text {**`\1`**} text
+    regsub -all {(http[^ \t\n]*)} $text {[\1](\1)} text
+    return $text
+}
+proc title {text} {
+    underline [para $text] =
+    nl
+}
+proc p {text} {
+    puts [para $text]
+    nl
+}
+proc code {text} {
+    puts "~~~~~~~~~~~~"
+    foreach line [parse_code_block $text] {
+        puts $line
+    }
+    puts "~~~~~~~~~~~~"
+    nl
+}
+proc nl {} {
+    puts ""
+}
+proc underline {text char} {
+    regexp "^(\[ \t\]*)(.*)" $text -> indent words
+    puts $text
+    puts $indent[string repeat $char [string length $words]]
+}
+proc section {text} {
+    underline "[incr ::section]. [para $text]" -
+    set ::subsection 0
+    nl
+}
+proc subsection {text} {
+    puts "### $::section.[incr ::subsection]. $text"
+    nl
+}
+proc bullet {text} {
+    puts "* [para $text]"
+}
+proc defn {first args} {
+    puts "^"
+    set defn [string trim [join $args \n]]
+    if {$first ne ""} {
+        puts "**${first}**"
+        puts -nonewline ": "
+        regsub -all "\n\n" $defn "\n: " defn
+    }
+    puts "$defn"
 }
 }
 
@@ -1858,6 +2150,9 @@ proc file-normalize {path} {
 # This is designed to be called for incorrect usage in auto.def, via autosetup-error
 #
 proc error-location {msg} {
+	if {$::autosetup(debug)} {
+		return -code error $msg
+	}
 	# Search back through the stack trace for the first error in a .def file
 	for {set i 1} {$i < [info level]} {incr i} {
 		if {$::autosetup(istcl)} {
@@ -1925,6 +2220,8 @@ set modsource(text-formatting) {
 
 # Module which provides text formatting
 
+use formatting
+
 proc wordwrap {text length {firstprefix ""} {nextprefix ""}} {
     set len 0
     set space $firstprefix
@@ -1939,9 +2236,18 @@ proc wordwrap {text length {firstprefix ""} {nextprefix ""}} {
             set space $nextprefix
         }
         incr len [string length $space$word]
-        # Use x^Hx hightlighting for 'quoted' single words
+
+        # Use man-page conventions for highlighting 'quoted' and *quoted*
+        # single words.
+        # Use x^Hx for *bold* and _^Hx for 'underline'.
+        #
+        # less and more will both understand this.
+        # Pipe through 'col -b' to remove them.
         if {[regexp {^'(.*)'([^a-zA-Z0-9_]*)$} $word -> bareword dot]} {
-            regsub -all . $bareword "&\010&" word
+            regsub -all . $bareword "_\b&" word
+            append word $dot
+        } elseif {[regexp {^[*](.*)[*]([^a-zA-Z0-9_]*)$} $word -> bareword dot]} {
+            regsub -all . $bareword "&\b&" word
             append word $dot
         }
         puts -nonewline $space$word
@@ -1960,21 +2266,16 @@ proc p {text} {
     nl
 }
 proc code {text} {
-    # Find the indent of the first non-blank line
-    set indent ""
-    regexp "^\n(\[ \t\]\+)" $text dummy indent
-    set len [string length $indent]
-    # Trim initial newline and trailing space
-    set text [string trimleft $text \n]
-    foreach line [split $text \n] {
-        puts "    [string range $line $len end]"
+    foreach line [parse_code_block $text] {
+        puts "    $line"
     }
+    nl
 }
 proc nl {} {
     puts ""
 }
 proc underline {text char} {
-    regexp {^([ \t]*)(.*)} $text -> indent words
+    regexp "^(\[ \t\]*)(.*)" $text -> indent words
     puts $text
     puts $indent[string repeat $char [string length $words]]
 }
@@ -2014,6 +2315,8 @@ set modsource(wiki-formatting) {
 # Module which provides text formatting
 # wiki.tcl.tk format output
 
+use formatting
+
 proc joinlines {text} {
     set lines {}
     foreach l [split [string trim $text] \n] {
@@ -2030,21 +2333,9 @@ proc title {text} {
     puts ""
 }
 proc code {text} {
-    # If the text begins with newline, skip it
-    regexp {^\n(.*)} $text -> text
-
-    # And trip spaces off the end
-    set text [string trimright $text]
-
-    # Find the indent of the first line
-    # so that can be removed from every line
-    set indent ""
-    regexp "^(\[ \t\]\+)" $text -> indent
-    set len [string length $indent]
-
     puts "======"
-    foreach line [split $text \n] {
-        puts "  [string range $line $len end]"
+    foreach line [parse_code_block $text] {
+        puts "    $line"
     }
     puts "======"
 }
@@ -2083,7 +2374,6 @@ proc defn {first args} {
 #
 if {$autosetup(debug)} {
 	main $argv
-	exit 0
 }
 if {[catch {main $argv} msg] == 1} {
 	show-notices
@@ -2093,4 +2383,3 @@ if {[catch {main $argv} msg] == 1} {
 	}
 	exit 1
 }
-show-notices
