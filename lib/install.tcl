@@ -45,7 +45,7 @@ proc autosetup_install {} {
 		}
 
 		# Install support files
-		foreach file {config.guess config.sub jimsh0.c find-tclsh test-tclsh LICENCE} {
+		foreach file {config.guess config.sub jimsh0.c find-tclsh test-tclsh LICENSE} {
 			autosetup_install_file $::autosetup(dir)/$file autosetup
 		}
 		exec chmod 755 autosetup/config.sub autosetup/config.guess autosetup/find-tclsh
@@ -69,6 +69,9 @@ proc autosetup_install_append {f file} {
 }
 
 proc autosetup_install_file {file dir} {
+	if {![file exists $file]} {
+		error "Missing installation file '$file'"
+	}
 	writefile [file join $dir [file tail $file]] [readfile $file]\n
 }
 

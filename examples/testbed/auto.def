@@ -128,5 +128,7 @@ foreach n [lsort [dict keys [all-defines]]] {
 }
 close $f
 
-# And process the template
+# And process the template. Note that we need to explictly
+# specify that the template is in the build directory, not
+# the source directory
 make-template [get-define builddir]/template.in

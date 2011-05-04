@@ -2,9 +2,9 @@ Unless explicitly stated, all files which form part of autosetup
 are released under the following license:
 
 ---------------------------------------------------------------------
-autosetup - An environment autoconfigurator
+autosetup - A build environment "autoconfigurator"
 
-Copyright 2010 Steve Bennett <steveb@workware.net.au>
+Copyright (c) 2010-2011, WorkWare Systems <http://workware.net.au/>
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions

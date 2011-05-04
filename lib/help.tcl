@@ -6,12 +6,10 @@
 proc autosetup_help {what} {
     use_pager
 
-    puts "Usage: [file tail $::autosetup(exe)] \[options\] \[settings\]"
-    puts \
-{
-   This is autosetup, a faster, better alternative to autoconf.
-   Use the --manual option for the full autosetup manual.
-}
+    puts "Usage: [file tail $::autosetup(exe)] \[options\] \[settings\]\n"
+    puts "This is [autosetup_version], a build environment \"autoconfigurator\""
+    puts "Use the --manual option for the full autosetup manual\n"
+
     if {$what eq "local"} {
         if {[file exists $::autosetup(autodef)]} {
             # This relies on auto.def having a call to 'options'
@@ -753,20 +751,20 @@ proc autosetup_manual {{type text}} {
     bullet {https://e-reports-ext.llnl.gov/pdf/315457.pdf - autokonf}
     nl
 
-    section {Copyright, Author and Licence}
+    section {Copyright, Author and License}
     p {
-        autosetup is Copyright (c) 2010 WorkWare Systems http://workware.net.au/
+        autosetup is Copyright (c) 2010-2011 WorkWare Systems <http://workware.net.au/>
     }
     p {
         autosetup was written by Steve Bennett <steveb@workware.net.au>
     }
     p {
-        autosetup is released under the "2-clause FreeBSD Licence" as follows.
+        autosetup is released under the "2-clause FreeBSD License" as follows.
     }
     code {
-        autosetup - An environment "autoconfigurator"
+        autosetup - A build environment "autoconfigurator"
 
-        Copyright 2010 Steve Bennett <steveb@workware.net.au>
+        Copyright (c) 2010-2011 WorkWare Systems <http://workware.net.au/>
 
         Redistribution and use in source and binary forms, with or without
         modification, are permitted provided that the following conditions
