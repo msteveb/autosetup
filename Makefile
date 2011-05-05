@@ -1,6 +1,6 @@
 # This is a convenience Makefile to do a few admin tasks
 all:
-	@echo "Try 'make manual' or './autosetup --help'"
+	@echo "Try 'make reference' or './autosetup --help'"
 
 VERSION := $(shell ./autosetup --version)
 
@@ -12,8 +12,11 @@ dist: clean
 
 PAGER ?= less
 
-manual:
-	./autosetup --manual | $(PAGER)
+help:
+	./autosetup --help
+
+ref reference:
+	./autosetup --reference
 
 html:
-	./autosetup --manual=asciidoc | asciidoc -o autosetup.html -
+	./autosetup --reference=asciidoc | asciidoc -o autosetup-reference.html -

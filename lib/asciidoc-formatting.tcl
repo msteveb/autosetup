@@ -23,6 +23,12 @@ proc code {text} {
     }
     nl
 }
+proc codelines {lines} {
+    foreach line $lines {
+        puts "    $line"
+    }
+    nl
+}
 proc nl {} {
     puts ""
 }
@@ -32,12 +38,11 @@ proc underline {text char} {
     puts $indent[string repeat $char [string length $words]]
 }
 proc section {text} {
-    underline "[incr ::section]. [para $text]" -
-    set ::subsection 0
+    underline "[para $text]" -
     nl
 }
 proc subsection {text} {
-    underline "$::section.[incr ::subsection]. $text" ~
+    underline "$text" ~
     nl
 }
 proc bullet {text} {

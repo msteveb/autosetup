@@ -48,8 +48,8 @@ proc p {text} {
     wordwrap $text 80
     nl
 }
-proc code {text} {
-    foreach line [parse_code_block $text] {
+proc codelines {lines} {
+    foreach line $lines {
         puts "    $line"
     }
     nl
@@ -63,12 +63,11 @@ proc underline {text char} {
     puts $indent[string repeat $char [string length $words]]
 }
 proc section {text} {
-    underline "[incr ::section]. [string trim $text]" -
-    set ::subsection 0
+    underline "[string trim $text]" -
     nl
 }
 proc subsection {text} {
-    underline "$::section.[incr ::subsection]. $text" ~
+    underline "$text" ~
     nl
 }
 proc bullet {text} {

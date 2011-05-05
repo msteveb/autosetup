@@ -21,6 +21,13 @@ proc title {text} {
     puts "*** [joinlines $text] ***"
     puts ""
 }
+proc codelines {lines} {
+    puts "======"
+    foreach line $lines {
+        puts "    $line"
+    }
+    puts "======"
+}
 proc code {text} {
     puts "======"
     foreach line [parse_code_block $text] {
@@ -31,12 +38,11 @@ proc code {text} {
 proc nl {} {
 }
 proc section {text} {
-    puts "'''[incr ::section]. $text'''"
+    puts "'''$text'''"
     puts ""
-    set ::subsection 0
 }
 proc subsection {text} {
-    puts "''$::section.[incr ::subsection]. $text''"
+    puts "''$text''"
     puts ""
 }
 proc bullet {text} {

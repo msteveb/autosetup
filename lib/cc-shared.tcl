@@ -3,8 +3,8 @@
 
 # @synopsis:
 #
-# Module which provides support for shared libraries and shared objects.
-# Defines the following variables:
+# The 'cc-shared' module provides support for shared libraries and shared objects.
+# It defines the following variables:
 #
 ## SH_CFLAGS         Flags to use compiling sources destined for a shared library
 ## SH_LDFLAGS        Flags to use linking a shared library

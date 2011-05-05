@@ -3,7 +3,7 @@
 
 # @synopsis:
 #
-# This module supports checking various 'features' of the C or C++
+# The 'cc' module supports checking various 'features' of the C or C++
 # compiler/linker environment. Common commands are cc-check-includes,
 # cc-check-types, cc-check-functions, cc-with, make-autoconf-h and make-template.
 #
