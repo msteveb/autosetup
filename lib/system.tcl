@@ -126,11 +126,13 @@ proc make-template {template {out {}}} {
 		set out [file rootname $template]
 	}
 
+	set outdir [file dirname $out]
+
 	# Make sure the directory exists
-	file mkdir [file dirname $out]
+	file mkdir $outdir
 
 	# Set up srcdir to be relative to the target dir
-	define srcdir [relative-path $::autosetup(srcdir) [file dirname $out]]
+	define srcdir [relative-path [file join $::autosetup(srcdir) $outdir] $outdir]
 
 	set mapping {}
 	foreach {n v} [array get ::define] {
