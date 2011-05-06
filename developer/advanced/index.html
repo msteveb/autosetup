@@ -1,0 +1,299 @@
+<!DOCTYPE HTML>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>autosetup - Advanced Concepts</title>
+    <link rel="stylesheet" type="text/css" href="/css/style.css" media="screen">
+    <link rel="stylesheet" type="text/css" href="/css/sh_style.css" media="screen">
+    
+    <script src="/javascript/sh_main.min.js" type="text/javascript"></script>
+    <script src="/javascript/sh_lang.js" type="text/javascript"></script>
+    <script src="/javascript/motionpack.js" type="text/javascript"></script>
+    <meta name="generator" content="nanoc 3.1.6">
+  </head>
+  <body>
+    <div id="header">
+      <h1 id="blog-title">autosetup</h1>
+      <p id="description">A build environment "autoconfigurator"</p>
+    </div>
+    <div id="content">
+        <div class="breadcrumbs">
+        
+        
+            <a href="/">Overview</a> 
+            » 
+        
+            <a href="/developer/">Developing with autosetup</a> 
+            » 
+        
+            <a href="/developer/advanced/">Advanced Concepts</a> 
+             
+        
+        </div>
+        <div class="main" id="main">
+        
+        <h2 id="troubleshooting">Troubleshooting</h2>
+<p>If <strong>autosetup</strong> does not produce the expected results, the <code>--debug</code> option may
+be given to help troubleshoot the problem. Modules are expected to write additional
+details to the log, <code>config.log</code>, when this setting is enabled.</p>
+
+<p>This code snippet is from the <code>cc</code> module.</p>
+
+<pre class="sh_autosetup">
+if {$::autosetup(debug)} {
+    configlog "Compiled OK: [join $cmdline]"
+}
+</pre>
+
+<p>In addition, all configuration variables are dumped at the end of configuration.</p>
+
+<h2 id="selecting-the-language-c-or-c">Selecting the Language: C or C++</h2>
+
+<p>The <code>cc</code> module provides low level <code>cctest</code> commands provides the <code>-lang</code> option to
+select the language to use for tests. This can be used in conjunction
+with <code>cc-with</code> to set the language for a series of tests.</p>
+
+<pre class="sh_autosetup">
+cc-with {-lang c++} {
+    # All tests now use the C++ compiler -- $(CXX) and $(CXXFLAGS)
+    cc-check-types bool
+}
+# Or just set it for the rest of the file
+cc-with {-lang c++}
+...
+</pre>
+
+<h2 id="supporting-standard-installation">Supporting Standard Installation</h2>
+
+<p><strong>autosetup</strong> facilitates use of both configure-time installation location
+and install-time installation location through the autoconf-standard <code>--prefix</code> and <code>$DESTDIR</code>.
+See &lt;/user/installing/&gt; for details.</p>
+
+<p>In order to support <code>$DESTDIR</code> with <code>make</code>, the following should be included in <code>Makefile.in</code></p>
+
+<pre class="sh_makefile">
+prefix = @prefix@
+...
+install: all
+    @echo Installing from @srcdir@ and @builddir@ to $(DESTDIR)$(prefix)
+</pre>
+
+<p>If the project requires the installation directory, an appropriate <code>define</code> can be created.
+e.g.</p>
+
+<pre class="sh_autosetup">
+define TCL_LIBRARY [get-define prefix]/lib/jim
+</pre>
+
+<h2 id="a-standard-makefilein">A &ldquo;standard&rdquo; Makefile.in</h2>
+
+<p>If autosetup is being used to control a make-based build system,
+the use of a <code>Makefile.in</code> with a standard structure will
+provide behaviour similar to that provided by <strong>autoconf</strong>/<strong>automake</strong>
+systems. <strong>autosetup</strong> provides a typical <code>Makefile.in</code> in
+<code>examples/typical/Makefile.in</code>. This example provides the
+following:</p>
+
+<ul>
+  <li>Use <code>CC</code>, <code>AR</code>, <code>RANLIB</code> as determined by cross compiler settings or user overrides</li>
+  <li>Install appropriately considers <code>--prefix</code> and <code>$DESTDIR</code></li>
+  <li>Use VPATH to support out-of-tree builds</li>
+  <li>Dummy <strong>automake</strong> targets to allow for use as a subproject with <strong>automake</strong></li>
+  <li>Automatically reconfigure if <code>auto.def</code> changes</li>
+</ul>
+
+<pre class="sh_makefile">
+# Example of a typical Makefile template for autosetup
+
+# Tools. CC is standard. The rest are via cc-check-tools
+CC = @CC@
+RANLIB = @RANLIB@
+AR = @AR@
+STRIP = @STRIP@
+
+# FLAGS/LIBS
+CFLAGS = @CFLAGS@
+LDFLAGS = @LDFLAGS@
+LDLIBS += @LIBS@
+
+# Install destination
+prefix = @prefix@
+exec_prefix = @exec_prefix@
+DESTDIR = $(prefix)
+
+# Project-specific CFLAGS
+CPPFLAGS += -D_GNU_SOURCE -Wall -Werror -I.
+
+# VPATH support for out-of-tree build
+ifneq (@srcdir@,.)
+CPPFLAGS += -I@srcdir@
+VPATH := @srcdir@
+endif
+
+APPOBJS := main.o
+LIBOBJS := funcs.o
+
+APP := app@EXEEXT@
+
+all: $(APP)
+
+# shared vs. static library
+ifeq (@shared@,1)
+# Shared library support from cc-shared
+LIB = libtest.so
+# All objects destined for the shared library need these flags
+CPPFLAGS += @SH_CFLAGS@
+
+$(LIB): $(LIBOBJS)
+    $(CC) $(CFLAGS) $(LDFLAGS) @SH_LDFLAGS@ -o $@ $^ $(LDLIBS)
+
+else
+LIB = libtest.a
+
+$(LIB): $(LIBOBJS)
+    $(AR) cr $@ $^
+    $(RANLIB) $@
+endif
+
+$(APP): $(APPOBJS) $(LIB)
+    $(CC) $(CFLAGS) $(LDFLAGS) @SH_LINKFLAGS@ -o $@ $(APPOBJS) $(LIB) $(LDLIBS)
+
+install: all
+    @echo Installing from @srcdir@ and `pwd` to $(DESTDIR)
+
+clean:
+    rm -f *.o *.so lib*.a $(APP) conftest.*
+
+distclean: clean
+    rm -f config.h Makefile config.log
+
+# automake compatibility. do nothing for all these targets
+EMPTY_AUTOMAKE_TARGETS := dvi pdf ps info html tags ctags mostlyclean maintainer-clean check installcheck installdirs \
+ install-pdf install-ps install-info install-html -install-dvi uninstall install-exec install-data distdir
+.PHONY: $(EMPTY_AUTOMAKE_TARGETS)
+$(EMPTY_AUTOMAKE_TARGETS):
+
+# Reconfigure if needed
+ifeq ($(findstring clean,$(MAKECMDGOALS)),)
+Makefile: @AUTODEPS@ @srcdir@/Makefile.in
+    @@AUTOREMAKE@
+endif
+
+# Or on demand
+reconfig:
+    @AUTOREMAKE@
+</pre>
+
+<h2 id="automatic-reconfiguration">Automatic Reconfiguration</h2>
+
+<p>It is convenient for <code>configure</code> to be re-run automatically with if any
+of the input files change (e.g. <code>auto.def</code> or any of the
+template files). This can be achieved by adding the following to
+Makefile.in.</p>
+
+<pre class="sh_makefile">
+ifeq ($(findstring clean,$(MAKECMDGOALS)),)
+Makefile: @AUTODEPS@ @srcdir@/Makefile.in
+        @@AUTOREMAKE@
+endif
+</pre>
+
+<p>It may also be convenient to add a target to force reconfiguring with the same options.</p>
+
+<pre class="sh_makefile">
+reconfig:
+        @AUTOREMAKE@
+</pre>
+
+<h2 id="extending-autosetup">Extending autosetup</h2>
+
+<p>Local modules can be added directly to the autosetup directory and loaded with the <code>use</code> command.</p>
+
+<p>A module is simply a Tcl script (with a <code>.tcl</code> extension) in the <code>autosetup/</code> directory
+which follows some conventions.</p>
+
+<ol>
+  <li>The module should include a synopsis for documentation purposes.</li>
+  <li><code>module-options</code> should be the first statement</li>
+  <li>Public commands should be documented with &lsquo;# @cmdname &hellip;&rsquo;</li>
+  <li>The module can also include private commands and globals</li>
+</ol>
+
+<p>The following is a bare-bones example module.</p>
+
+<pre class="sh_autosetup">
+# @synopsis:
+#
+# Documentation for this module. Environment variables should be documented here.
+
+module-options {
+    modopt =&gt; "A boolean option"
+}
+
+# @check-erlang-feature name expression
+#
+# Runs the erlang code 'expression' and defines the
+# given feature if the code succeeds (returns 0).
+#
+# See 'feature-define-name' for how the feature name
+# is translated into the define name.
+#
+proc check-erlang-feature {name expression} {
+    define [feature-define-name $name] [erlang-run $expression]
+}
+
+msg-result "Erlang module loaded"
+</pre>
+
+<h2 id="future-featureschanges">Future Features/Changes</h2>
+
+<p>Some features are not yet implemented, but are candidates for
+including in an existing module, or adding to a new module. Others
+may require changes to the core <strong>autosetup</strong>.</p>
+
+<ul>
+  <li>pkg-config support (although pkg-config has poor support for cross compiling)</li>
+  <li>More fully-featured shared library support (<code>cc-shared</code> module), possibly with support for <code>libtool</code></li>
+  <li>Support for additional languages</li>
+  <li>Subdirectory support. Need to resolve how options are parsed, and how variables interact between subdirectories.</li>
+</ul>
+
+        </div>
+    </div>
+    <div id="sidebar">
+      <h2>About autosetup</h2>
+      <ul>
+        
+            
+            <li><a href="/">Overview</a></li>
+        
+            
+            <li><a href="/news/">News</a></li>
+        
+            
+            <li><a href="/download/">Download</a></li>
+        
+            
+            <li><a href="/user/">Running autosetup</a></li>
+        
+            
+            <li><a href="/developer/">Developing</a></li>
+        
+            
+            <li><a href="/developer/examples/">Examples</a></li>
+        
+            
+            <li><a href="/license/">License</a></li>
+        
+      </ul>
+      <h2>Community</h2>
+      <ul>
+        <li><a href="https://github.com/msteveb/autosetup">autosetup on github</a></li>
+        <li><a href="https://github.com/msteveb/autosetup/commits/master">» commit history</a></li>
+        <li><a href="https://github.com/msteveb/autosetup/issues">» open issues</a></li>
+      </ul>
+    </div>
+    
+    <script language="javascript">sh_highlightDocument();</script>
+  </body>
+</html>

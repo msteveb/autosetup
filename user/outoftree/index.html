@@ -2,7 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="utf-8">
-    <title>autosetup - Overview</title>
+    <title>autosetup - Build Out-of-Tree</title>
     <link rel="stylesheet" type="text/css" href="/css/style.css" media="screen">
     <link rel="stylesheet" type="text/css" href="/css/sh_style.css" media="screen">
     
@@ -21,48 +21,55 @@
         
         
             <a href="/">Overview</a> 
+            » 
+        
+            <a href="/user/">Running autosetup</a> 
+            » 
+        
+            <a href="/user/outoftree/">Build Out-of-Tree</a> 
              
         
         </div>
         <div class="main" id="main">
         
-        <h2 id="introduction-to-autosetup">Introduction to autosetup</h2>
+        <h1 id="building-out-of-tree">Building Out-of-Tree</h1>
 
-<p><strong>autosetup</strong> is a tool, similar to <strong>autoconf</strong>, to configure a
-build system for the appropriate environment, according to the
-system capabilities and the user-selected options.</p>
+<p>While it is common to build a project in-place, many projects
+will also support building out-of-tree. That is, generated files
+such as object files and executables are created in a tree outside
+the project source code. This approach can be useful when building
+multiple versions of a project with different options.</p>
 
-<p><strong>autosetup</strong> is designed to be light-weight, fast, simple and flexible.</p>
+<p>Building out-of-tree simply involves invoking <code>configure</code> from
+an empty directory other than the top of the source tree.</p>
 
-<p>Notable features include:</p>
+<p>For example, to create a debug build in the <code>build-debug</code> directory:</p>
+
+<pre class="sh_unix">
+$ mkdir build-debug
+$ cd build-debug
+$ ../configure CFLAGS="-g -O0"
+$ make
+$ cd ..
+</pre>
+
+<p>And to create a release build in the <code>build-release</code> directory:</p>
+
+<pre class="sh_unix">
+$ mkdir build-release
+$ cd build-release
+$ ../configure CFLAGS="-O2"
+$ make
+$ cd ..
+</pre>
+
+<p>Notes:</p>
 
 <ul>
-  <li>Easily check for headers, functions, types for C/C++</li>
-  <li>Easily support user configuration options</li>
-  <li>Can generate files based on templates, such as Makefile.in =&gt; Makefile</li>
-  <li>Can generate header files based on checked features</li>
-  <li>Excellent support for cross compilation</li>
-  <li>Replacement for autoconf in many situations</li>
-  <li>Runs with either Tcl 8.5+, <a href="http://jim.berlios.de">Jim Tcl</a> or just a C compiler (using the included Jim Tcl source code!)</li>
-  <li>autosetup is intended to be distributed with projects - no version mismatch issues</li>
-</ul>
-
-<p>autosetup is particularly targeted towards building C/C++ applications
-on Unix systems, however it can be extended for other environments
-as needed.</p>
-
-<p><strong>autosetup</strong> is <em>not</em>:</p>
-
-<ul>
-  <li>A complete build system</li>
-  <li>A replacement for automake</li>
-  <li>Intended to replace all possible uses of autoconf</li>
-</ul>
-
-<h2 id="getting-started">Getting Started</h2>
-<ul>
-  <li><a href="/user/">Building an autosetup-enabled project</a> <em>(for users)</em></li>
-  <li><a href="/developer/">Adding autosetup support to a project</a> <em>(for developers)</em></li>
+  <li>The project must be enabled for out-of-tree builds, typically with the
+user of <code>VPATH</code> if using <code>make</code></li>
+  <li>The source tree should be clean (i.e. no build should be done in the
+original source directory), otherwise it will confuse <code>make</code></li>
 </ul>
 
         </div>
@@ -72,7 +79,7 @@ as needed.</p>
       <ul>
         
             
-            <li><span class="active" title="You're here.">Overview</span></li>
+            <li><a href="/">Overview</a></li>
         
             
             <li><a href="/news/">News</a></li>

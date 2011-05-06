@@ -1,0 +1,356 @@
+<!DOCTYPE HTML>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>autosetup - Command Reference</title>
+    <link rel="stylesheet" type="text/css" href="/css/style.css" media="screen">
+    <link rel="stylesheet" type="text/css" href="/css/sh_style.css" media="screen">
+    
+    <script src="/javascript/sh_main.min.js" type="text/javascript"></script>
+    <script src="/javascript/sh_lang.js" type="text/javascript"></script>
+    <script src="/javascript/motionpack.js" type="text/javascript"></script>
+    <meta name="generator" content="nanoc 3.1.6">
+  </head>
+  <body>
+    <div id="header">
+      <h1 id="blog-title">autosetup</h1>
+      <p id="description">A build environment "autoconfigurator"</p>
+    </div>
+    <div id="content">
+        <div class="breadcrumbs">
+        
+        
+            <a href="/">Overview</a> 
+            » 
+        
+            <a href="/developer/">Developing with autosetup</a> 
+            » 
+        
+            <a href="/developer/reference/">Command Reference</a> 
+             
+        
+        </div>
+        <div class="main" id="main">
+        
+        <h1 id="autosetup-v061----command-reference">autosetup v0.6.1 &ndash; Command Reference</h1>
+
+<h2 id="introduction">Introduction</h2>
+
+<p>See <a href="http://msteveb.github.com/autosetup/">http://msteveb.github.com/autosetup/</a> for the online documentation for <strong><code>autosetup</code></strong></p>
+
+<p><strong><code>autosetup</code></strong> provides a number of built-in commands which are documented below. These may be used from <strong><code>auto.def</code></strong> to test for features, define variables, create files from templates and other similar actions.</p>
+
+<h2 id="core-commands">Core Commands</h2>
+
+<h3 id="opt-bool-option-"><code>opt-bool option ...</code></h3>
+
+<p>Check each of the named, boolean options and return 1 if any of them have been set by the user.</p>
+
+<h3 id="opt-val-option-list-default"><code>opt-val option-list ?default=""?</code></h3>
+
+<p>Returns a list containing all the values given for the non-boolean options in <strong><code>option-list</code></strong>. There will be one entry in the list for each option given by the user, including if the same option was used multiple times. If only a single value is required, use something like:</p>
+
+<pre><code>lindex [opt-val $names] end
+</code></pre>
+
+<p>If no options were set, $default is returned (exactly, not as a list).</p>
+
+<h3 id="define-name-value1"><code>define name ?value=1?</code></h3>
+
+<p>Defines the named variable to the given value. These name, values pairs represent the results of the configuration check and are available to be checked, modified and substituted.</p>
+
+<h3 id="define-append-name-value-"><code>define-append name value ...</code></h3>
+
+<p>Appends the given value(s) to the given <strong><code>defined</code></strong> variable. If the variable is not defined or empty, it is set to $value. Otherwise the value is appended, separated by a space. Any extra values are also appended</p>
+
+<h3 id="get-define-name-default0"><code>get-define name ?default=0?</code></h3>
+
+<p>Returns the current value of the <strong><code>defined</code></strong> variable, or $default if not set.</p>
+
+<h3 id="is-defined-name"><code>is-defined name</code></h3>
+
+<p>Returns 1 if the given variable is defined.</p>
+
+<h3 id="all-defines"><code>all-defines</code></h3>
+
+<p>Returns a dictionary (name value list) of all defined variables.</p>
+
+<p>This is suitable for use with <strong><code>dict</code></strong>, <strong><code>array set</code></strong> or <strong><code>foreach</code></strong> and allows for arbitrary processing of the defined variables.</p>
+
+<h3 id="get-env-name-default"><code>get-env name default</code></h3>
+
+<p>If $name was specified on the command line, return it. If $name was set in the environment, return it. Otherwise return $default.</p>
+
+<h3 id="env-is-set-name"><code>env-is-set name</code></h3>
+
+<p>Returns 1 if the $name was specified on the command line or in the environment.</p>
+
+<h3 id="readfile-filename-default"><code>readfile filename ?default=""?</code></h3>
+
+<p>Return the contents of the file, without the trailing newline. If the doesn&rsquo;t exist or can&rsquo;t be read, returns $default.</p>
+
+<h3 id="writefile-filename-value"><code>writefile filename value</code></h3>
+
+<p>Creates the given file containing $value. Does not add an extra newline.</p>
+
+<h3 id="find-executable-name"><code>find-executable name</code></h3>
+
+<p>Searches the path for an executable with the given name. Note that the name may include some parameters, e.g. &ldquo;cc -mbig-endian&rdquo;, in which case the parameters are ignored. Returns 1 if found, or 0 if not.</p>
+
+<h3 id="find-an-executable--required-name-"><code>find-an-executable ?-required? name ...</code></h3>
+
+<p>Given a list of possible executable names, searches for one of these on the path.</p>
+
+<p>Returns the name found, or &ldquo;&rdquo; if none found. If the first parameter is <strong><code>-required</code></strong>, an error is generated if no executable is found.</p>
+
+<h3 id="configlog-msg"><code>configlog msg</code></h3>
+
+<p>Writes the given message to the configuration log, config.log</p>
+
+<h3 id="msg-checking-msg"><code>msg-checking msg</code></h3>
+
+<p>Writes the message with no newline to stdout.</p>
+
+<h3 id="msg-result-msg"><code>msg-result msg</code></h3>
+
+<p>Writes the message to stdout.</p>
+
+<h3 id="msg-quiet-command-"><code>msg-quiet command ...</code></h3>
+
+<p>msg-quiet evaluates it&rsquo;s arguments as a command with output from msg-checking and msg-result suppressed.</p>
+
+<p>This is useful if a check needs to run a subcheck which isn&rsquo;t of interest to the user.</p>
+
+<h3 id="user-error-msg"><code>user-error msg</code></h3>
+
+<p>Indicate incorrect usage to the user, including if required components or features are not found. autosetup exits with a non-zero return code.</p>
+
+<h3 id="user-notice-msg"><code>user-notice msg</code></h3>
+
+<p>Output the given message to stderr.</p>
+
+<h3 id="use-module-"><code>use module ...</code></h3>
+
+<p>Load the given library modules. e.g. use cc cc-shared</p>
+
+<h2 id="module-cc-shared">Module: cc-shared</h2>
+
+<p>The <strong><code>cc-shared</code></strong> module provides support for shared libraries and shared objects. It defines the following variables:</p>
+
+<pre><code>SH_CFLAGS         Flags to use compiling sources destined for a shared library
+SH_LDFLAGS        Flags to use linking a shared library
+SHOBJ_CFLAGS      Flags to use compiling sources destined for a shared object
+SHOBJ_LDFLAGS     Flags to use linking a shared object
+SH_LINKFLAGS      Flags to use linking an executable which will load shared objects
+LD_LIBRARY_PATH   Environment variable which specifies path to shared libraries
+</code></pre>
+
+<h2 id="module-cc">Module: cc</h2>
+
+<p>The <strong><code>cc</code></strong> module supports checking various <strong><code>features</code></strong> of the C or C++ compiler/linker environment. Common commands are cc-check-includes, cc-check-types, cc-check-functions, cc-with, make-autoconf-h and make-template.</p>
+
+<p>The following environment variables are used if set:</p>
+
+<pre><code>CC       - C compiler
+CXX      - C++ compiler
+CCACHE   - Set to "none" to disable automatic use of ccache
+CFLAGS   - Additional C compiler flags
+CXXFLAGS - Additional C++ compiler flags
+LDFLAGS  - Additional compiler flags during linking
+LIBS     - Additional libraries to use (for all tests)
+CROSS    - Tool prefix for cross compilation
+</code></pre>
+
+<p>The following variables are defined from the corresponding environment variables if set.</p>
+
+<pre><code>CPPFLAGS
+LINKFLAGS
+CC_FOR_BUILD
+LD
+</code></pre>
+
+<h3 id="cc-check-sizeof-type-"><code>cc-check-sizeof type ...</code></h3>
+
+<p>Checks the size of the given types (between 1 and 32, inclusive). Defines a variable with the size determined, or &ldquo;unknown&rdquo; otherwise. e.g. for type <strong><code>long long</code></strong>, defines SIZEOF_LONG_LONG. Returns the size of the last type.</p>
+
+<h3 id="cc-check-includes-includes-"><code>cc-check-includes includes ...</code></h3>
+
+<p>Checks that the given include files can be used</p>
+
+<h3 id="cc-check-types-type-"><code>cc-check-types type ...</code></h3>
+
+<p>Checks that the types exist.</p>
+
+<h3 id="cc-check-functions-function-"><code>cc-check-functions function ...</code></h3>
+
+<p>Checks that the given functions exist (can be linked)</p>
+
+<h3 id="cc-check-members-typemember-"><code>cc-check-members type.member ...</code></h3>
+
+<p>Checks that the given type/structure members exist. A structure member is of the form &ldquo;struct stat.st_mtime&rdquo;</p>
+
+<h3 id="cc-check-function-in-lib-function-libs-otherlibs"><code>cc-check-function-in-lib function libs ?otherlibs?</code></h3>
+
+<p>Checks that the given given function can be found on one of the libs.</p>
+
+<p>First checks for no library required, then checks each of the libraries in turn.</p>
+
+<p>If the function is found, the feature is defined and lib_$function is defined to -l$lib where the function was found, or &ldquo;&rdquo; if no library required. In addition, -l$lib is added to the LIBS define.</p>
+
+<p>If additional libraries may be needed to linked, they should be specified as $extralibs as &ldquo;-lotherlib1 -lotherlib2&rdquo;. These libraries are not automatically added to LIBS.</p>
+
+<p>Returns 1 if found or 0 if not.</p>
+
+<h3 id="cc-check-tools-tool-"><code>cc-check-tools tool ...</code></h3>
+
+<p>Checks for existence of the given compiler tools, taking into account any cross compilation prefix.</p>
+
+<p>For example, when checking for &ldquo;ar&rdquo;, first AR is checked on the command line and then in the environment. If not found, &ldquo;${host}-ar&rdquo; or simply &ldquo;ar&rdquo; is assumed depending upon whether cross compiling. The path is searched for this executable, and if found AR is defined to the executable name.</p>
+
+<p>It is an error if the executable is not found.</p>
+
+<h3 id="cc-check-progs-prog-"><code>cc-check-progs prog ...</code></h3>
+
+<p>Checks for existence of the given executables on the path.</p>
+
+<p>For example, when checking for &ldquo;grep&rdquo;, the path is searched for the executable, <strong><code>grep</code></strong>, and if found GREP is defined as &ldquo;grep&rdquo;.</p>
+
+<p>It the executable is not found, the variable is defined as false. Returns 1 if all programs were found, or 0 otherwise.</p>
+
+<h3 id="cc-with-settings--script-"><code>cc-with settings ?{ script }?</code></h3>
+
+<p>Sets the given <strong><code>cctest</code></strong> settings and then runs the tests in <strong><code>script</code></strong>. Note that settings such as -lang replace the current setting, while those such as -includes are appended to the existing setting.</p>
+
+<p>If no script is given, the settings become the default for the remainder of the auto.def file.</p>
+
+<pre><code>cc-with {-lang c++} {
+  # This will check with the C++ compiler
+  cc-check-types bool
+  cc-with {-includes signal.h} {
+    # This will check with the C++ compiler, signal.h and any existing includes.
+    ...
+  }
+  # back to just the C++ compiler
+}
+</code></pre>
+
+<p>The -libs setting is special in that newer values are added <em>before</em> earlier ones.</p>
+
+<pre><code>cc-with {-libs {-lc -lm}} {
+  cc-with {-libs -ldl} {
+    cctest -libs -lsocket ...
+    # libs will be in this order: -lsocket -ldl -lc -lm
+  }
+}
+</code></pre>
+
+<h3 id="cctest-settings"><code>cctest ?settings?</code></h3>
+
+<p>Low level C compiler checker. Compiles and or links a small C program according to the arguments and returns 1 if OK, or 0 if not.</p>
+
+<p>Supported settings are:</p>
+
+<pre><code>-cflags cflags      A list of flags to pass to the compiler
+-includes list      A list of includes, e.g. {stdlib.h stdio.h}
+-declare code       Code to declare before main()
+-link 1             Don't just compile, link too
+-lang c|c++         Use the C (default) or C++ compiler
+-libs liblist       List of libraries to link, e.g. {-ldl -lm}
+-code code          Code to compile in the body of main()
+-source code        Compile a complete program. Ignore -includes, -declare and -code
+-sourcefile file    Shorthand for -source [readfile [get-define srcdir]/$file]
+</code></pre>
+
+<p>Unless -source or -sourcefile is specified, the C program looks like:</p>
+
+<pre><code>#include &lt;firstinclude&gt;   /* same for remaining includes in the list */
+</code></pre>
+
+<pre><code>declare-code              /* any code in -declare, verbatim */
+</code></pre>
+
+<pre><code>int main(void) {
+  code                    /* any code in -code, verbatim */
+  return 0;
+}
+</code></pre>
+
+<p>Any failures are recorded in <strong><code>config.log</code></strong></p>
+
+<h3 id="make-autoconf-h-outfile-patternlist"><code>make-autoconf-h outfile ?patternlist?</code></h3>
+
+<p>Examines all defined variables which match the given patterns and writes an include file, $file, which defines each of these. - defines which have the value &ldquo;0&rdquo; are ignored. - defines which have integer values are defined as the integer value. - any other value is defined as a string, e.g. &ldquo;value&rdquo;</p>
+
+<p>If the file would be unchanged, it is not written.</p>
+
+<h2 id="module-system">Module: system</h2>
+
+<p>This module supports common system interrogation and options such as &ndash;host, &ndash;build, &ndash;prefix, and setting srcdir, builddir, and EXEXT.</p>
+
+<p>It also support the <strong><code>feature</code></strong> naming convention, where searching for a feature such as sys/type.h defines HAVE_SYS_TYPES_H</p>
+
+<h3 id="have-feature-name-default0"><code>have-feature name ?default=0?</code></h3>
+
+<p>Returns the value of the feature if defined, or $default if not. See <strong><code>feature-define-name</code></strong> for how the feature name is translated into the define name.</p>
+
+<h3 id="define-feature-name-value1"><code>define-feature name ?value=1?</code></h3>
+
+<p>Sets the feature <strong><code>define</code></strong> to the given value. See <strong><code>feature-define-name</code></strong> for how the feature name is translated into the define name.</p>
+
+<h3 id="feature-checked-name"><code>feature-checked name</code></h3>
+
+<p>Returns 1 if the feature has been checked, whether true or not</p>
+
+<h3 id="feature-define-name-name-prefixhave"><code>feature-define-name name ?prefix=HAVE_?</code></h3>
+
+<p>Converts a name to the corresponding define, e.g. sys/stat.h becomes HAVE_SYS_STAT_H.</p>
+
+<p>Converts * to P and all non-alphanumeric to underscore.</p>
+
+<h3 id="make-template-template-outfile"><code>make-template template ?outfile?</code></h3>
+
+<p>Reads the input file <srcdir>/$template and writes the output file $outfile. If $outfile is blank/omitted, $template should end with ".in" which is removed to create the output file name.</srcdir></p>
+
+<p>Each pattern of the form @define@ is replaced the the corresponding define, if it exists, or left unchanged if not.</p>
+
+<p>The special value @srcdir@ is subsituted with the relative path to the source directory from the directory where the output file is created. Use @top_srcdir@ for the absolute path.</p>
+
+        </div>
+    </div>
+    <div id="sidebar">
+      <h2>About autosetup</h2>
+      <ul>
+        
+            
+            <li><a href="/">Overview</a></li>
+        
+            
+            <li><a href="/news/">News</a></li>
+        
+            
+            <li><a href="/download/">Download</a></li>
+        
+            
+            <li><a href="/user/">Running autosetup</a></li>
+        
+            
+            <li><a href="/developer/">Developing</a></li>
+        
+            
+            <li><a href="/developer/examples/">Examples</a></li>
+        
+            
+            <li><a href="/license/">License</a></li>
+        
+      </ul>
+      <h2>Community</h2>
+      <ul>
+        <li><a href="https://github.com/msteveb/autosetup">autosetup on github</a></li>
+        <li><a href="https://github.com/msteveb/autosetup/commits/master">» commit history</a></li>
+        <li><a href="https://github.com/msteveb/autosetup/issues">» open issues</a></li>
+      </ul>
+    </div>
+    
+    <script language="javascript">sh_highlightDocument();</script>
+  </body>
+</html>

@@ -1,0 +1,393 @@
+<!DOCTYPE HTML>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>autosetup - Developing with autosetup</title>
+    <link rel="stylesheet" type="text/css" href="/css/style.css" media="screen">
+    <link rel="stylesheet" type="text/css" href="/css/sh_style.css" media="screen">
+    
+    <script src="/javascript/sh_main.min.js" type="text/javascript"></script>
+    <script src="/javascript/sh_lang.js" type="text/javascript"></script>
+    <script src="/javascript/motionpack.js" type="text/javascript"></script>
+    <meta name="generator" content="nanoc 3.1.6">
+  </head>
+  <body>
+    <div id="header">
+      <h1 id="blog-title">autosetup</h1>
+      <p id="description">A build environment "autoconfigurator"</p>
+    </div>
+    <div id="content">
+        <div class="breadcrumbs">
+        
+        
+            <a href="/">Overview</a> 
+            » 
+        
+            <a href="/developer/">Developing with autosetup</a> 
+             
+        
+        </div>
+        <div class="main" id="main">
+        
+        <h1 id="adding-autosetup-support-to-a-project">Adding <strong>autosetup</strong> support to a project</h1>
+
+<h2 id="introduction">Introduction</h2>
+
+<p>This guide explains how to add <strong>autosetup</strong> support to a project. Be sure to read the <a href="/user/">user-level documentation</a>
+first, including the <a href="/download/">download instructions</a>. The <a href="/developer/examples">examples</a> can also be very helpful.</p>
+
+<h2 id="the-moving-parts">The Moving Parts</h2>
+
+<p><strong>autosetup</strong> is deployed directly into the source tree of a project.
+(This approach was inspired by <a href="http://code.google.com/p/waf/">waf</a>,
+and means that there are no dependency issues with different versions
+of autosetup since an appropriate version is part of the project.)</p>
+
+<p>Within a project, autosetup consists of three main parts
+at the top of the tree.</p>
+
+<ol>
+  <li>The <code>autosetup/</code> directory</li>
+  <li>The <code>auto.def</code> file</li>
+  <li>The <code>configure</code> wrapper script</li>
+</ol>
+
+<p>These are all created by <code>autosetup --install</code>. Here are the files
+in a typical installation.</p>
+
+<pre><code>auto.def
+configure
+autosetup/LICENSE
+autosetup/README.autosetup
+autosetup/autosetup
+autosetup/cc-shared.tcl
+autosetup/cc.tcl
+autosetup/config.guess
+autosetup/config.sub
+autosetup/find-tclsh
+autosetup/jimsh0.c
+autosetup/system.tcl
+autosetup/test-tclsh
+</code></pre>
+
+<h3 id="the-autodef-file">The auto.def file</h3>
+
+<p>This file controls the configuration process. A trivial version is created by <code>autosetup --install</code>,
+which must be edited to add the options and tests required for the project.</p>
+
+<h3 id="the-configure-script">The <code>configure</code> script</h3>
+
+<p>This tiny wrapper script is created by <code>autosetup --install</code> and does not need to be modified.</p>
+
+<h3 id="the-autosetup-directory">The autosetup/ directory</h3>
+
+<p>This directory contains <strong>autosetup</strong>. Normally nothing needs to be modified in this directory,
+however it is possible to add custom modules if necessary as: <code>autosetup/&lt;modulename&gt;.tcl</code></p>
+
+<p>The core of <strong>autosetup</strong> is the Tcl script <code>autosetup/autosetup</code> with the remaining files
+as support files.</p>
+
+<p>Note that a single-file version of a Tcl interpreter, <code>autosetup/jimsh0.c</code>
+is included and automatically used in case no suitable interpreter
+is found.</p>
+
+<h2 id="configuration-description-----autodef">Configuration Description &mdash; auto.def</h2>
+
+<p>The configuration process is controlled by the <code>auto.def</code> file.
+This file consists of the following sections.</p>
+
+<ul>
+  <li>module <code>use</code> declarations (must be first)</li>
+  <li>user <code>options</code> declaration (must be second)</li>
+  <li>checks for features and options</li>
+  <li>output file generation based on checks, including template-based generation</li>
+</ul>
+
+<p>A typical, simple auto.def file is:</p>
+
+<pre class="sh_autosetup">
+use cc
+
+options {
+    shared =&gt; "build a shared library"
+    lineedit=1 =&gt; "disable line editing"
+    utf8 =&gt; "enabled UTF-8 support"
+    with-regexp regexp =&gt; "use regexp"
+}
+
+cc-check-types "long long"
+cc-check-includes sys/un.h dlfcn.h
+cc-check-functions ualarm sysinfo lstat fork vfork
+cc-check-function-in-lib sqlite3_open sqlite3
+
+if {[opt-bool utf8] &amp;&amp; [have-feature fork]} {
+    msg-result "Enabling UTF-8"
+    define JIM_UTF8
+}
+make-autoconf-h config.h
+make-template Makefile.in
+</pre>
+
+<p>The <code>auto.def</code> file is written in <strong>Tcl</strong>. See <a href="/developer/tcl/">Tcl Scripting</a>
+for more information on the syntax and language features of <strong>Tcl</strong>.</p>
+
+<h3 id="module-use">module use</h3>
+
+<p><strong>autosetup</strong> contains some core configuration support, but support
+for additional features is provided by optional modules. Some modules
+such as <code>system</code>, <code>cc</code> and <code>cc-shared</code> are very common and will
+almost always be included, while additional modules may be included
+as required. See <a href="/developer/modules/">Modules</a> for more information on how
+modules can be created.</p>
+
+<p>A typical <code>use</code> declaration is:</p>
+
+<pre class="sh_autosetup">
+# The C/C++ compiler will be used and shared libraries may be needed
+use cc cc-shared
+</pre>
+
+<p>Note that the <code>system</code> module is automatically included by the <code>cc</code> module.</p>
+
+<h3 id="options-declaration">options declaration</h3>
+
+<p>Options allow the user to provide control of the build. Options may be used to specify:
+* where the build is installed
+* the toolchain to use
+* features to enable or disable
+* the location of required external components
+* and anything else which may affect how the build is performed</p>
+
+<p><strong>Note</strong>: Every auto.def <em>must</em> have an <code>options</code> declaration
+immediately after any <code>use</code> declarations, even if it is empty.  This
+ensures that <code>configure --help</code> behaves correctly.</p>
+
+<p>Options are declared as follows.</p>
+
+<pre class="sh_autosetup">
+options {
+    boolopt            =&gt; "a boolean option which defaults to disabled"
+    boolopt2=1         =&gt; "a boolean option which defaults to enabled"
+    stringopt:         =&gt; "an option which takes an argument, e.g. --stringopt=value"
+    stringopt2:=value  =&gt; "an option where the argument is optional and defaults to 'value'"
+    optalias booltopt3 =&gt; "a boolean with a hidden alias. --optalias is not shown in --help"
+    boolopt4 =&gt; {
+        Multiline description for this option
+        which is carefully formatted.
+    }
+}
+</pre>
+
+<p>The <code>=&gt;</code> syntax is used to indicate the help description for the
+option. If an option is not followed by <code>=&gt;</code>, the option is not
+displayed in <code>--help</code> but is still available.</p>
+
+<p>If the first character of the help description is a newline (as for
+<code>boolopt4</code>), the description will not be reformatted.</p>
+
+<p>String options can be specified multiple times by the user, and all given values
+are available. If there is no default value, the value must be
+specified.</p>
+
+<p>Within <code>auto.def</code>, options can be checked with the commands <code>opt-bool</code> and <code>opt-val</code>.</p>
+
+<p><code>configure --help</code> automatically displays appropriately formatted help for the declared options.
+The example above gives.</p>
+
+<pre class="sh_unix">
+$ ./configure --help
+...standard help...
+  Local Options:      
+  --boolopt             a boolean option which defaults to disabled
+  --disable-boolopt2    a boolean option which defaults to enabled
+  --stringopt=          an option which takes an argument, e.g. --stringopt=value
+  --stringopt2?=value?  an option where the argument is optional and defaults to 'value'
+  --booltopt3           a boolean with a hidden alias. --optalias is not shown in --help
+  --boolopt4          
+        Multiline description for this option
+        which is carefully formatted.
+</pre>
+
+<p>See <a href="/user/#options">Options</a> for how options are specified on the <code>autosetup</code> command line.</p>
+
+<h3 id="testing-features-and-options">Testing Features and Options</h3>
+
+<p><strong>autosetup</strong> maintains a single set of name/value pairs (<em>defines</em>) which represent the build
+environment. Some of these values are set automatically by <strong>autosetup</strong>, some are set
+by modules, some are set based on feature tests and others are set explicitly in <code>auto.def</code>.
+Some example values are:</p>
+
+<pre><code>srcdir=.
+target=x86_64-apple-darwin10.7.0
+HAVE_STDLIB_H=1
+CC=arm-linux-gcc
+SIZEOF_LONG_LONG=8
+</code></pre>
+
+<p>These <strong>defines</strong>, or <em>configuration variables</em> fall into three broad categories:</p>
+
+<ol>
+  <li>Standard system <strong>defines</strong> are lower case, such as <code>srcdir</code>, <code>host_alias</code> and <code>prefix</code></li>
+  <li>Commands, libraries and flags which would typically be substituted in a Makefile are
+uppercase, such as <code>CC</code>, <code>LIBS</code> and <code>CFLAGS</code></li>
+  <li><em>Feature</em> tests are boolean values in uppercase, always start with HAVE_ and have the value 0 or 1.
+For example, <code>HAVE_STDLIB_H</code>, <code>HAVE_REGCOMP</code> and <code>HAVE_LONG_LONG</code>. Note that a standard naming
+convention is used such that a test for <code>stdlib.h</code> sets <code>HAVE_STDLIB_H</code>, a test for the function <code>regcomp</code>
+sets <code>HAVE_REGCOMP</code> and a test for the type <code>long long</code> defines <code>HAVE_LONG_LONG</code></li>
+</ol>
+
+<p>In addition, <code>cc-check-sizeof</code> sets a numeric value and uses the SIZEOF_ prefix rather than the HAVE_ prefix.</p>
+
+<p>The goal of the testing section of <code>auto.def</code> is to set <strong>defines</strong> based on the
+development environment and the user options. <strong>autosetup</strong> provides a number of convenient commands
+for setting <strong>defines</strong> (see the command reference for full details).</p>
+
+<h4 id="direct-definition">Direct Definition</h4>
+
+<p>The <code>define</code> and <code>define-feature</code> commands directly define a value. Note that <code>define-feature</code>
+automatically applies the <em>feature</em> naming convention.</p>
+
+<pre class="sh_autosetup">
+define VERSION 1.1.3
+if {[opt-bool utf8]} {
+    define USE_UTF8
+}
+define-feature regcomp
+</pre>
+
+<p>These definitions are often made based on user options, which may
+be checked with <code>opt-bool</code> and <code>opt-val</code>.</p>
+
+<h4 id="feature-test-commands">Feature Test Commands</h4>
+
+<p>The <code>cc-xxx</code> commands run the C or C++ compiler and define <em>features</em> based on the results.</p>
+
+<pre class="sh_autosetup">
+cc-check-types "long long"
+cc-check-includes sys/un.h dlfcn.h
+cc-check-functions ualarm sysinfo lstat fork vfork
+cc-check-tools ar ranlib strip
+cc-with {-includes sys/socket.h} {
+    cc-check-members "struct msghdr.msg_control"
+}
+</pre>
+
+<h4 id="user-specified-variables">User Specified Variables</h4>
+
+<p>Any <strong>name=value</strong> parameters specified on the <code>configure</code> command line are automatically
+set as configuration variables.</p>
+
+<h3 id="output-file-generation">Output File Generation</h3>
+
+<p>In order for the feature and option checks to be useful, output files
+must be created to control the build. <strong>autosetup</strong> provides support
+for two common mechanisms.</p>
+
+<h4 id="template-substitutuion-----make-template">1. Template Substitutuion &mdash; make-template</h4>
+
+<p>The <code>make-template</code> command creates a file from a template by
+applying substitutions based on the <em>configuration variables</em>.  For
+example, any instance of <code>@CC@</code> is replace with the value of <code>CC</code>
+(e.g. <code>arm-linux-gcc</code>) in the output file.</p>
+
+<p>This approach is ideal for creating a Makefile from a template, Makefile.in.</p>
+
+<h4 id="header-file-generation-----make-autoconf-h">2. Header File Generation &mdash; make-autoconf-h</h4>
+
+<p>The <code>make-autoconf-h</code> command creates a C/C++ header file based on the <em>configuration variables</em>.
+By default, every true feature test is defined in the generated header file. It is also possible
+to output only a subset of the configuration variables, and also to include string variables
+in addition to boolean variables.</p>
+
+<p>A typical generated header file is:</p>
+
+<pre><code>#ifndef _AUTOCONF_H
+#define _AUTOCONF_H
+#define HAVE_BACKTRACE 1
+#define HAVE_DLFCN_H 1
+#define HAVE_DLOPEN 1
+#define HAVE_FORK 1
+#define HAVE_GETADDRINFO 1
+#define HAVE_GETEUID 1
+#define HAVE_INET_NTOP 1
+#define HAVE_LONG_LONG 1
+/* #undef HAVE_SYSINFO */
+#define HAVE_SYSLOG 1
+#define TCL_PLATFORM_OS "Darwin"
+#define TCL_PLATFORM_PLATFORM "unix"
+#define SIZEOF_LONG_LONG 8
+#endif
+</code></pre>
+
+<p>It is also easy to create other file formats based on configuration
+variables. For example, to produce configuration files in the Linux
+<strong>kconfig</strong> format. It is also possible to output configuration
+variables in Makefile format.</p>
+
+<h2 id="related-topics">Related Topics</h2>
+
+<ul>
+<li><a href="/developer/reference/">Command Reference</a></li>
+<li><a href="/developer/examples/">Examples</a></li>
+<li><a href="/developer/autoconf/">autoconf Comparison</a></li>
+<li><a href="/developer/advanced/">Advanced Concepts</a></li>
+</ul>
+
+        </div>
+    </div>
+    <div id="sidebar">
+      <h2>About autosetup</h2>
+      <ul>
+        
+            
+            <li><a href="/">Overview</a></li>
+        
+            
+            <li><a href="/news/">News</a></li>
+        
+            
+            <li><a href="/download/">Download</a></li>
+        
+            
+            <li><a href="/user/">Running autosetup</a></li>
+        
+            
+            <li><span class="active" title="You're here.">Developing</span></li>
+        
+            
+            <li><a href="/developer/examples/">Examples</a></li>
+        
+            
+            <li><a href="/license/">License</a></li>
+        
+      </ul>
+      <h2>Community</h2>
+      <ul>
+        <li><a href="https://github.com/msteveb/autosetup">autosetup on github</a></li>
+        <li><a href="https://github.com/msteveb/autosetup/commits/master">» commit history</a></li>
+        <li><a href="https://github.com/msteveb/autosetup/issues">» open issues</a></li>
+      </ul>
+    </div>
+    
+	<div href="#" id="related" onmouseover="show_related(1)" onmouseout="show_related(0)">
+		<h2><img id="star" width="16" height="18" src="/img/star16.png"> Related Topics</h2>
+		<div id="related_menu" style="display: none">
+		<ul>
+<li><a href="/developer/reference/">Command Reference</a></li>
+<li><a href="/developer/examples/">Examples</a></li>
+<li><a href="/developer/autoconf/">autoconf Comparison</a></li>
+<li><a href="/developer/advanced/">Advanced Concepts</a></li>
+</ul>
+
+		</div>
+	</div>
+    <script language="javascript">
+		function show_related(on)
+		{
+			document.getElementById('related_menu').style.display = on ? 'block' : 'none';
+		}
+	</script>
+    
+    <script language="javascript">sh_highlightDocument();</script>
+  </body>
+</html>

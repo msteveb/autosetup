@@ -1,0 +1,923 @@
+<!DOCTYPE HTML>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>autosetup - </title>
+    <link rel="stylesheet" type="text/css" href="/css/style.css" media="screen">
+    <link rel="stylesheet" type="text/css" href="/css/sh_style.css" media="screen">
+    
+    <script src="/javascript/sh_main.min.js" type="text/javascript"></script>
+    <script src="/javascript/sh_lang.js" type="text/javascript"></script>
+    <script src="/javascript/motionpack.js" type="text/javascript"></script>
+    <meta name="generator" content="nanoc 3.1.6">
+  </head>
+  <body>
+    <div id="header">
+      <h1 id="blog-title">autosetup</h1>
+      <p id="description">A build environment "autoconfigurator"</p>
+    </div>
+    <div id="content">
+        <div class="breadcrumbs">
+        
+        
+            <a href="/">Overview</a> 
+            » 
+        
+            <a href="/usermanual/"></a> 
+             
+        
+        </div>
+        <div class="main" id="main">
+        
+        <h1 id="autosetup-v060----user-manual">autosetup v0.6.0 &ndash; User Manual</h1>
+
+<h2 id="introduction">1. Introduction</h2>
+
+<p><strong>autosetup</strong> is a tool, similar to <strong><code>autoconf</code></strong>, to configure a build system for the appropriate environment, according to the system capabilities and the user configuration.</p>
+
+<p>autosetup is designed to be light-weight, fast, simple and flexible.</p>
+
+<p>Notable features include:</p>
+
+<ul>
+  <li>Easily check for headers, functions, types for C/C++</li>
+  <li>Easily support user configuration options</li>
+  <li>Can generate files based on templates, such as Makefile.in =&gt; Makefile</li>
+  <li>Can generate header files based on checked features</li>
+  <li>Excellent support for cross compilation</li>
+  <li>Replacement for autoconf in many situations</li>
+  <li>Runs with either Tcl 8.5+, Jim Tcl or just a C compiler (using the included Jim Tcl source code!)</li>
+  <li>autosetup is intended to be distributed with projects - no version issues</li>
+</ul>
+
+<p>autosetup is particularly targeted towards building C/C++ applications on Unix systems, however it can be extended for other environments as needed.</p>
+
+<p>autosetup is <em>not</em>:</p>
+
+<ul>
+  <li>A build system</li>
+  <li>A replacement for automake</li>
+  <li>Intended to replace all possible uses of autoconf</li>
+</ul>
+
+<h2 id="usage">2. Usage</h2>
+
+<p>autosetup accepts both standard options as well as local options defined in the <strong><code>auto.def</code></strong> file, and options for modules. Use <strong><code>autosetup --help</code></strong> to show all available options.</p>
+
+<pre><code>autosetup ?options? ?settings?
+</code></pre>
+
+<p>Some important core options are:</p>
+
+<pre><code>-C dir           change to the given directory before running autosetup
+--help           display help and options
+--version        display the version of autosetup
+--manual?=text?  display the autosetup manual. Alternative formats are 'wiki' and 'asciidoc'
+--install        install autosetup to the current directory
+--init           create an initial 'configure' script if none exists
+</code></pre>
+
+<p>Settings are of the form <strong><code>name=value</code></strong> and must be after any options. These settings allow the default values to be overridden for variables such as <strong><code>CC</code></strong> and <strong><code>CFLAGS</code></strong>.</p>
+
+<p>Optional modules may support additional options. For example, the cc module supports the following additional options.</p>
+
+<pre><code>--host=host-alias     a complete or partial cpu-vendor-opsys for the system where the
+                      application will run (defaults to the same value as --build)
+--build=build-alias   a complete or partial cpu-vendor-opsys for the system where the
+                      application will be built (defaults to the result of running
+                      config.guess)
+--prefix=dir          the target directory for the build (defaults to /usr/local)
+</code></pre>
+
+<p>Typically, autosetup is invoked via a simpler wrapper script, <strong><code>configure</code></strong>. This provides for compatibility with autoconf. For example:</p>
+
+<pre><code>./configure --host=arm-linux --utf8 --prefix=/usr CFLAGS="-g -Os"
+</code></pre>
+
+<h2 id="features">3. Features</h2>
+
+<h3 id="configuration-descriptions-are-tcl">3.1. Configuration Descriptions are Tcl</h3>
+
+<p>Configuration requirements are given in an <strong><code>auto.def</code></strong> file and are written in <strong><code>Tcl</code></strong>, a language slightly less obscure than <strong><code>m4</code></strong>! As a full language, there are no additional dependencies on the host system such as <strong><code>awk</code></strong>, <strong><code>sed</code></strong> and <strong><code>bash</code></strong>.</p>
+
+<p>Tcl is widely available on modern development platforms. Configuration descriptions are designed to look more like declarations than code. It is easy to write autosetup configuration descriptions with no knowledge of Tcl.</p>
+
+<h3 id="simple-configuration-descriptions">3.2. Simple Configuration Descriptions</h3>
+
+<p>A typical, simple auto.def file is:</p>
+
+<pre><code>use cc
+
+options {
+    shared =&gt; "build a shared library"
+    lineedit=1 =&gt; "disable line editing"
+    utf8 =&gt; "enabled UTF-8 support"
+    with-regexp regexp =&gt; "use regexp"
+}
+
+cc-check-types "long long"
+cc-check-includes sys/un.h dlfcn.h
+cc-check-functions ualarm sysinfo lstat fork vfork
+cc-check-function-in-lib sqlite3_open sqlite3
+
+if {[opt-bool utf8] &amp;&amp; [have-feature fork]} {
+    msg-result "Enabling UTF-8"
+    define JIM_UTF8
+}
+make-autoconf-h config.h
+make-template Makefile.in
+</code></pre>
+
+<h3 id="fast">3.3. Fast</h3>
+
+<p>All the processing occurs in a single process, aside from invocations of the C compiler. Here are the results of a typical configure for a small project. <strong><code>autoconf</code></strong> is particularly slow on <strong><code>cygwin</code></strong>.</p>
+
+<pre><code>              autoconf     autosetup
+              ---------    ---------
+Linux            4.1s         1.3s
+Mac OS X         6.4s         2.8s
+cygwin          91.5s         9.9s
+</code></pre>
+
+<h3 id="deploys-directly-within-a-project">3.4. Deploys directly within a project</h3>
+
+<p>autosetup is deployed as a single subdirectory, autosetup, at the top level of a project, containing a handful of files. This approach (inspired by waf - <a href="http://code.google.com/p/waf/">http://code.google.com/p/waf/)</a>) means that there are no dependency issues with different versions of autosetup since an appropriate version is part of the project.</p>
+
+<p>autosetup is written in Tcl, but can run under any of the following Tcl interpreters:</p>
+
+<ul>
+  <li>Tcl 8.5 or later</li>
+  <li>Jim Tcl - a small footprint, portable Tcl interpreter</li>
+</ul>
+
+<p>The source code for Jim Tcl is included directly within autosetup and is automatically built if no other Tcl interpreter is available.</p>
+
+<pre><code>$ ./configure --help
+No installed jimsh or tclsh, building local bootstrap jimsh0
+Usage: configure [options]
+
+   This is autosetup, a faster, better alternative to autoconf.
+   Use the --manual option for the full autosetup manual, including
+   standard autosetup options.
+
+Local options:
+  --shared            Create a shared library
+  --disable-utf8      Disable utf8 support
+</code></pre>
+
+<h3 id="no-separate-generaterun-step">3.5. No separate generate/run step</h3>
+
+<p>autosetup parses <strong><code>auto.def</code></strong> and updates the configuration in a single step. This simplifies and speeds development. It also means that both developers and users (those building the project from source) follow the same configure/build procedure.</p>
+
+<h2 id="writing-autodef-files">4. Writing auto.def files</h2>
+
+<p><strong><code>auto.def</code></strong> files are generally simple to write, but have the full power of Tcl if required for implementing complex checks or option processing. The <strong><code>auto.def</code></strong> file is structured as follows:</p>
+
+<ul>
+  <li><strong><code>use</code></strong> optional modules</li>
+  <li><strong><code>options</code></strong> declaration</li>
+  <li>environment checks and option processing</li>
+  <li>template, header file and other output generation</li>
+</ul>
+
+<h3 id="optional-modules">4.1. Optional modules</h3>
+
+<p>autosetup includes the common, optional modules <strong><code>cc</code></strong> and <strong><code>cc-shared</code></strong>. If these modules are required, the <em>must</em> be declared <em>before</em> <strong><code>options</code></strong> so that any module-specific options can be recognised.</p>
+
+<pre><code># This project checks for C/C++ features
+use cc
+# And supports shared libraries/shared objects
+use cc-shared
+
+options { ... }
+</code></pre>
+
+<h3 id="declaring-user-options">4.2. Declaring User Options</h3>
+
+<p>Allowed options are defined using the <strong><code>options</code></strong> declaration in the <strong><code>auto.def</code></strong> file.</p>
+
+<p><em>Note</em>: Every auto.def <em>must</em> have an <strong><code>options</code></strong> declaration immediately after any <strong><code>use</code></strong> declarations, even if it is empty. This ensures that <strong><code>configure --help</code></strong> behaves correctly.</p>
+
+<p>Options are declared as follows.</p>
+
+<pre><code>options {
+    boolopt            =&gt; "a boolean option which defaults to disabled"
+    boolopt2=1         =&gt; "a boolean option which defaults to enabled"
+    stringopt:         =&gt; "an option which takes an argument, e.g. --stringopt=value"
+    stringopt2:=value  =&gt; "an option where the argument is optional and defaults to 'value'"
+    optalias booltopt3 =&gt; "a boolean with a hidden alias. --optalias is not shown in --help"
+    boolopt4 =&gt; {
+        Multiline description for this option
+        which is carefully formatted.
+    }
+}
+</code></pre>
+
+<p>The <strong><code>=&gt;</code></strong> syntax is used to indicate the help description for the option. If an option is not followed by <strong><code>=&gt;</code></strong>, the option is not displayed in <strong><code>--help</code></strong> but is still available.</p>
+
+<p>If the first character of the help description is a newline (as for <strong><code>boolopt4</code></strong>), the description will not be reformatted.</p>
+
+<p>String options can be specified multiple times, and all given values are available. If there is no default value, the value must be specified.</p>
+
+<p>Within <strong><code>auto.def</code></strong>, options are checked with the commands <strong><code>opt-bool</code></strong> and <strong><code>opt-val</code></strong>.</p>
+
+<h3 id="setting-options">4.3. Setting Options</h3>
+
+<p>Boolean options can be enabled or disabled with one of the following forms (some of which are for autoconf compatibility):</p>
+
+<p>To <em>enable</em> an option:</p>
+
+<pre><code>--boolopt
+--enable-boolopt
+--boolopt=1
+--boolopt=yes
+</code></pre>
+
+<p>To <em>disable</em> an option:</p>
+
+<pre><code>--disable-boolopt
+--boolopt=0
+--boolopt=no
+</code></pre>
+
+<p>String options must have a value specified, unless the option has a default value.</p>
+
+<pre><code>--stropt          - OK if a default value is given for stropt
+--stropt=value    - Adds the given value for the option
+</code></pre>
+
+<h3 id="configuration-variables">4.4. Configuration Variables</h3>
+
+<p>At it&rsquo;s heart, autosetup is about examining user options, performing checks and setting configuration variables representing the options and environment. These variables are set either directly with the <strong><code>define</code></strong> or <strong><code>define-feature</code></strong> commands, or indirectly via one of the test commands such as <strong><code>cc-check-includes</code></strong>.</p>
+
+<p>All configuration variables are available for template substitution (<strong><code>make-template</code></strong>), header file generation (<strong><code>make-autoconf-h</code></strong>) or can be tested and set within <strong><code>auto.def</code></strong>. Certain naming conventions are used to provide expected behaviour.</p>
+
+<p>All commands which check for the existence of a feature, use HAVE_xxx as the name of the corresponding variable (this is autoconf compatible). See <strong><code>feature-define-name</code></strong> for the rules used to convert a feature name to a variable name.</p>
+
+<pre><code>cc-check-includes time.h sys/types.h      =&gt; HAVE_TIME_H HAVE_SYS_TYPES_H
+cc-check-functions strlcat                =&gt; HAVE_STRLCAT
+cc-check-types "long long" "struct stat"  =&gt; HAVE_LONG_LONG HAVE_STRUCT_STAT
+</code></pre>
+
+<p>These two are equivalent:</p>
+
+<pre><code>have-feature sys/types.h
+get-define HAVE_SYS_TYPE_H
+</code></pre>
+
+<p><strong><code>cc-check-sizeof</code></strong> uses the SIZEOF_ prefix rather than the HAVE_ prefix.</p>
+
+<p>Variables used to store command names are simply the uppercase of the base command.</p>
+
+<pre><code>CC              - The C compiler
+LD              - The linker
+AR              - ar
+RANLIB          - ranlib
+</code></pre>
+
+<h3 id="configure">4.5. configure</h3>
+
+<p>In order to provide compatibility with autoconf, and to simplify out-of-tree builds, autosetup can be run via a simple <strong><code>configure</code></strong> script. The following script is created by <strong><code>autosetup --init</code></strong>.</p>
+
+<pre><code>#!/bin/sh
+dir="$(dirname "$0")/autosetup"
+WRAPPER="$0" exec $("$dir/find-tclsh" || echo false) "$dir/autosetup" "$@"
+</code></pre>
+
+<p>This script invokes autosetup in the autosetup/ subdirectory after setting the <strong><code>WRAPPER</code></strong> environment variable.</p>
+
+<p><strong><code>autosetup --init</code></strong> will create this script if it doesn&rsquo;t exist.</p>
+
+<h3 id="checking-features">4.6. Checking Features</h3>
+
+<p>Apart from checking user options, the primary purpose of autosetup and <strong><code>auto.def</code></strong> is to check for the availability of features in the environment. The <strong><code>cc</code></strong> module provides commands to check various settings by compiling small test programs with the specified C compiler. The following is a typical example:</p>
+
+<pre><code>use cc
+options {}
+cc-check-types "long long"
+cc-check-includes sys/un.h
+cc-check-functions regcomp waitpid sigaction
+cc-check-tools ar ranlib strip
+</code></pre>
+
+<p>See the command reference for details of these built-in checks.</p>
+
+<h3 id="selecting-the-language">4.7. Selecting the Language</h3>
+
+<p>The low level <strong><code>cctest</code></strong> commands provides the <strong><code>-lang</code></strong> option to select the language to use for tests. This can be used in conjunction with <strong><code>cc-with</code></strong> to set the language for a series of tests.</p>
+
+<pre><code>cc-with {-lang c++} {
+    # All tests now use the C++ compiler -- $(CXX) and $(CXXFLAGS)
+    cc-check-types bool
+}
+# Or just set it for the rest of the file
+cc-with {-lang c++}
+...
+</code></pre>
+
+<h3 id="controlling-the-build">4.8. Controlling the build</h3>
+
+<p>Once the user options have been processed and the environment checked for supported features, it is necessary to use this information to control the build. The <strong><code>cc</code></strong> module provides two mechanisms for this:</p>
+
+<ul>
+  <li><strong><code>make-template</code></strong> creates a file from a template by applying substitutions based on the configuration variables. For example, replacing <strong><code>@CC@</code></strong> with <strong><code>arm-linux-gcc</code></strong>.</li>
+  <li><strong><code>make-autoconf-h</code></strong> creates a C/C++ header file based on the configuration variables</li>
+</ul>
+
+<p>It is easy to create other file formats based on configuration variables. For example, to produce configuration files in the Linux <strong><code>kconfig</code></strong> format. It is also possible to output configuration variables in Makefile format.</p>
+
+<p>autosetup has far more control over generating files to control the build than autoconf since the configuration variables are directly accessible in <strong><code>Tcl</code></strong> from <strong><code>auto.def</code></strong>. See <strong><code>all-defines</code></strong> and <strong><code>examples/testbed/auto.def</code></strong>.</p>
+
+<h3 id="a-standard-makefilein">4.9. A &ldquo;standard&rdquo; Makefile.in</h3>
+
+<p>If autosetup is being used to control a make-based build system, the use of a a <strong><code>Makefile.in</code></strong> with a standard structure will provide behaviour similar to that provided by autoconf/automake systems. autosetup provides a typical <strong><code>Makefile.in</code></strong> in <strong><code>examples/typical/Makefile.in</code></strong>. This example provides the following:</p>
+
+<ul>
+  <li>Use CC, AR, RANLIB as determined by cross compiler settings or user overrides</li>
+  <li>Install to &ndash;prefix, overridable with DESTDIR</li>
+  <li>Use VPATH to support out-of-tree builds</li>
+  <li>Dummy automake targets to allow for use as a subproject with automake</li>
+  <li>Automatically reconfigure if auto.def changes</li>
+</ul>
+
+<h2 id="command-reference">5. Command Reference</h2>
+
+<p>autosetup provides a number of built-in commands which are documented below. These may be used from <strong><code>auto.def</code></strong> to test for features, define variables create files from templates and other similar actions.</p>
+
+<p>This commands are all implemented as Tcl procedures. Custom commands may be added simply by defining additional Tcl procedures in the <strong><code>auto.def</code></strong> file, and custom modules may be added by creating files with a <strong><code>.tcl</code></strong> extension in the autosetup directory.</p>
+
+<h3 id="core-commands">5.1. Core Commands</h3>
+
+<dl>
+  <dt><strong>opt-bool option &hellip;</strong></dt>
+  <dd>Check each of the named, boolean options and return 1 if any of them have
+been set by the user.</dd>
+</dl>
+
+<dl>
+  <dt><strong>opt-val option-list ?default=&rdquo;&rdquo;?</strong></dt>
+  <dd>Returns a list containing all the values given for the non-boolean options in &lsquo;option-list&rsquo;.
+There will be one entry in the list for each option given by the user, including if the
+same option was used multiple times.
+If only a single value is required, use something like:</dd>
+</dl>
+
+<pre><code>lindex [opt-val $names] end
+</code></pre>
+
+<p>If no options were set, $default is returned (exactly, not as a list).</p>
+
+<dl>
+  <dt><strong>define name ?value=1?</strong></dt>
+  <dd>Defines the named variable to the given value.
+These name, values pairs represent the results of the configuration check
+and are available to be checked, modified and substituted.</dd>
+</dl>
+
+<dl>
+  <dt><strong>define-append name value &hellip;</strong></dt>
+  <dd>Appends the given value(s) to the given &lsquo;defined&rsquo; variable.
+If the variable is not defined or empty, it is set to $value.
+Otherwise the value is appended, separated by a space.
+Any extra values are also appended</dd>
+</dl>
+
+<dl>
+  <dt><strong>get-define name ?default=0?</strong></dt>
+  <dd>Returns the current value of the &lsquo;defined&rsquo; variable, or $default
+if not set.</dd>
+</dl>
+
+<dl>
+  <dt><strong>is-defined name</strong></dt>
+  <dd>Returns 1 if the given variable is defined.</dd>
+</dl>
+
+<dl>
+  <dt><strong>all-defines</strong></dt>
+  <dd>Returns a dictionary (name value list) of all defined variables.</dd>
+  <dd>This is suitable for use with &lsquo;dict&rsquo;, &lsquo;array set&rsquo; or &lsquo;foreach&rsquo;
+and allows for arbitrary processing of the defined variables.</dd>
+</dl>
+
+<dl>
+  <dt><strong>get-env name default</strong></dt>
+  <dd>If $name was specified on the command line, return it.
+If $name was set in the environment, return it.
+Otherwise return $default.</dd>
+</dl>
+
+<dl>
+  <dt><strong>env-is-set name</strong></dt>
+  <dd>Returns 1 if the $name was specified on the command line or in the environment.</dd>
+</dl>
+
+<dl>
+  <dt><strong>readfile filename ?default=&rdquo;&rdquo;?</strong></dt>
+  <dd>Return the contents of the file, without the trailing newline.
+If the doesn&rsquo;t exist or can&rsquo;t be read, returns $default.</dd>
+</dl>
+
+<dl>
+  <dt><strong>writefile filename value</strong></dt>
+  <dd>Creates the given file containing $value.
+Does not add an extra newline.</dd>
+</dl>
+
+<dl>
+  <dt><strong>find-executable name</strong></dt>
+  <dd>Searches the path for an executable with the given name.
+Note that the name may include some parameters, e.g. &ldquo;cc -mbig-endian&rdquo;,
+in which case the parameters are ignored.
+Returns 1 if found, or 0 if not.</dd>
+</dl>
+
+<dl>
+  <dt><strong>find-an-executable ?-required? name &hellip;</strong></dt>
+  <dd>Given a list of possible executable names,
+searches for one of these on the path.</dd>
+  <dd>Returns the name found, or &ldquo;&rdquo; if none found.
+If the first parameter is &lsquo;-required&rsquo;, an error is generated
+if no executable is found.</dd>
+</dl>
+
+<dl>
+  <dt><strong>configlog msg</strong></dt>
+  <dd>Writes the given message to the configuration log, config.log</dd>
+</dl>
+
+<dl>
+  <dt><strong>msg-checking msg</strong></dt>
+  <dd>Writes the message with no newline to stdout.</dd>
+</dl>
+
+<dl>
+  <dt><strong>msg-result msg</strong></dt>
+  <dd>Writes the message to stdout.</dd>
+</dl>
+
+<dl>
+  <dt><strong>msg-quiet command &hellip;</strong></dt>
+  <dd>msg-quiet evaluates it&rsquo;s arguments as a command with output
+from msg-checking and msg-result suppressed.</dd>
+  <dd>This is useful if a check needs to run a subcheck which isn&rsquo;t
+of interest to the user.</dd>
+</dl>
+
+<dl>
+  <dt><strong>user-error msg</strong></dt>
+  <dd>Indicate incorrect usage to the user, including if required components
+or features are not found.
+autosetup exits with a non-zero return code.</dd>
+</dl>
+
+<dl>
+  <dt><strong>user-notice msg</strong></dt>
+  <dd>Output the given message to stderr.</dd>
+</dl>
+
+<dl>
+  <dt><strong>use module &hellip;</strong></dt>
+  <dd>Load the given library modules.
+e.g. use cc cc-shared</dd>
+</dl>
+
+<h3 id="module-cc-shared">5.2. Module: cc-shared</h3>
+
+<p>Module which provides support for shared libraries and shared objects.
+Defines the following variables:</p>
+
+<pre><code>SH_CFLAGS         Flags to use compiling sources destined for a shared library
+SH_LDFLAGS        Flags to use linking a shared library
+SHOBJ_CFLAGS      Flags to use compiling sources destined for a shared object
+SHOBJ_LDFLAGS     Flags to use linking a shared object
+SH_LINKFLAGS      Flags to use linking an executable which will load shared objects
+LD_LIBRARY_PATH   Environment variable which specifies path to shared libraries
+</code></pre>
+
+<h3 id="module-cc">5.3. Module: cc</h3>
+
+<p>This module supports checking various &lsquo;features&rsquo; of the C or C++
+compiler/linker environment. Common commands are cc-check-includes,
+cc-check-types, cc-check-functions, cc-with, make-autoconf-h and make-template.</p>
+
+<p>The following environment variables are used if set:</p>
+
+<pre><code>CC       - C compiler
+CXX      - C++ compiler
+CCACHE   - Set to "none" to disable automatic use of ccache
+CFLAGS   - Additional C compiler flags
+CXXFLAGS - Additional C++ compiler flags
+LDFLAGS  - Additional compiler flags during linking
+LIBS     - Additional libraries to use (for all tests)
+CROSS    - Tool prefix for cross compilation
+</code></pre>
+
+<p>The following variables are defined from the corresponding
+environment variables if set.</p>
+
+<pre><code>CPPFLAGS
+LINKFLAGS
+CC_FOR_BUILD
+LD
+</code></pre>
+
+<dl>
+  <dt><strong>cc-check-sizeof type &hellip;</strong></dt>
+  <dd>Checks the size of the given types (between 1 and 32, inclusive).
+Defines a variable with the size determined, or &ldquo;unknown&rdquo; otherwise.
+e.g. for type &lsquo;long long&rsquo;, defines SIZEOF_LONG_LONG.
+Returns the size of the last type.</dd>
+</dl>
+
+<dl>
+  <dt><strong>cc-check-includes includes &hellip;</strong></dt>
+  <dd>Checks that the given include files can be used</dd>
+</dl>
+
+<dl>
+  <dt><strong>cc-check-types type &hellip;</strong></dt>
+  <dd>Checks that the types exist.</dd>
+</dl>
+
+<dl>
+  <dt><strong>cc-check-functions function &hellip;</strong></dt>
+  <dd>Checks that the given functions exist (can be linked)</dd>
+</dl>
+
+<dl>
+  <dt><strong>cc-check-members type.member &hellip;</strong></dt>
+  <dd>Checks that the given type/structure members exist.
+A structure member is of the form &ldquo;struct stat.st_mtime&rdquo;</dd>
+</dl>
+
+<dl>
+  <dt><strong>cc-check-function-in-lib function libs ?otherlibs?</strong></dt>
+  <dd>Checks that the given given function can be found on one of the libs.</dd>
+  <dd>First checks for no library required, then checks each of the libraries
+in turn.</dd>
+  <dd>If the function is found, the feature is defined and lib_$function is defined
+to -l$lib where the function was found, or &ldquo;&rdquo; if no library required.
+In addition, -l$lib is added to the LIBS define.</dd>
+  <dd>If additional libraries may be needed to linked, they should be specified
+as $extralibs as &ldquo;-lotherlib1 -lotherlib2&rdquo;.
+These libraries are not automatically added to LIBS.</dd>
+  <dd>Returns 1 if found or 0 if not.</dd>
+</dl>
+
+<dl>
+  <dt><strong>cc-check-tools tool &hellip;</strong></dt>
+  <dd>Checks for existence of the given compiler tools, taking
+into account any cross compilation prefix.</dd>
+  <dd>For example, when checking for &ldquo;ar&rdquo;, first AR is checked on the command
+line and then in the environment. If not found, &ldquo;${host}-ar&rdquo; or
+simply &ldquo;ar&rdquo; is assumed depending upon whether cross compiling.
+The path is searched for this executable, and if found AR is defined
+to the executable name.</dd>
+  <dd>It is an error if the executable is not found.</dd>
+</dl>
+
+<dl>
+  <dt><strong>cc-check-progs prog &hellip;</strong></dt>
+  <dd>Checks for existence of the given executables on the path.</dd>
+  <dd>For example, when checking for &ldquo;grep&rdquo;, the path is searched for
+the executable, &lsquo;grep&rsquo;, and if found GREP is defined as &ldquo;grep&rdquo;.</dd>
+  <dd>It the executable is not found, the variable is defined as false.
+Returns 1 if all programs were found, or 0 otherwise.</dd>
+</dl>
+
+<dl>
+  <dt><strong>cc-with settings ?{ script }?</strong></dt>
+  <dd>Sets the given &lsquo;cctest&rsquo; settings and then runs the tests in &lsquo;script&rsquo;.
+Note that settings such as -lang replace the current setting, while
+those such as -includes are appended to the existing setting.</dd>
+  <dd>If no script is given, the settings become the default for the remainder
+of the auto.def file.</dd>
+</dl>
+
+<pre><code>cc-with {-lang c++} {
+  # This will check with the C++ compiler
+  cc-check-types bool
+  cc-with {-includes signal.h} {
+    # This will check with the C++ compiler, signal.h and any existing includes.
+    ...
+  }
+  # back to just the C++ compiler
+}
+</code></pre>
+
+<p>The -libs setting is special in that newer values are added <em>before</em> earlier ones.</p>
+
+<pre><code>cc-with {-libs {-lc -lm}} {
+  cc-with {-libs -ldl} {
+    cctest -libs -lsocket ...
+    # libs will be in this order: -lsocket -ldl -lc -lm
+  }
+}
+</code></pre>
+
+<dl>
+  <dt><strong>cctest ?settings?</strong></dt>
+  <dd>Low level C compiler checker. Compiles and or links a small C program
+according to the arguments and returns 1 if OK, or 0 if not.</dd>
+  <dd>Supported settings are:</dd>
+</dl>
+
+<pre><code>-cflags cflags      A list of flags to pass to the compiler
+-includes list      A list of includes, e.g. {stdlib.h stdio.h}
+-declare code       Code to declare before main()
+-link 1             Don't just compile, link too
+-lang c|c++         Use the C (default) or C++ compiler
+-libs liblist       List of libraries to link, e.g. {-ldl -lm}
+-code code          Code to compile in the body of main()
+-source code        Compile a complete program. Ignore -includes, -declare and -code
+-sourcefile file    Shorthand for -source [readfile [get-define srcdir]/$file]
+</code></pre>
+
+<p>Unless -source or -sourcefile is specified, the C program looks like:</p>
+
+<pre><code>#include &lt;firstinclude&gt;   /* same for remaining includes in the list */
+
+declare-code              /* any code in -declare, verbatim */
+
+int main(void) {
+  code                    /* any code in -code, verbatim */
+  return 0;
+}
+</code></pre>
+
+<p>Any failures are recorded in &lsquo;config.log&rsquo;</p>
+
+<dl>
+  <dt><strong>make-autoconf-h outfile ?patternlist?</strong></dt>
+  <dd>Examines all defined variables which match the given patterns
+and writes an include file, $file, which defines each of these.
+- defines which have the value &ldquo;0&rdquo; are ignored.
+- defines which have integer values are defined as the integer value.
+- any other value is defined as a string, e.g. &ldquo;value&rdquo;</dd>
+  <dd>If the file would be unchanged, it is not written.</dd>
+</dl>
+
+<h3 id="module-system">5.4. Module: system</h3>
+
+<p>This module supports common system interrogation and options
+such as &ndash;host, &ndash;build, &ndash;prefix, and setting srcdir, builddir, and EXEXT.</p>
+
+<p>It also support the &lsquo;feature&rsquo; naming convention, where searching
+for a feature such as sys/type.h defines HAVE_SYS_TYPES_H</p>
+
+<dl>
+  <dt><strong>have-feature name ?default=0?</strong></dt>
+  <dd>Returns the value of the feature if defined, or $default if not.
+See &lsquo;feature-define-name&rsquo; for how the feature name
+is translated into the define name.</dd>
+</dl>
+
+<dl>
+  <dt><strong>define-feature name ?value=1?</strong></dt>
+  <dd>Sets the feature &lsquo;define&rsquo; to the given value.
+See &lsquo;feature-define-name&rsquo; for how the feature name
+is translated into the define name.</dd>
+</dl>
+
+<dl>
+  <dt><strong>feature-checked name</strong></dt>
+  <dd>Returns 1 if the feature has been checked, whether true or not</dd>
+</dl>
+
+<dl>
+  <dt><strong>feature-define-name name ?prefix=HAVE_?</strong></dt>
+  <dd>Converts a name to the corresponding define,
+e.g. sys/stat.h becomes HAVE_SYS_STAT_H.</dd>
+  <dd>Converts * to P and all non-alphanumeric to underscore.</dd>
+</dl>
+
+<dl>
+  <dt><strong>make-template template ?outfile?</strong></dt>
+  <dd>Reads the input file <srcdir>/$template and writes the output file $outfile.
+If $outfile is blank/omitted, $template should end with ".in" which
+is removed to create the output file name.</srcdir></dd>
+  <dd>Each pattern of the form @define@ is replaced the the corresponding
+define, if it exists, or left unchanged if not.</dd>
+  <dd>The special value @srcdir@ is subsituted with the relative
+path to the source directory from the directory where the output
+file is created. Use @top_srcdir@ for the absolute path.</dd>
+</dl>
+
+<h2 id="examples">6. Examples</h2>
+
+<p>autosetup includes a number of examples, including:</p>
+
+<ul>
+  <li><strong><code>examples/typical</code></strong> - A simple, but full featured example</li>
+  <li><strong><code>examples/minimal</code></strong> - A minimal example</li>
+  <li><strong><code>examples/jimtcl</code></strong> - The Jim Tcl project uses autosetup</li>
+</ul>
+
+<p>These examples can be found along with the autosetup source at <a href="https://github.com/msteveb/autosetup">https://github.com/msteveb/autosetup</a></p>
+
+<h2 id="cross-compiling">8. Cross Compiling</h2>
+
+<p>In general, cross compilation works the same way as autoconf. Generally this simply means specifying &ndash;host=<target-alias>. For example, if you have arm-linux-gcc and related tools, run:</target-alias></p>
+
+<pre><code>./configure --host=arm-linux
+</code></pre>
+
+<p>If additional compiler options are needed, such as -mbig-endian, these can be specified with <strong><code>CFLAGS</code></strong>. In this case, the default <strong><code>CFLAGS</code></strong> of &ldquo;-g -O2&rdquo; won&rsquo;t be used so the desired debugging and optimisation flags should also be added.</p>
+
+<pre><code>./configure --host=arm-linux CFLAGS="-mbig-endian -msoft-float -static-libgcc -g -Os"
+</code></pre>
+
+<p>If the compiler and related tools have a non-standard prefix, it may be necessary to set CROSS in addition to &ndash;host.</p>
+
+<pre><code>./configure --host=arm-linux CROSS=my-
+</code></pre>
+
+<p>In this case, C the compiler should be named my-cc or my-gcc, and similarly for the other tools. This is usually simpler than specifying CC, AR, RANLIB, STRIP, etc.</p>
+
+<h2 id="installing">9. Installing</h2>
+
+<p>Like autoconf, autosetup uses a combination of <strong><code>--prefix</code></strong> and <strong><code>DESTDIR</code></strong> to determine where the project is installed.</p>
+
+<p>The <strong><code>--prefix</code></strong> option is used during with <strong><code>./configure</code></strong> to specify the top level installation directory. It defaults to <strong><code>/usr/local</code></strong>. Use <strong><code>--prefix=</code></strong> to install at the top level (e.g. <strong><code>/bin</code></strong>). The application may use this value (via <strong><code>@prefix@</code></strong> or one of the related values such as <strong><code>@bindir@</code></strong>) to find files at runtime.</p>
+
+<p>The <strong><code>DESTDIR</code></strong> Makefile variable may be used at installation time to specify an different install root directory. This is especially useful to stage the installed files in a temporary location before they are installed to their final location (e.g. when building a filesystem for an embedded target). It defaults to the empty string (i.e. files are installed to <strong><code>--prefix</code></strong>).</p>
+
+<pre><code>./configure --prefix=/usr
+make DESTDIR=/tmp/staging install
+</code></pre>
+
+<p>autosetup has no special support for installing other than providing <strong><code>--prefix</code></strong>. The use of <strong><code>DESTDIR</code></strong> is by convention. In order to provide expected behaviour, Makefile.in should contain something like:</p>
+
+<pre><code>prefix = @prefix@
+...
+install: all
+    @echo Installing from @srcdir@ and `pwd` to $(DESTDIR)$(prefix)
+</code></pre>
+
+<h2 id="automatic-remaking">10. Automatic remaking</h2>
+
+<p>It is convenient for configure to be rerun automatically if any of the input files change (for example autosetup or any of the template files). This can be achieved by adding the following to Makefile.in.</p>
+
+<pre><code>ifeq ($(findstring clean,$(MAKECMDGOALS)),)
+Makefile: @AUTODEPS@ @srcdir@/Makefile.in
+        @@AUTOREMAKE@
+endif
+</code></pre>
+
+<p>It may also be convenient to add a target to force reconfiguring with the same options.</p>
+
+<pre><code>reconfig:
+        @AUTOREMAKE@
+</code></pre>
+
+<h2 id="shipping-autosetup">11. Shipping autosetup</h2>
+
+<p>autosetup is designed to be deployed directly as part of a project. It is installed as a single subdirectory, autosetup, at the top level of a project.</p>
+
+<p>In addition to autosetup, the following files are required for an autosetup-enabled project.</p>
+
+<ul>
+  <li>auto.def</li>
+  <li>configure (generated by autosetup &ndash;init)</li>
+  <li>Makefile.in (and any other template specified in auto.def)</li>
+</ul>
+
+<h2 id="extending-autosetup">12. Extending autosetup</h2>
+
+<p>Local modules can be added directly to the autosetup directory and loaded with the <strong><code>use</code></strong> command.</p>
+
+<h2 id="future-featureschanges">13. Future Features/Changes</h2>
+
+<p>Some features are not yet implemented, but are candidates for including in an existing module, or adding to a new module. Others may require changes to the core <strong>autosetup</strong>.</p>
+
+<ul>
+  <li>Explicit C++ support</li>
+  <li>pkg-config support (although pkg-config has poor support for cross compiling)</li>
+  <li>More fully-featured shared library support</li>
+  <li>Support for additional languages</li>
+  <li>libtool support (if we must!)</li>
+  <li>Subdirectory support. Need to resolve how options are parsed, and how variables interact between subdirectories.</li>
+</ul>
+
+<h2 id="motivation">14. Motivation</h2>
+
+<p>autoconf does the job and supports many platforms, but it suffers from at least the following problems:</p>
+
+<ul>
+  <li>Requires configuration descriptions in a combination of m4 and shell scripts</li>
+  <li>Creates 10,000 line shell scripts which are slow to run and impossible to debug</li>
+  <li>Requires a multi-stage process of aclocal =&gt; autoheader =&gt; autoconf =&gt; configure =&gt; Makefile + config.h</li>
+</ul>
+
+<p>autosetup attempts to address these issues as follows by directly parsing a simple <strong><code>auto.def</code></strong> file, written in Tcl, and directly generating output files such as config.h and Makefile.</p>
+
+<p>autosetup runs under either Tcl 8.5, which is available on almost any modern system, or Jim Tcl. Jim Tcl is very easy to build on almost any system in the case where Tcl is not available.</p>
+
+<h2 id="references">15. References</h2>
+
+<ul>
+  <li><a href="http://freshmeat.net/articles/stop-the-autoconf-insanity-why-we-need-a-new-build-system">http://freshmeat.net/articles/stop-the-autoconf-insanity-why-we-need-a-new-build-system</a></li>
+  <li><a href="http://www.varnish-cache.org/docs/2.1/phk/autocrap.html">http://www.varnish-cache.org/docs/2.1/phk/autocrap.html</a></li>
+  <li><a href="http://wiki.tcl.tk/27197">http://wiki.tcl.tk/27197</a></li>
+  <li><a href="http://jim.berlios.de/">http://jim.berlios.de/</a></li>
+  <li><a href="http://www.gnu.org/software/hello/manual/autoconf/index.html">http://www.gnu.org/software/hello/manual/autoconf/index.html</a></li>
+  <li><a href="http://www.flameeyes.eu/autotools-mythbuster/index.html">http://www.flameeyes.eu/autotools-mythbuster/index.html</a></li>
+</ul>
+
+<h3 id="comments-on-autoconf">15.1. Comments on autoconf</h3>
+
+<ul>
+  <li><a href="http://news.ycombinator.com/item?id=1499738">http://news.ycombinator.com/item?id=1499738</a></li>
+  <li><a href="http://developers.slashdot.org/article.pl?sid=04/05/21/0154219">http://developers.slashdot.org/article.pl?sid=04/05/21/0154219</a></li>
+  <li><a href="http://www.airs.com/blog/archives/95">http://www.airs.com/blog/archives/95</a></li>
+</ul>
+
+<h3 id="alternative-autoconf-alternatives">15.2. Alternative autoconf Alternatives</h3>
+
+<ul>
+  <li><a href="http://pmk.sourceforge.net/faq.php">http://pmk.sourceforge.net/faq.php</a> - PMK</li>
+  <li><a href="https://e-reports-ext.llnl.gov/pdf/315457.pdf">https://e-reports-ext.llnl.gov/pdf/315457.pdf</a> - autokonf</li>
+</ul>
+
+<h2 id="copyright-author-and-licence">16. Copyright, Author and Licence</h2>
+
+<p>autosetup is Copyright (c) 2010 WorkWare Systems <a href="http://workware.net.au/">http://workware.net.au/</a></p>
+
+<p>autosetup was written by Steve Bennett <a href="&#109;&#097;&#105;&#108;&#116;&#111;:&#115;&#116;&#101;&#118;&#101;&#098;&#064;&#119;&#111;&#114;&#107;&#119;&#097;&#114;&#101;&#046;&#110;&#101;&#116;&#046;&#097;&#117;">&#115;&#116;&#101;&#118;&#101;&#098;&#064;&#119;&#111;&#114;&#107;&#119;&#097;&#114;&#101;&#046;&#110;&#101;&#116;&#046;&#097;&#117;</a></p>
+
+<p>autosetup is released under the &ldquo;2-clause FreeBSD Licence&rdquo; as follows.</p>
+
+<pre><code>autosetup - An environment "autoconfigurator"
+
+Copyright 2010 Steve Bennett &lt;steveb@workware.net.au&gt;
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions
+are met:
+
+1) Redistributions of source code must retain the above copyright
+   notice, this list of conditions and the following disclaimer.
+2) Redistributions in binary form must reproduce the above
+   copyright notice, this list of conditions and the following
+   disclaimer in the documentation and/or other materials
+   provided with the distribution.
+
+THIS SOFTWARE IS PROVIDED BY THE WORKWARE SYSTEMS ``AS IS'' AND ANY
+EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
+THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A
+PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL WORKWARE
+SYSTEMS OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
+ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+The views and conclusions contained in the software and documentation
+are those of the authors and should not be interpreted as representing
+official policies, either expressed or implied, of WorkWare Systems.
+</code></pre>
+
+
+        </div>
+    </div>
+    <div id="sidebar">
+      <h2>About autosetup</h2>
+      <ul>
+        
+            
+            <li><a href="/">Overview</a></li>
+        
+            
+            <li><a href="/news/">News</a></li>
+        
+            
+            <li><a href="/download/">Download</a></li>
+        
+            
+            <li><a href="/user/">Running autosetup</a></li>
+        
+            
+            <li><a href="/developer/">Developing</a></li>
+        
+            
+            <li><a href="/developer/examples/">Examples</a></li>
+        
+            
+            <li><a href="/license/">License</a></li>
+        
+      </ul>
+      <h2>Community</h2>
+      <ul>
+        <li><a href="https://github.com/msteveb/autosetup">autosetup on github</a></li>
+        <li><a href="https://github.com/msteveb/autosetup/commits/master">» commit history</a></li>
+        <li><a href="https://github.com/msteveb/autosetup/issues">» open issues</a></li>
+      </ul>
+    </div>
+    
+    <script language="javascript">sh_highlightDocument();</script>
+  </body>
+</html>

@@ -1,0 +1,260 @@
+<!DOCTYPE HTML>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>autosetup - Running autosetup</title>
+    <link rel="stylesheet" type="text/css" href="/css/style.css" media="screen">
+    <link rel="stylesheet" type="text/css" href="/css/sh_style.css" media="screen">
+    
+    <script src="/javascript/sh_main.min.js" type="text/javascript"></script>
+    <script src="/javascript/sh_lang.js" type="text/javascript"></script>
+    <script src="/javascript/motionpack.js" type="text/javascript"></script>
+    <meta name="generator" content="nanoc 3.1.6">
+  </head>
+  <body>
+    <div id="header">
+      <h1 id="blog-title">autosetup</h1>
+      <p id="description">A build environment "autoconfigurator"</p>
+    </div>
+    <div id="content">
+        <div class="breadcrumbs">
+        
+        
+            <a href="/">Overview</a> 
+            » 
+        
+            <a href="/user/">Running autosetup</a> 
+             
+        
+        </div>
+        <div class="main" id="main">
+        
+        <h1 id="building-an-autosetup-enabled-project">Building an autosetup-enabled Project</h1>
+
+<h2 id="introduction">Introduction</h2>
+
+<p>The purpose of <strong>autosetup</strong> is to adapt a project build to
+the local development environment, including compilers, libraries,
+and selected user options.</p>
+
+<p>Building an <strong>autosetup</strong>-enabled project is almost identical to building
+an <strong>autoconf</strong>-enabled project except it is faster and simpler.</p>
+
+<p>Your project will include an <strong>autosetup</strong> wrapper, <code>configure</code>, and
+an <strong>autosetup</strong> control file, <code>auto.def</code> at the top level. <strong>autosetup</strong> is invoked
+via the <code>configure</code> script.</p>
+
+<pre class="sh_unix">
+$ ./configure
+</pre>
+
+<p>A more complex example might be:</p>
+
+<pre class="sh_unix">
+$ ./configure --host=arm-linux --utf8 --with-ext="regexp tree" --prefix=/usr CFLAGS="-g -Os"
+</pre>
+
+<h2 id="configuring">Configuring</h2>
+
+<p><strong>autosetup</strong>-enabled projects support various command-line options to
+control the configuration process. These options include both
+standard <strong>autosetup</strong> options and project-specific options.</p>
+
+<p>Use <code>configure --help</code> for a full list of the supported options.</p>
+
+<pre><code>Usage: configure [options] [settings]
+
+   This is autosetup, a faster, better alternative to autoconf.
+   Use the --manual option for the full autosetup manual.
+
+  --help?=local?       display help and options. Optionally specify a module name, such
+                       as --help=system
+  --version            display the version of autosetup
+  --manual?=text?      display the autosetup manual. Other formats: 'wiki', 'asciidoc',
+                       'markdown'
+  --debug              display debugging output as autosetup runs
+  --install            install autosetup to the current directory (in the 'autosetup/'
+                       subdirectory)
+  --init               create an initial 'configure' script if none exists
+  --host=host-alias    a complete or partial cpu-vendor-opsys for the system where the
+                       application will run (defaults to the same value as --build)
+  --build=build-alias  a complete or partial cpu-vendor-opsys for the system where the
+                       application will be built (defaults to the result of running
+                       config.guess)
+  --prefix=dir         the target directory for the build (defaults to /usr/local)
+  Local Options:     
+  --shared             Create a shared library
+  --disable-utf8       Disable utf8 support
+  --disable-largefile  Disable large file support
+</code></pre>
+
+<p>In many cases, <code>configure</code> can be run without any arguments to select the default
+options. Once the configuration process is complete, <code>make</code> is typically used to build
+the project. Thus the typical configuration and build process is:</p>
+
+<pre class="sh_unix">
+$ ./configure
+...output...
+$ make
+...output...
+</pre>
+
+<p>Note that <code>configure</code> need only be run once unless the compiler or environment changes,
+or different options need to selected.</p>
+
+<h2 id="options">Options</h2>
+<p>There two types of options, <strong>boolean</strong> options and <strong>string</strong> options. <strong>boolean</strong> options simply
+enable or disable a feature, while <strong>string</strong> options take an additional parameter.</p>
+
+<h3 id="boolean-options">Boolean Options</h3>
+
+<p>Boolean options are either enabled or disabled by default. The following output from
+<code>configure --help</code> shows two boolean options.</p>
+
+<pre><code>--shared             Create a shared library
+--disable-utf8       Disable utf8 support
+</code></pre>
+
+<p>Here, <code>shared</code> is an option which is disabled by default, while <code>utf8</code> is an option
+which is enabled by default.</p>
+
+<p>For convenience, boolean options may be enabled or disabled in various ways.
+To <strong>enable</strong> an option:</p>
+
+<pre><code>--boolopt
+--enable-boolopt
+--boolopt=1
+--boolopt=yes
+</code></pre>
+
+<p>To <strong>disable</strong> an option:</p>
+
+<pre><code>--disable-boolopt
+--boolopt=0
+--boolopt=no
+</code></pre>
+
+<h3 id="string-options">String Options</h3>
+
+<p>String options take a parameter, however a default value <em>may</em> be provided for the the parameter.
+The following output from <code>configure --help</code> shows two string options.</p>
+
+<pre><code>--manual?=text?      display the autosetup manual. Other formats: 'wiki', 'asciidoc',
+                     'markdown'
+--host=host-alias    a complete or partial cpu-vendor-opsys for the system where the
+                     application will run (defaults to the same value as --build)
+</code></pre>
+
+<p>Here, <code>manual</code> is a string option with a default parameter value
+(<strong>text</strong>), while <code>host</code> is a string option which requires a
+parameter.</p>
+
+<h2 id="environment-variables">Environment Variables</h2>
+<p>The <code>configure</code> command line may specify additional environment
+variable settings after any options.</p>
+
+<p>From example, consider the following:</p>
+
+<pre class="sh_unix">
+$ ./configure --utf8 CFLAGS="-Os"
+</pre>
+
+<p>In this case, the setting for CFLAGS overrides the default (-g -O2).</p>
+
+<p>Environment variables are checked in the following priority order:</p>
+
+<ol>
+  <li>Values specified on the command line</li>
+  <li>Values from the environment</li>
+  <li>System defaults, possibly derived from other settings</li>
+</ol>
+
+<p>In addition to project-specific environment variables (which should be documented
+with the project), some modules have environment variables which can be changed.
+For example, from the <strong>cc</strong> module reference:</p>
+
+<pre><code>The following environment variables are used if set:
+
+CC       - C compiler
+CXX      - C++ compiler
+CCACHE   - Set to "none" to disable automatic use of ccache
+CFLAGS   - Additional C compiler flags
+CXXFLAGS - Additional C++ compiler flags
+LDFLAGS  - Additional compiler flags during linking
+LIBS     - Additional libraries to use (for all tests)
+CROSS    - Tool prefix for cross compilation
+
+The following variables are defined from the corresponding
+environment variables if set.
+
+CPPFLAGS
+LINKFLAGS
+CC_FOR_BUILD
+LD
+</code></pre>
+
+<h2 id="related-topics">Related Topics</h2>
+
+<ul>
+<li><a href="/user/outoftree/">Build Out-of-Tree</a></li>
+<li><a href="/user/crosscompiling/">Cross Compiling</a></li>
+<li><a href="/user/installing/">Installing</a></li>
+</ul>
+
+        </div>
+    </div>
+    <div id="sidebar">
+      <h2>About autosetup</h2>
+      <ul>
+        
+            
+            <li><a href="/">Overview</a></li>
+        
+            
+            <li><a href="/news/">News</a></li>
+        
+            
+            <li><a href="/download/">Download</a></li>
+        
+            
+            <li><span class="active" title="You're here.">Running autosetup</span></li>
+        
+            
+            <li><a href="/developer/">Developing</a></li>
+        
+            
+            <li><a href="/developer/examples/">Examples</a></li>
+        
+            
+            <li><a href="/license/">License</a></li>
+        
+      </ul>
+      <h2>Community</h2>
+      <ul>
+        <li><a href="https://github.com/msteveb/autosetup">autosetup on github</a></li>
+        <li><a href="https://github.com/msteveb/autosetup/commits/master">» commit history</a></li>
+        <li><a href="https://github.com/msteveb/autosetup/issues">» open issues</a></li>
+      </ul>
+    </div>
+    
+	<div href="#" id="related" onmouseover="show_related(1)" onmouseout="show_related(0)">
+		<h2><img id="star" width="16" height="18" src="/img/star16.png"> Related Topics</h2>
+		<div id="related_menu" style="display: none">
+		<ul>
+<li><a href="/user/outoftree/">Build Out-of-Tree</a></li>
+<li><a href="/user/crosscompiling/">Cross Compiling</a></li>
+<li><a href="/user/installing/">Installing</a></li>
+</ul>
+
+		</div>
+	</div>
+    <script language="javascript">
+		function show_related(on)
+		{
+			document.getElementById('related_menu').style.display = on ? 'block' : 'none';
+		}
+	</script>
+    
+    <script language="javascript">sh_highlightDocument();</script>
+  </body>
+</html>

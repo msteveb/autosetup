@@ -1,0 +1,242 @@
+<!DOCTYPE HTML>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>autosetup - autoconf Comparison</title>
+    <link rel="stylesheet" type="text/css" href="/css/style.css" media="screen">
+    <link rel="stylesheet" type="text/css" href="/css/sh_style.css" media="screen">
+    
+    <script src="/javascript/sh_main.min.js" type="text/javascript"></script>
+    <script src="/javascript/sh_lang.js" type="text/javascript"></script>
+    <script src="/javascript/motionpack.js" type="text/javascript"></script>
+    <meta name="generator" content="nanoc 3.1.6">
+  </head>
+  <body>
+    <div id="header">
+      <h1 id="blog-title">autosetup</h1>
+      <p id="description">A build environment "autoconfigurator"</p>
+    </div>
+    <div id="content">
+        <div class="breadcrumbs">
+        
+        
+            <a href="/">Overview</a> 
+            » 
+        
+            <a href="/developer/">Developing with autosetup</a> 
+            » 
+        
+            <a href="/developer/autoconf/">autoconf Comparison</a> 
+             
+        
+        </div>
+        <div class="main" id="main">
+        
+        <h1 id="tips-on-moving-from-autoconf">Tips on moving from autoconf</h1>
+
+<p>From a user perspective, <strong>autosetup</strong> is highly compatible with an <strong>autoconf</strong>-generated <code>configure</code> script.</p>
+
+<h2 id="user-level-differences">User-level Differences</h2>
+
+<h3 id="no---target---build-is">No &ndash;target, &ndash;build is</h3>
+
+<p>In <strong>autoconf</strong>, <code>--target</code> identifies the final target of a cross-compilation tool, while
+<code>--build</code> identifies the current build system.</p>
+
+<p>To illustrate, if the build runs on architecture <strong>B</strong> to produce a tool which runs on architecture <strong>H</strong>
+which in turn produces executables witch run on architecture <strong>T</strong>, the relationship is:</p>
+
+<ul>
+  <li><code>--build  =&gt;</code> <strong>B</strong></li>
+  <li><code>--host   =&gt;</code> <strong>H</strong></li>
+  <li><code>--target =&gt;</code> <strong>T</strong></li>
+</ul>
+
+<p><strong>autosetup</strong> guesses the build architecture by running <code>config.guess</code>, but in any case the build architecture
+is almost never necessary.</p>
+
+<p>The target architecture is only necessary where the project builds a cross-compilation tool.
+<strong>autosetup</strong> has no explicit support for this. Instead, such projects can implement the <code>--target</code> option explicitly.</p>
+
+<p>The host architecture <em>is</em> supported with the <code>--host</code> option, and defaults to the build architecture if not specified.</p>
+
+<h3 id="no-override-of-tests">No override of tests</h3>
+
+<p><strong>autoconf</strong> allows individual tests to be overridded by setting the corresponding environment
+variable directly. e.g.</p>
+
+<pre class="sh_unix">
+$ ac_cv_func_malloc_0_nonnull=yes ./configure 
+</pre>
+
+<p><strong>autosetup</strong> does not allow tests to be overridden. If settings cannot be detected reliably, developers
+should provide explicit options to specify the result. e.g.</p>
+
+<pre class="sh_unix">
+$ ./configure --malloc-zero-nonnull
+</pre>
+
+<h2 id="developer-level-differences">Developer-level Differences</h2>
+
+<h3 id="single-variable-namespace">Single variable namespace</h3>
+
+<p>All variables defined with <code>define</code> and <code>define-feature</code> use a
+single namespace. This essentially means that AC_SUBST and AC_DEFINE
+are equivalent, which simplifies configuration in practice.</p>
+
+<h3 id="no-autoheader">No autoheader</h3>
+
+<p>autosetup has no need for <code>autoheader</code> since a configuration header
+file can simply be generated directly (see <code>make-autoconf-h</code>) without
+a template.</p>
+
+<h3 id="no-subdirectory-support">No subdirectory support</h3>
+
+<p>autoconf supports configuring subdirectories with AC_CONFIG_SUBDIRS.
+autosetup has no explicit support for this feature.</p>
+
+<h3 id="no-automake">No automake</h3>
+
+<p>autosetup is not designed to be used with automake. autosetup is
+flexible enough to be used with plain <code>make</code>, or other builds
+systems.</p>
+
+<h3 id="no-actryrun">No AC_TRY_RUN</h3>
+
+<p>autosetup has no equivalent of AC_TRY_RUN which attempts to run a
+test program. This feature is often used unnecessarily, and is
+useless when cross compiling, which is a core feature of autosetup.</p>
+
+<p>Developers are encouraged to provide common defaults, with user-settable options
+for these features.</p>
+
+<h3 id="modern-platform-assumption">Modern Platform Assumption</h3>
+
+<p>autoconf includes support for many old and obsolete platforms. Most
+of these are no longer relevant. autosetup assumes that the build
+environment is somewhat POSIX compliant. This includes both cygwin
+and mingw on Windows.</p>
+
+<p>Thus, there is no need to check for standard headers such as stdlib.h, string.h, etc.</p>
+
+<h3 id="checking-for-programs">Checking for programs</h3>
+
+<p>The equalivalent of AC_PROG_xxxx is the flexible <code>cc-check-progs</code></p>
+
+<pre class="sh_autosetup">
+if {![cc-check-progs grep]} {
+    user-error "You don't have grep, but we need it"
+}
+foreach prog {gawk mawk nawk awk false} {
+    if {[cc-check-progs $prog]} {
+        define AWK $prog
+        break
+    }
+}
+# If not found, AWK is defined as false
+</pre>
+
+<h3 id="checking-for-functions">Checking for functions</h3>
+
+<p>The equivalent of AC_FUNC_xxx is the flexible <code>cc-check-functions</code></p>
+
+<h3 id="no-special-commands-to-use-replacement-functions">No special commands to use replacement functions</h3>
+
+<p>Instead consider something like the following.</p>
+
+<pre class="sh_autosetup">
+# auto.def: Check all functions
+cc-check-functions strtod backtrace
+
+/* replacements.c */
+#include "config.h"
+#ifndef HAVE_STRTOD
+double strtod(...) { /* implementation */ }
+#endif
+</pre>
+
+<p>Alternatively, implement each missing function in it&rsquo;s own file.</p>
+
+<pre class="sh_autosetup">
+define EXTRA_OBJS ""
+foreach f {strtod backtrace} {
+    if {![cc-check-functions $f]} {
+        define-append EXTRA_OBJS $f.o
+    }
+}
+</pre>
+
+<h3 id="default-checks-do-not-use-any-include-files">Default checks do not use any include files.</h3>
+
+<p>autoconf normally adds certain include files to every test build,
+such as stdio.h. This can cause problems where declarations in these
+standard includes conflict with the code being tested. For this
+reason, autosetup compile tests use no standard includes. If includes
+are required, they should be added explicitly.</p>
+
+<pre class="sh_autosetup">
+cc-check-includes sys/socket.h sys/stat.h
+cc-with {-includes sys/socket.h} {
+    cc-check-members "struct msghdr.msg_control"
+}
+cc-with {-includes sys/stat.h} {
+    cc-check-members "struct stat.st_mtime" "struct stat.st_atime" "struct stat.st_size"
+}
+</pre>
+
+<h3 id="checking-for-include-files">Checking for include files</h3>
+
+<p>When adding include files to a test, <code>cctest</code> will automatically omit
+any include files which have been checked and do not exist. If any
+includes have been specified but not checked, a warning is given.</p>
+
+<pre class="sh_autosetup">
+cc-with {-includes sys/socket.h} {
+    cc-check-members "struct msghdr.msg_control"
+}
+</pre>
+
+<pre class="sh_unix">
+$ ./configure
+Warning: using #include &lt;sys/socket.h&gt; which has not been checked -- ignoring
+</pre>
+
+        </div>
+    </div>
+    <div id="sidebar">
+      <h2>About autosetup</h2>
+      <ul>
+        
+            
+            <li><a href="/">Overview</a></li>
+        
+            
+            <li><a href="/news/">News</a></li>
+        
+            
+            <li><a href="/download/">Download</a></li>
+        
+            
+            <li><a href="/user/">Running autosetup</a></li>
+        
+            
+            <li><a href="/developer/">Developing</a></li>
+        
+            
+            <li><a href="/developer/examples/">Examples</a></li>
+        
+            
+            <li><a href="/license/">License</a></li>
+        
+      </ul>
+      <h2>Community</h2>
+      <ul>
+        <li><a href="https://github.com/msteveb/autosetup">autosetup on github</a></li>
+        <li><a href="https://github.com/msteveb/autosetup/commits/master">» commit history</a></li>
+        <li><a href="https://github.com/msteveb/autosetup/issues">» open issues</a></li>
+      </ul>
+    </div>
+    
+    <script language="javascript">sh_highlightDocument();</script>
+  </body>
+</html>

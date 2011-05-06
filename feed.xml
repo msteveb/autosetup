@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+  <id>http://msteveb.github.com/autosetup/</id>
+  <title>autosetup News</title>
+  <updated>2011-05-04T14:00:00Z</updated>
+  <link rel="alternate" href="http://msteveb.github.com/autosetup/"/>
+  <link rel="self" href="http://msteveb.github.com/autosetup/feed.xml"/>
+  <author>
+    <name>steveb@workware.net.au</name>
+    <uri>mailto:steveb@workware.net.au</uri>
+  </author>
+  <entry>
+    <id>tag:msteveb.github.com,2011-05-05:/autosetup/articles/2011-05-05/</id>
+    <title type="html">New Website Launched</title>
+    <published>2011-05-04T14:00:00Z</published>
+    <updated>2011-05-04T14:00:00Z</updated>
+    <link rel="alternate" href="http://msteveb.github.com/autosetup/articles/2011-05-05/"/>
+    <content type="html">&lt;p&gt;The &lt;strong&gt;autosetup&lt;/strong&gt; project has a new &lt;a href="http://msteveb.github.com/autosetup/"&gt;website&lt;/a&gt;
+with better, more approachable documentation.&lt;/p&gt;
+
+&lt;p&gt;The new website includes separate documentation for &lt;a href="/user/"&gt;users&lt;/a&gt; and &lt;a href="/developer/"&gt;developers&lt;/a&gt;&lt;/p&gt;
+</content>
+  </entry>
+  <entry>
+    <id>tag:msteveb.github.com,2010-12-14:/autosetup/articles/2010-12-14/</id>
+    <title type="html">Initial release of autosetup</title>
+    <published>2010-12-13T14:00:00Z</published>
+    <updated>2010-12-13T14:00:00Z</updated>
+    <link rel="alternate" href="http://msteveb.github.com/autosetup/articles/2010-12-14/"/>
+    <content type="html">&lt;p&gt;The initial version of &lt;strong&gt;autosetup&lt;/strong&gt; &amp;mdash; a faster, better autoconf &amp;mdash; has been released.
+Find it on github at &lt;a href="https://github.com/msteveb/autosetup/"&gt;https://github.com/msteveb/autosetup/&lt;/a&gt;&lt;/p&gt;
+</content>
+  </entry>
+</feed>

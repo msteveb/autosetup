@@ -2,7 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="utf-8">
-    <title>autosetup - Overview</title>
+    <title>autosetup - Cross Compiling</title>
     <link rel="stylesheet" type="text/css" href="/css/style.css" media="screen">
     <link rel="stylesheet" type="text/css" href="/css/sh_style.css" media="screen">
     
@@ -21,48 +21,57 @@
         
         
             <a href="/">Overview</a> 
+            » 
+        
+            <a href="/user/">Running autosetup</a> 
+            » 
+        
+            <a href="/user/crosscompiling/">Cross Compiling</a> 
              
         
         </div>
         <div class="main" id="main">
         
-        <h2 id="introduction-to-autosetup">Introduction to autosetup</h2>
+        <h1 id="cross-compiling">Cross Compiling</h1>
 
-<p><strong>autosetup</strong> is a tool, similar to <strong>autoconf</strong>, to configure a
-build system for the appropriate environment, according to the
-system capabilities and the user-selected options.</p>
+<p><strong>autosetup</strong> is designed to make cross compiling very easy.
+If you have a toolchain installed with the <em>standard</em> GNU naming
+convention, cross compiling should <em>&ldquo;just work&rdquo;</em>.</p>
 
-<p><strong>autosetup</strong> is designed to be light-weight, fast, simple and flexible.</p>
+<p>For example, if you have <code>arm-linux-cc</code>, <code>arm-linux-ar</code>, etc.
+then building with this toolchain is as simple as:</p>
 
-<p>Notable features include:</p>
+<pre class="sh_unix">
+$ ./configure --host=arm-linux
+</pre>
 
+<p>If specific options need to be passed to the compiler, they
+can be set by overriding <code>CC</code>. e.g.</p>
+
+<pre class="sh_unix">
+$ ./configure --host=arm-linux CC="arm-linux-gcc -mbig-endian"
+</pre>
+
+<p>Note that this approach is preferred rather than setting <code>CFLAGS</code>
+as it allows the user to override <code>CFLAGS</code> at build time.</p>
+
+<h2 id="overriding-the-cross-compiler-prefix">Overriding the cross compiler prefix</h2>
+
+<p>In general, <code>--host</code> should be used to specify the toolchain prefix.
+However it may be desirable to override the toolchain prefix. This is
+possible with the <code>CROSS</code> environment variable. For example:</p>
+
+<pre class="sh_unix">
+$ ./configure --host=arm-linux CROSS=my-
+</pre>
+
+<p>This will use the C compiler, <code>my-cc</code> or <code>my-gcc</code>, the archive tool, <code>my-ar</code>, etc.</p>
+
+<h2 id="additional-topics">Additional Topics</h2>
 <ul>
-  <li>Easily check for headers, functions, types for C/C++</li>
-  <li>Easily support user configuration options</li>
-  <li>Can generate files based on templates, such as Makefile.in =&gt; Makefile</li>
-  <li>Can generate header files based on checked features</li>
-  <li>Excellent support for cross compilation</li>
-  <li>Replacement for autoconf in many situations</li>
-  <li>Runs with either Tcl 8.5+, <a href="http://jim.berlios.de">Jim Tcl</a> or just a C compiler (using the included Jim Tcl source code!)</li>
-  <li>autosetup is intended to be distributed with projects - no version mismatch issues</li>
-</ul>
-
-<p>autosetup is particularly targeted towards building C/C++ applications
-on Unix systems, however it can be extended for other environments
-as needed.</p>
-
-<p><strong>autosetup</strong> is <em>not</em>:</p>
-
-<ul>
-  <li>A complete build system</li>
-  <li>A replacement for automake</li>
-  <li>Intended to replace all possible uses of autoconf</li>
-</ul>
-
-<h2 id="getting-started">Getting Started</h2>
-<ul>
-  <li><a href="/user/">Building an autosetup-enabled project</a> <em>(for users)</em></li>
-  <li><a href="/developer/">Adding autosetup support to a project</a> <em>(for developers)</em></li>
+  <li>CC_FOR_BUILD</li>
+  <li>&ndash;build</li>
+  <li>&lt;/installing/&gt;</li>
 </ul>
 
         </div>
@@ -72,7 +81,7 @@ as needed.</p>
       <ul>
         
             
-            <li><span class="active" title="You're here.">Overview</span></li>
+            <li><a href="/">Overview</a></li>
         
             
             <li><a href="/news/">News</a></li>

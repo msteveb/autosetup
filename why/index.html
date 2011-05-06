@@ -1,0 +1,110 @@
+<!DOCTYPE HTML>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>autosetup - </title>
+    <link rel="stylesheet" type="text/css" href="/css/style.css" media="screen">
+    <link rel="stylesheet" type="text/css" href="/css/sh_style.css" media="screen">
+    
+    <script src="/javascript/sh_main.min.js" type="text/javascript"></script>
+    <script src="/javascript/sh_lang.js" type="text/javascript"></script>
+    <script src="/javascript/motionpack.js" type="text/javascript"></script>
+    <meta name="generator" content="nanoc 3.1.6">
+  </head>
+  <body>
+    <div id="header">
+      <h1 id="blog-title">autosetup</h1>
+      <p id="description">A build environment "autoconfigurator"</p>
+    </div>
+    <div id="content">
+        <div class="breadcrumbs">
+        
+        
+            <a href="/">Overview</a> 
+            » 
+        
+            <a href="/why/"></a> 
+             
+        
+        </div>
+        <div class="main" id="main">
+        
+        <h2 id="motivation">14. Motivation</h2>
+
+<p>autoconf does the job and supports many platforms, but it suffers from at least the following problems:</p>
+
+<ul>
+  <li>Requires configuration descriptions in a combination of m4 and shell scripts</li>
+  <li>Creates 10,000 line shell scripts which are slow to run and impossible to debug</li>
+  <li>Requires a multi-stage process of aclocal =&gt; autoheader =&gt; autoconf =&gt; configure =&gt; Makefile + config.h</li>
+</ul>
+
+<p>autosetup attempts to address these issues as follows by directly parsing a simple <strong><code>auto.def</code></strong> file, written in Tcl, and directly generating output files such as config.h and Makefile.</p>
+
+<p>autosetup runs under either Tcl 8.5, which is available on almost any modern system, or Jim Tcl. Jim Tcl is very easy to build on almost any system in the case where Tcl is not available.</p>
+
+<h2 id="references">15. References</h2>
+
+<ul>
+  <li><a href="http://freshmeat.net/articles/stop-the-autoconf-insanity-why-we-need-a-new-build-system">http://freshmeat.net/articles/stop-the-autoconf-insanity-why-we-need-a-new-build-system</a></li>
+  <li><a href="http://www.varnish-cache.org/docs/2.1/phk/autocrap.html">http://www.varnish-cache.org/docs/2.1/phk/autocrap.html</a></li>
+  <li><a href="http://wiki.tcl.tk/27197">http://wiki.tcl.tk/27197</a></li>
+  <li><a href="http://jim.berlios.de/">http://jim.berlios.de/</a></li>
+  <li><a href="http://www.gnu.org/software/hello/manual/autoconf/index.html">http://www.gnu.org/software/hello/manual/autoconf/index.html</a></li>
+  <li><a href="http://www.flameeyes.eu/autotools-mythbuster/index.html">http://www.flameeyes.eu/autotools-mythbuster/index.html</a></li>
+</ul>
+
+<h3 id="comments-on-autoconf">15.1. Comments on autoconf</h3>
+
+<ul>
+  <li><a href="http://news.ycombinator.com/item?id=1499738">http://news.ycombinator.com/item?id=1499738</a></li>
+  <li><a href="http://developers.slashdot.org/article.pl?sid=04/05/21/0154219">http://developers.slashdot.org/article.pl?sid=04/05/21/0154219</a></li>
+  <li><a href="http://www.airs.com/blog/archives/95">http://www.airs.com/blog/archives/95</a></li>
+</ul>
+
+<h3 id="alternative-autoconf-alternatives">15.2. Alternative autoconf Alternatives</h3>
+
+<ul>
+  <li><a href="http://pmk.sourceforge.net/faq.php">http://pmk.sourceforge.net/faq.php</a> - PMK</li>
+  <li><a href="https://e-reports-ext.llnl.gov/pdf/315457.pdf">https://e-reports-ext.llnl.gov/pdf/315457.pdf</a> - autokonf</li>
+</ul>
+
+        </div>
+    </div>
+    <div id="sidebar">
+      <h2>About autosetup</h2>
+      <ul>
+        
+            
+            <li><a href="/">Overview</a></li>
+        
+            
+            <li><a href="/news/">News</a></li>
+        
+            
+            <li><a href="/download/">Download</a></li>
+        
+            
+            <li><a href="/user/">Running autosetup</a></li>
+        
+            
+            <li><a href="/developer/">Developing</a></li>
+        
+            
+            <li><a href="/developer/examples/">Examples</a></li>
+        
+            
+            <li><a href="/license/">License</a></li>
+        
+      </ul>
+      <h2>Community</h2>
+      <ul>
+        <li><a href="https://github.com/msteveb/autosetup">autosetup on github</a></li>
+        <li><a href="https://github.com/msteveb/autosetup/commits/master">» commit history</a></li>
+        <li><a href="https://github.com/msteveb/autosetup/issues">» open issues</a></li>
+      </ul>
+    </div>
+    
+    <script language="javascript">sh_highlightDocument();</script>
+  </body>
+</html>

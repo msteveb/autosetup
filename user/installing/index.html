@@ -1,0 +1,122 @@
+<!DOCTYPE HTML>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>autosetup - Installing</title>
+    <link rel="stylesheet" type="text/css" href="/css/style.css" media="screen">
+    <link rel="stylesheet" type="text/css" href="/css/sh_style.css" media="screen">
+    
+    <script src="/javascript/sh_main.min.js" type="text/javascript"></script>
+    <script src="/javascript/sh_lang.js" type="text/javascript"></script>
+    <script src="/javascript/motionpack.js" type="text/javascript"></script>
+    <meta name="generator" content="nanoc 3.1.6">
+  </head>
+  <body>
+    <div id="header">
+      <h1 id="blog-title">autosetup</h1>
+      <p id="description">A build environment "autoconfigurator"</p>
+    </div>
+    <div id="content">
+        <div class="breadcrumbs">
+        
+        
+            <a href="/">Overview</a> 
+            » 
+        
+            <a href="/user/">Running autosetup</a> 
+            » 
+        
+            <a href="/user/installing/">Installing</a> 
+             
+        
+        </div>
+        <div class="main" id="main">
+        
+        <h1 id="installing">Installing</h1>
+
+<p>An <strong>autosetup</strong>-enabled project will typically have an <code>install</code> target in the <code>Makefile</code>.
+If the project follows the <strong>autoconf</strong> conventions, two settings may be used
+to control where the build results are installed, <code>--prefix</code> and <code>$DESTDIR</code>.</p>
+
+<h2 id="using---prefix">Using <code>--prefix</code></h2>
+
+<p>By default, the install prefix is set to <code>/usr/local</code>. This means that binaries
+are installed to <code>/usr/local/bin</code>, manual pages to <code>/usr/local/man</code>, etc.</p>
+
+<p>The <code>--prefix</code> option changes this install prefix. For example, <code>--prefix=/usr</code> will install
+to <code>/usr</code>, while <code>--prefix=</code> will install to the root directory (<code>/bin</code>, <code>/man</code>, etc.)</p>
+
+<p>Note that the given prefix may be used withing the project to locate it&rsquo;s files at runtime,
+so it should match the actual target destination.</p>
+
+<h2 id="using-destdir-to-stage-installation">Using <code>$DESTDIR</code> to stage installation</h2>
+
+<p>In addition to <code>--prefix</code>, the <code>$DESTDIR</code> environment variable controls the root of the tree
+under which the build results are installed. This is an <strong>install time</strong> environment variable, not
+a <strong>configure time</strong> environment variable. Consider:</p>
+
+<pre class="sh_unix">
+$ ./configure --prefix=/usr
+$ make DESTDIR=/tmp/staging install
+</pre>
+
+<p>Here, the project is configured to install to <code>/usr</code> on the final target, but the files are copied
+to <code>/tmp/staging/usr/bin</code>, etc. This can be used to stage installation to a temporary directory before
+installation in the final location.</p>
+
+<p>This is often done when cross compiling to build an installation filesystem, or when creating a binary
+package for later installation.</p>
+
+<h2 id="additional-installation-locations">Additional Installation Locations</h2>
+
+<p>In addition to <code>--prefix</code>, <strong>autosetup</strong> supports the following <strong>autoconf</strong>-compatible options to override the installation
+location of specific build results. Note that the project may or may not have support for these
+options, and their use is discouraged.</p>
+
+<pre><code>--includedir
+--mandir
+--infodir
+--libexecdir
+--sysconfdir
+--localstatedir
+</code></pre>
+
+        </div>
+    </div>
+    <div id="sidebar">
+      <h2>About autosetup</h2>
+      <ul>
+        
+            
+            <li><a href="/">Overview</a></li>
+        
+            
+            <li><a href="/news/">News</a></li>
+        
+            
+            <li><a href="/download/">Download</a></li>
+        
+            
+            <li><a href="/user/">Running autosetup</a></li>
+        
+            
+            <li><a href="/developer/">Developing</a></li>
+        
+            
+            <li><a href="/developer/examples/">Examples</a></li>
+        
+            
+            <li><a href="/license/">License</a></li>
+        
+      </ul>
+      <h2>Community</h2>
+      <ul>
+        <li><a href="https://github.com/msteveb/autosetup">autosetup on github</a></li>
+        <li><a href="https://github.com/msteveb/autosetup/commits/master">» commit history</a></li>
+        <li><a href="https://github.com/msteveb/autosetup/issues">» open issues</a></li>
+      </ul>
+    </div>
+    
+    <script language="javascript">sh_highlightDocument();</script>
+  </body>
+</html>

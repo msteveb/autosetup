@@ -1,0 +1,120 @@
+<!DOCTYPE HTML>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>autosetup - Frequently Asked Questions</title>
+    <link rel="stylesheet" type="text/css" href="/css/style.css" media="screen">
+    <link rel="stylesheet" type="text/css" href="/css/sh_style.css" media="screen">
+    
+    <script src="/javascript/sh_main.min.js" type="text/javascript"></script>
+    <script src="/javascript/sh_lang.js" type="text/javascript"></script>
+    <script src="/javascript/motionpack.js" type="text/javascript"></script>
+    <meta name="generator" content="nanoc 3.1.6">
+  </head>
+  <body>
+    <div id="header">
+      <h1 id="blog-title">autosetup</h1>
+      <p id="description">A build environment "autoconfigurator"</p>
+    </div>
+    <div id="content">
+        <div class="breadcrumbs">
+        
+        
+            <a href="/">Overview</a> 
+            » 
+        
+            <a href="/faq/">Frequently Asked Questions</a> 
+             
+        
+        </div>
+        <div class="main" id="main">
+        
+        <h1 id="frequently-asked-questions">Frequently Asked Questions</h1>
+
+<h2 id="how-fast-is-autosetup">1. How fast is <strong>autosetup</strong>?</h2>
+
+<p><strong>autosetup</strong> is very fast. A typical project involves invocation of
+the C compiler a few dozen times which can be done in a few seconds.
+Here is a comparison with <code>autoconf</code> on some different platforms.</p>
+
+<pre><code>              autoconf     autosetup
+              ---------    ---------
+Linux            4.1s         1.3s
+Mac OS X         6.4s         2.8s
+cygwin          91.5s         9.9s
+</code></pre>
+
+<p>Also note that there is <strong>no</strong> separate step needed to generate
+a <code>configure</code> script or header templates.</p>
+
+<h2 id="why-is-it-faster">2. Why is it faster?</h2>
+
+<p><code>autoconf</code> attempts to work with a minimal set of native tools
+(<strong>Bourne shell</strong>, <code>awk</code>, <code>sed</code>, <code>tr</code>).  As such it invokes <em>many</em>
+subprocesses to perform simple string manipulation in a
+platform-indepdendent manner.</p>
+
+<p>By comparison, <strong>autosetup</strong> uses a full-featured scripting language and does
+all string manipulation in a single process. This approach dramatically speeds
+up configuration as the only time of significance is the invocation of the compiler.</p>
+
+<h2 id="what-are-the-prerequisites-for-autosetup">3. What are the prerequisites for <strong>autosetup</strong>?</h2>
+
+<p><strong>autosetup</strong> requires <strong>one</strong> of:</p>
+
+<ul>
+  <li>Tcl 8.5 (tclsh8.5)</li>
+  <li>Tcl 8.6 (tclsh8.6)</li>
+  <li><a href="http://jim.berlios.de/">jimsh</a> (version &gt;= 0.70)</li>
+  <li>A C compiler (cc)</li>
+</ul>
+
+<p>In addition, the <code>configure</code> wrapper script requires a Bourne-compatible
+shell and the <code>dirname</code> command.</p>
+
+<h2 id="do-i-need-to-install-autosetup">4. Do I need to install <strong>autosetup</strong>?</h2>
+
+<p>No. The <strong>autosetup</strong> distribution is included directly as part of the
+project. This approach means that the project is completely self-contained.
+In addition, the version of <strong>autosetup</strong> which ships with the project
+is the version which has been tested.</p>
+
+        </div>
+    </div>
+    <div id="sidebar">
+      <h2>About autosetup</h2>
+      <ul>
+        
+            
+            <li><a href="/">Overview</a></li>
+        
+            
+            <li><a href="/news/">News</a></li>
+        
+            
+            <li><a href="/download/">Download</a></li>
+        
+            
+            <li><a href="/user/">Running autosetup</a></li>
+        
+            
+            <li><a href="/developer/">Developing</a></li>
+        
+            
+            <li><a href="/developer/examples/">Examples</a></li>
+        
+            
+            <li><a href="/license/">License</a></li>
+        
+      </ul>
+      <h2>Community</h2>
+      <ul>
+        <li><a href="https://github.com/msteveb/autosetup">autosetup on github</a></li>
+        <li><a href="https://github.com/msteveb/autosetup/commits/master">» commit history</a></li>
+        <li><a href="https://github.com/msteveb/autosetup/issues">» open issues</a></li>
+      </ul>
+    </div>
+    
+    <script language="javascript">sh_highlightDocument();</script>
+  </body>
+</html>

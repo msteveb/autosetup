@@ -1,0 +1,249 @@
+body {
+  background:#f8f8f8;
+  margin:0;
+  padding:20px;
+  font:x-small/1.5em "Trebuchet MS",Verdana,Arial,Sans-serif;
+  color:#ccc;
+  font-size: small;
+}
+
+/* Header */
+#header {
+  text-align:center;
+  width: 920px;
+  background: #7C8DB0;
+  padding: 0 0 8px;
+  color:#ffffff;
+  }
+#blog-title {
+  margin:0;
+  padding:10px 30px 5px;
+  font-size:200%;
+  line-height:1.2em;
+  }
+#description {
+  margin:0;
+  padding:5px 30px 10px;
+  font-size:94%;
+  line-height:1.5em;
+  color:#eeeeee;
+  }
+
+p.articledate {
+	color: #777;
+	font-size: 93%;
+	font-weight: bold;
+	display: block;
+	margin-bottom: 0;
+	padding: 0;
+}
+pre code {
+  color: black;
+  font-style: normal;
+  font-weight: normal;
+  padding: 5px;
+  border-top: dotted 1px black;
+  border-bottom: dotted 1px black;
+  background-color: rgba(255,255,255,0.7);
+  display: block;
+}
+
+/* main page */
+#content {
+  text-align:center;
+  position: absolute;
+  left: 215px;
+  width: 725px;
+  margin-top: 20px;
+}
+
+.breadcrumbs {
+	color: #000;
+	margin-bottom: 5px;
+}
+.breadcrumbs a {
+}
+.breadcrumbs a#rss {
+	float: right;
+}
+
+#main {
+  padding: 5px 30px 5px 30px;
+  text-align:left;
+  border: 2px solid #7C8DB0;
+  background: #dcdee1;
+  color:#333;
+  font-size:97%;
+  line-height:1.5em;
+  margin-bottom: 20px;
+}
+
+#main h1 {
+	padding-bottom: 10px;
+	font-size: 2em;
+}
+
+#main h2 {
+	width: 100%;
+	border-bottom: 3px solid #bbb;
+	padding: 10px 0;
+	margin: 0.83em 0;
+}
+
+#main h3 {
+	border-bottom: 1px solid #888;
+	display: inline-block;
+	margin: 0;
+	padding-bottom: 4px;
+}
+
+#main h4 {
+	font-style: italic;
+}
+
+#main ul {
+  margin: 1em 0;
+  padding-left: 20px;
+}
+
+#main hr {
+	display: block;
+	width: 100%;
+	height: 0px;
+	border-top: dashed 2px black;
+	margin-top: 30px;
+	margin-bottom: 30px;
+}
+
+#main a:link, #main a:visited {
+  color:#66d;
+}
+#main a:hover {
+  color:#aaf;
+}
+
+#news #main {
+    padding: 5px 30px 5px 30px;
+	margin-bottom: 20px;
+	border: 2px solid #7C8DB0;
+	background: #dcdee1;
+	color:#333;
+}
+#main h2.news {
+	margin: 10px 0;
+	border-bottom: none;
+}
+
+#sidebar {
+  position: absolute;
+
+  left: 0px;
+  width: 150px;
+
+  margin: 20px 20px 20px 0px;
+  padding: 10px 20px 0 20px;
+  border-right: 1px solid #ccc;
+
+  text-align: right;
+  float:right;
+}
+
+#sidebar h2 {
+  text-transform: uppercase;
+  font-size: 13px;
+  color: #333;
+  letter-spacing: 1px;
+  line-height: 20px;
+  margin: 0;
+  padding: 0 8px 0 0;
+}
+
+#sidebar ul {
+  list-style-type: none;
+  margin: 10px 0 20px 0;
+  padding: 0 8px 0 0;
+}
+
+#sidebar li {
+  font-size: 14px;
+  line-height: 20px;
+}
+
+#sidebar li .active {
+	color: #226;
+}
+#sidebar ul.submenu {
+	list-style-type: bullet;
+}
+#sidebar ul.submenu a {
+	font-size: smaller;
+}
+
+#related {
+	position: absolute;
+	display: block;
+
+	left: 755px;
+	top: 165px;
+	width: 150px;
+	-moz-border-radius: 8px;
+	-webkit-border-radius: 8px;
+	border-radius: 8px;
+	background: #f8f8f8;
+	border: solid 1px #444;
+	padding: 8px 8px 4px 0;
+	text-align: right;
+	float:right;
+	margin: 0px;
+	padding: 4px 10px;
+	z-index: 2;
+}
+
+#related h2 {
+  text-transform: uppercase;
+  font-size: 13px;
+  color: #333;
+  letter-spacing: 1px;
+  line-height: 20px;
+  margin: 0;
+  padding: 0 6px 0 0;
+  white-space: nowrap;
+}
+
+#related h2 #star {
+  margin: 0;
+  padding: 0;
+  vertical-align: top;
+}
+
+
+#related ul {
+  list-style-type: none;
+  margin: 10px 0;
+  padding: 0 6px;
+}
+
+#related li {
+  font-size: 14px;
+  line-height: 20px;
+}
+
+/* links */
+a {
+  text-decoration: none;
+}
+
+a:link, a:visited {
+  color:#69c;
+}
+a:hover {
+  color:#000;
+}
+a img {
+  border-width:0;
+}
+
+code {
+	font-size: larger;
+	font-weight: bold;
+}
