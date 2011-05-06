@@ -5,11 +5,14 @@
 
 uplevel #0 {
 
-# Don't allow autosetup arguments to interfer with tcltest
+# Don't allow autosetup arguments to interfere with tcltest
 set argv {}
 set argc 0
 # And pretend we ran this as the main script
 set argv0 [info script]
+
+# Suppress msg-result
+proc msg-result {msg} { }
 
 source [file dir $argv0]/tcltest.tcl
 
@@ -18,7 +21,17 @@ if {[info exists tcl_patchLevel]} {
 } else {
 	set interp "[info nameofexecutable] ([info version])"
 }
-puts "Testing with Tcl interpreter $interp"
+# out-of-tree build?
+set OOT [get-env OOT 0]
+if {$OOT} {
+	set oot "out of tree "
+} else {
+	set oot ""
+}
+
+puts "Testing ${oot}with Tcl interpreter $interp"
+
+use system
 
 test list-non-empty-1.1 {simple} {
 	list-non-empty {a b c}
@@ -153,6 +166,40 @@ test prefix-1.3 {prefix then suffix} {
 test prefix-1.3 {suffix then prefix} {
 	prefix jim- [suffix .c {a b c}]
 } {jim-a.c jim-b.c jim-c.c}
+
+test template-1.1 {make-template at top level} -body {
+	define abc ABC
+	make-template template.in template.out
+	set result [readfile template.out]
+	if {$OOT} {
+		set exp "srcdir=..,top_srcdir=..,abc=ABC"
+	} else {
+		set exp "srcdir=.,top_srcdir=.,abc=ABC"
+	}
+	if {$result ne $exp} {
+		error "$result != $exp"
+	}
+} -result {} -cleanup {
+	file delete template.out
+}
+
+test template-1.2 {make-template in subdir} -body {
+	make-template subdir/template.in subdir/template.out
+	set result [readfile subdir/template.out]
+	if {$OOT} {
+		set exp "srcdir=../../subdir,top_srcdir=../..,abc=ABC"
+	} else {
+		set exp "srcdir=.,top_srcdir=..,abc=ABC"
+	}
+	if {$result ne $exp} {
+		error "$result != $exp"
+	}
+} -result {} -cleanup {
+	file delete subdir/template.out
+}
+
+file delete -force config.log
+catch {file delete subdir}
 
 testreport
 

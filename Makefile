@@ -23,6 +23,6 @@ html:
 
 # Both tclsh8.5 and tclsh8.6 are required to run the top level test suite
 test:
-	@make -C testsuite test
-	@make -C testsuite autosetup_tclsh=tclsh8.6 test
-	@make -C testsuite autosetup_tclsh=tclsh8.5 test
+	@make -C testsuite test subdirtest
+	@make -C testsuite autosetup_tclsh=tclsh8.6 test subdirtest
+	@make -C testsuite autosetup_tclsh=tclsh8.5 test subdirtest
