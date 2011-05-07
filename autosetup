@@ -390,7 +390,7 @@ proc config_sub {alias} {
 # @define name ?value=1?
 # 
 # Defines the named variable to the given value.
-# These name, values pairs represent the results of the configuration check
+# These (name, value) pairs represent the results of the configuration check
 # and are available to be checked, modified and substituted.
 #
 proc define {name {value 1}} {
@@ -403,11 +403,17 @@ proc define {name {value 1}} {
 # Appends the given value(s) to the given 'defined' variable.
 # If the variable is not defined or empty, it is set to $value.
 # Otherwise the value is appended, separated by a space.
-# Any extra values are also appended
+# Any extra values are similarly appended.
+# If any value is already contained in the variable (as a substring) it is omitted.
 #
 proc define-append {name args} {
-	if {[info exists ::define($name)] && $::define($name) ne ""} {
-		append ::define($name) " " [join $args]
+	if {[get-define $name ""] ne ""} {
+		# Make a token attempt to avoid duplicates
+		foreach arg $args {
+			if {[string first $arg $::define($name)] == -1} {
+				append ::define($name) " " $arg
+			}
+		}
 	} else {
 		set ::define($name) [join $args]
 	}
