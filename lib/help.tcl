@@ -72,13 +72,32 @@ proc autosetup_reference {{type text}} {
     exit 0
 }
 
+proc autosetup_output_block {type lines} {
+    if {[llength $lines]} {
+        switch $type {
+            code {
+                codelines $lines
+            }
+            p {
+                p [join $lines]
+            }
+            list {
+                foreach line $lines {
+                    bullet $line
+                }
+                nl
+            }
+        }
+    }
+}
+
 # Generate a command reference from inline documentation
 proc automf_command_reference {} {
     lappend files $::autosetup(prog)
     lappend files {*}[lsort [glob -nocomplain $::autosetup(libdir)/*.tcl]]
 
     section "Core Commands"
-    set oldhash ""
+    set type p
     set lines {}
     set cmd {}
 
@@ -100,7 +119,7 @@ proc automf_command_reference {} {
             }
 
             set lines {}
-            set oldhash ""
+            set type p
 
             # Now the description
             while {![eof $f]} {
@@ -109,33 +128,28 @@ proc automf_command_reference {} {
                 if {![regexp {^#(#)? ?(.*)} $line -> hash cmd]} {
                     break
                 }
+                if {$hash eq "#"} {
+                    set t code
+                } elseif {[regexp {^- (.*)} $cmd -> cmd} {
+                    set t list
+                } else {
+                    set t p
+                }
 
                 #puts "hash=$hash, oldhash=$oldhash, lines=[llength $lines], cmd=$cmd"
 
-                if {$hash ne $oldhash || $cmd eq ""} {
-                    # Transition between code and para
-                    if {[llength $lines]} {
-                        if {$oldhash eq "#"} {
-                            codelines $lines
-                        } else {
-                            p [join $lines]
-                        }
-                        set lines {}
-                    }
-                    set oldhash $hash
+                if {$t ne $type || $cmd eq ""} {
+                    # Finish the current block
+                    autosetup_output_block $type $lines
+                    set lines {}
+                    set type $t
                 }
                 if {$cmd ne ""} {
                     lappend lines $cmd
                 }
             }
 
-            if {[llength $lines]} {
-                if {$oldhash eq "#"} {
-                    codelines $lines
-                } else {
-                    p [join $lines]
-                }
-            }
+            autosetup_output_block $type $lines
         }
         close $f
     }
