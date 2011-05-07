@@ -53,6 +53,12 @@ proc cctest_member {struct_member} {
 	cctest -code "static $struct _s; return sizeof(_s.$member);"
 }
 
+# Checks for the existence of the given define by compiling
+#
+proc cctest_define {name} {
+	cctest -code "#ifndef $name\n#error not defined\n#endif"
+}
+
 # @cc-check-sizeof type ...
 #
 # Checks the size of the given types (between 1 and 32, inclusive).
@@ -110,6 +116,15 @@ proc cc-check-includes {args} {
 proc cc-check-types {args} {
 	cc-check-some-feature $args {
 		cctest_type $each
+	}
+}
+
+# @cc-check-defines define ...
+#
+# Checks that the given preprocessor symbol is defined
+proc cc-check-defines {args} {
+	cc-check-some-feature $args {
+		cctest_define $each
 	}
 }
 
