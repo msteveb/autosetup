@@ -165,7 +165,7 @@ proc cc-check-members {args} {
 # Returns 1 if found or 0 if not.
 # 
 proc cc-check-function-in-lib {function libs {otherlibs {}}} {
-	msg-checking "Checking for $function..."
+	msg-checking "Checking libs for $function..."
 	set found 0
 	cc-with [list -libs $otherlibs] {
 		if {[cctest_function $function]} {
@@ -176,7 +176,7 @@ proc cc-check-function-in-lib {function libs {otherlibs {}}} {
 			foreach lib $libs {
 				cc-with [list -libs -l$lib] {
 					if {[cctest_function $function]} {
-						msg-result $lib
+						msg-result -l$lib
 						define lib_$function -l$lib
 						define-append LIBS -l$lib
 						incr found
@@ -189,7 +189,7 @@ proc cc-check-function-in-lib {function libs {otherlibs {}}} {
 	if {$found} {
 		define [feature-define-name $function]
 	} else {
-		msg-result "not found"
+		msg-result "no"
 	}
 	return $found
 }
