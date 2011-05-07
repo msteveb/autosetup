@@ -456,31 +456,51 @@ proc cctest {args} {
 	return $ok
 }
 
-# @make-autoconf-h outfile ?patternlist?
+# @make-autoconf-h outfile ?auto-patterns=HAVE_*? ?unquoted-patterns=SIZEOF_*?
 #
 # Examines all defined variables which match the given patterns
 # and writes an include file, $file, which defines each of these.
+# Variables which match 'auto-patterns' are output as follows:
 # - defines which have the value "0" are ignored.
 # - defines which have integer values are defined as the integer value.
 # - any other value is defined as a string, e.g. "value"
+#
+# Variables which match 'unquoted-patterns' are defined unquoted.
 # 
 # If the file would be unchanged, it is not written.
-proc make-autoconf-h {file {patterns {HAVE_* SIZEOF_*}}} {
+proc make-autoconf-h {file {autopatterns {HAVE_*}} {unquotedpatterns {SIZEOF_*}}} {
 	set guard _[string toupper [regsub -all {[^a-zA-Z0-9]} [file tail $file] _]]
 	file mkdir [file dirname $file]
 	set lines {}
 	lappend lines "#ifndef $guard"
 	lappend lines "#define $guard"
-	foreach pattern $patterns {
-		foreach n [lsort [array names ::define $pattern]] {
+
+	# Work out the type of each variable
+	array set types {}
+	foreach pattern $autopatterns {
+		foreach n [array names ::define $pattern] {
+			set types($n) auto
+		}
+	}
+	foreach pattern $unquotedpatterns {
+		foreach n [array names ::define $pattern] {
+			set types($n) unquoted
+		}
+	}
+	foreach n [lsort [array names types]] {
+		if {$types($n) eq "auto"} {
+			# Automatically determine the type
 			if {$::define($n) eq "0"} {
 				lappend lines "/* #undef $n */"
-			} elseif {[string is integer -strict $::define($n)]} {
-				lappend lines "#define $n $::define($n)"
-			} else {
+				continue
+			}
+			if {![string is integer -strict $::define($n)]} {
 				lappend lines "#define $n \"$::define($n)\""
+				continue
 			}
 		}
+		# Unquoted
+		lappend lines "#define $n $::define($n)"
 	}
 	lappend lines "#endif"
 	set buf [join $lines \n]
