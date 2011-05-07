@@ -33,17 +33,13 @@ module-options {
 # Returns 1 if exists, or 0 if  not
 #
 proc check-feature {name code} {
-	lassign $name name msg
-	if {$msg eq ""} {
-		set msg $name
-	}
-	msg-checking "Checking for $msg..."
+	msg-checking "Checking for $name..."
 	set r [uplevel 1 $code]
 	define-feature $name $r
 	if {$r} {
 		msg-result "ok"
 	} else {
-		msg-result "no"
+		msg-result "not found"
 	}
 	return $r
 }
