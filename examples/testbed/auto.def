@@ -4,7 +4,7 @@
 # and features.
 #
 
-use cc
+use cc cc-lib
 
 options {
 	# Comment lines are allowed in options
@@ -60,14 +60,7 @@ cc-check-function-in-lib percent_m wrap
 
 # The equivalent of the AC_SYS_LARGEFILE macro
 if {[opt-bool largefile] && [opt-bool lfs]} {
-	cc-check-includes sys/types.h
-	msg-checking "Checking if -DFILE_OFFSET_BITS=64 is needed..."
-	if {[msg-quiet cc-with {-includes sys/types.h} {cc-check-sizeof off_t}] == 8} {
-		msg-result no
-	} elseif {[msg-quiet cc-with {-includes sys/types.h -cflags -D_FILE_OFFSET_BITS=64} {cc-check-sizeof off_t}] == 8} {
-		define _FILE_OFFSET_BITS 64
-		msg-result yes
-	} else {
+	if {![cc-check-lfs]} {
 		user-error "LFS not available"
 	}
 } else {
