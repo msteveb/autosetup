@@ -1,0 +1,6 @@
+Mon  9 May 2011 09:08:26 EST
+----------------------------
+
+This is an example of rewriting the dropbear-0.53 configure.in for autosetup
+
+Note that apart from auto.def and configure, all other files are completely unchanged.

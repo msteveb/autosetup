@@ -1,0 +1,349 @@
+# vim:se syn=tcl:
+
+use cc cc-lib
+
+options {
+	zlib=1     => "Disable zlib"
+	with-zlib: => "Use zlib in the specified path"
+	pam=0      => "Enable pam"
+	with-pam:  => "Use pam in the specified path"
+	openpty=1  => "Don't use openpty, use alternative method"
+	syslog=1   => "Don't include syslog support"
+	shadow=1   => "Don't use shadow passwords (if available)"
+	bundled-libtom => "Use bundled libtomcrypt/libtommath even if a system version exists"
+
+	lastlog=1     => "Disable use of lastlog even if detected"
+	with-lastlog: => "Location of lastlog"
+
+	loginfunc=1  => "Disable use of login() etc."
+	utmp=1       => "Disable use of utmp even if detected"
+	utmpx=1      => "Disable use of utmpx even if detected"
+	wtmp=1       => "Disable use of wtmp even if detected"
+	wtmpx=1      => "Disable use of wtmpx even if detected"
+	pututline=1  => "Disable use of pututline even if detected"
+	pututxline=1 => "Disable use of pututxline even if detected"
+}
+
+define configure_input "Created by [autosetup_version] as: [get-define AUTOREMAKE]"
+
+# Checks for programs. CC and LD are done automatically.
+cc-check-progs make
+
+# Is it gcc?
+cc-check-defines __GNUC__
+
+if {[have-feature __GNUC__] && [get-env CFLAGS ""] eq ""} {
+	msg-result {No $CFLAGS set... using "-Os -W -Wall" for GCC}
+	define CFLAGS "-Os -W -Wall"
+}
+
+# large file support is useful for scp
+cc-check-lfs
+
+# Host specific options
+# this isn't a definitive list of hosts, they are just added as required
+
+switch -glob -- [get-define host] {
+	*-*-solaris* {
+		# These should really go into EXTRA_CFLAGS
+		define-append CFLAGS -I/usr/local/include
+		define-append LDFLAGS "-L/usr/local/lib -R/usr/local/lib"
+
+		set conf_lastlog_location "/var/adm/lastlog"
+
+		# XXX: Runtime check for solaris version >= 2.8
+		# define DISABLE_UTMP
+		# define DISABLE_WTMP
+
+		# XXX: Runtime check for /dev/ptmx
+		define USE_DEV_PTMX
+
+		cc-check-function-in-lib socket socket
+		cc-check-function-in-lib yp_match nsl
+	}
+	*-*-aix* {
+		define AIX
+		# OpenSSH thinks it's broken. If it isn't, let me know.
+		define BROKEN_GETADDRINFO
+		# Use /dev/ptc & /dev/pts
+		define HAVE_DEV_PTS_AND_PTC
+	}
+	*-*-hpux* {
+		define-append LIBS -lsec
+		# It's probably broken.
+		define BROKEN_GETADDRINFO
+	}
+	*-dec-osf* {
+		define BROKEN_GETADDRINFO
+	}
+}
+
+cc-check-tools ar ranlib strip
+cc-check-progs install
+
+# Can't use login() or logout() with uclibc
+if {[cc-check-defines __UCLIBC__]} {
+	define DISABLE_LOGINFUNC
+	msg-result "Using uClibc - login() and logout() probably don't work, so we won't use them."
+}
+
+# Checks for libraries.
+cc-check-function-in-lib crypt crypt
+define CRYPTLIB [get-define lib_crypt ""]
+
+foreach lib {zlib pam} {
+	set dir [opt-val with-$lib]
+	if {$dir ne ""} {
+		if {[file isdir $dir/lib]} {
+			define-append LDFLAGS -L$dir/lib
+		} else {
+			define-append LDFLAGS -L$dir
+		}
+		if {[file isdir $dir/include]} {
+			define-append CPPFLAGS -I$dir/include
+		} else {
+			define-append CPPFLAGS -I$dir
+		}
+	}
+}
+
+if {[opt-bool zlib]} {
+	if {[cc-check-function-in-lib deflate z]} {
+		msg-result "Enabling zlib"
+	} else {
+		user-error "*** zlib missing - install first or check config.log ***"
+	}
+} else {
+	msg-result "Disabling zlib"
+	define DISABLE_ZLIB
+}
+
+if {[opt-bool pam]} {
+	if {[cc-check-function-in-lib pam_authenticate pam]} {
+		msg-result "Enabling PAM"
+	} else {
+		user-error "*** PAM missing - install first or check config.log ***"
+	}
+} else {
+	msg-result "Disabling PAM"
+	define DISABLE_PAM
+}
+
+if {[opt-bool openpty]} {
+	msg-result "Using openpty if available"
+	cc-check-function-in-lib openpty util
+} else {
+	msg-result "Not using openpty"
+}
+
+# Without the messages, it's much simpler
+if {![opt-bool syslog]} {
+	define DISABLE_SYSLOG
+}
+
+if {[opt-bool shadow]} {
+	cc-check-includes shadow.h
+}
+
+# Checks for header files.
+cc-check-includes sys/wait.h
+cc-check-includes fcntl.h limits.h netinet/in.h netinet/tcp.h stdlib.h string.h sys/socket.h sys/time.h
+cc-check-includes termios.h unistd.h crypt.h pty.h ioctl.h libutil.h libgen.h inttypes.h stropts.h utmp.h
+cc-check-includes utmpx.h lastlog.h paths.h util.h netdb.h security/pam_appl.h pam/pam_appl.h netinet/in_systm.h
+
+# Checks for typedefs, structures, and compiler characteristics.
+if {![cc-check-types "const int"]} {
+	define const ""
+}
+cc-with {-includes {stdlib.h unistd.h fcntl.h sys/types.h netinet/in.h}} {
+	cc-check-types uid_t pid_t mode_t size_t
+	cc-check-types uint16_t u_int16_t "struct sockaddr_storage"
+}
+
+cc-check-functions endutent getutent getutid getutline pututline setutent
+cc-check-functions utmpname
+cc-check-functions endutxent getutxent getutxid getutxline pututxline
+cc-check-functions setutxent utmpxname
+cc-check-functions dup2 getspnam getusershell memset putenv select socket strdup clearenv strlcpy strlcat daemon basename _getpty getaddrinfo freeaddrinfo getnameinfo
+
+cc-with {-includes {sys/types.h sys/socket.h unistd.h}}
+
+if {![cc-check-types socklen_t]} {
+	# Systems have either "struct sockaddr *" or
+	# "void *" as the second argument to getpeername
+	msg-checking "Checking for socklen_t equivalent..."
+
+	set ok 0
+	foreach arg2 {"struct sockaddr" void} {
+		foreach t {int size_t unsigned long "unsigned long"} {
+			if {[cctest -code "getpeername(0, ($arg2 *)NULL, ($t *)NULL);"]} {
+				# This combination works
+				incr ok
+				break
+			}
+		}
+		if {$ok} {
+			break
+		}
+	}
+	if {!$ok eq ""} {
+		msg-result "not found"
+		user-error "Cannot find a type to use in place of socklen_t"
+	} else {
+		msg-result $t
+		define socklen_t $t
+	}
+}
+
+# for the fake-rfc2553 stuff - straight from OpenSSH
+cc-check-types "struct sockaddr_storage"
+
+cc-with {-includes {netinet/in.h}} {
+	cc-check-types "struct sockaddr_in6"
+	cc-check-types "struct in6_addr"
+	cc-with {-includes {netdb.h}} {
+		cc-check-types "struct addrinfo"
+	}
+}
+
+if {[cc-check-functions gai_strerror]} {
+	# IRIX has a const char return value for gai_strerror()
+	if {![cctest -includes netdb.h -code { char *str = gai_strerror(0); }]} {
+		define HAVE_CONST_GAI_STRERROR_PROTO
+	}
+}
+
+# for loginrec.c
+cc-with {-includes utmp.h} {
+	cc-check-members "struct utmp.ut_host" "struct utmp.ut_pid" "struct utmp.ut_type" "struct utmp.ut_tv" "struct utmp.ut_id" "struct utmp.ut_addr" "struct utmp.ut_addr_v6" "struct utmp.ut_exit" "struct utmp.ut_time"
+}
+cc-with {-includes utmpx.h} {
+	cc-check-members "struct utmpx.ut_host" "struct utmpx.ut_syslen" "struct utmpx.ut_type" "struct utmpx.ut_id" "struct utmpx.ut_addr" "struct utmpx.ut_addr_v6" "struct utmpx.ut_time" "struct utmpx.ut_tv"
+}
+
+cc-check-members "struct sockaddr_storage.ss_family"
+
+set bundled_libtom 1
+if {[opt-bool bundled-libtom]} {
+	msg-result "Forcing bundled libtom*"
+} else {
+	if {[msg-quiet cc-check-function-in-lib register_cipher tomcrypt]} {
+		if {[msg-quiet cc-check-function-in-lib mp_exptmod tommath]} {
+			set bundled_libtom 0
+		}
+	}
+	if {$bundled_libtom} {
+		msg-result "Using bundled libtom"
+	}
+}
+define BUNDLED_LIBTOM $bundled_libtom
+
+# Added from OpenSSH 3.6.1p2's configure.ac
+
+# allow user to disable some login recording features
+foreach opt {lastlog utmp utmpx wtmp wtmpx loginfunc pututline pututxline} {
+	if {![opt-bool $opt]} {
+		define DISABLE_[string toupper $opt]
+	}
+}
+
+# lastlog, [uw]tmpx? detection
+cc-check-includes login.h
+
+if {![get-define DISABLE_LOGINFUNC 0]} {
+	# Checks for libutil functions (login(), logout() etc, not openpty() )
+	cc-check-function-in-lib login {util bsd}
+	cc-with "-libs {[get-define lib_login]}" {
+		cc-check-functions logout updwtmp logwtmp
+	}
+}
+
+if {![opt-bool lastlog]} {
+	define DISABLE_LASTLOG
+} else {
+	if {[opt-val with-lastlog] ne ""} {
+		set conf_lastlog_location [opt-val with-lastlog]
+	}
+	msg-checking "For the location of lastlog..."
+	if {[info exists conf_lastlog_location]} {
+		# specified directly. Need to quote it
+		set ll \"$conf_lastlog_location\"
+	} else {
+		# Try to find it
+		cc-with {-includes {utmp.h lastlog.h paths.h login.h}} {
+			if {[cctest -code {const char *lastlog = LASTLOG_FILE;}]} {
+				set ll LASTLOG_FILE
+			} elseif {[cctest -code {const char *lastlog = _PATH_LASTLOG;}]} {
+				set ll _PATH_LASTLOG
+			} elseif {
+				user-error "You need to tell me where lastlog is with --with-lastlog"
+			}
+		}
+	}
+	msg-result $ll
+	define CONF_LASTLOG_FILE $ll
+}
+
+# utmp detection
+msg-checking "For the location of utmp..."
+cc-with {-includes {utmp.h lastlog.h paths.h}} {
+	if {[cctest -code {const char *lastlog = UTMP_FILE;}]} {
+		set ll UTMP_FILE
+	} elseif {
+		user-error "You need to tell me where utmp is with --with-utmp"
+	}
+}
+msg-result $ll
+define CONF_UTMP_FILE $ll
+
+# wtmp detection
+msg-checking "For the location of wtmp..."
+cc-with {-includes {utmp.h lastlog.h paths.h}} {
+	if {[cctest -code {const char *lastlog = WTMP_FILE;}]} {
+		set ll WTMP_FILE
+	} elseif {
+		user-error "You need to tell me where wtmp is with --with-wtmp"
+	}
+}
+msg-result $ll
+define CONF_WTMP_FILE $ll
+
+# utmpx detection - I don't know any system so perverse as to require
+#  utmpx, but not define UTMPX_FILE (ditto wtmpx.)
+
+define CONF_UTMPX_FILE UTMPX_FILE
+define CONF_WTMPX_FILE WTMPX_FILE
+
+
+# Checks for library functions.
+
+# Obsolete:
+# AC_PROG_GCC_TRADITIONAL
+# AC_FUNC_MEMCMP
+# AC_FUNC_SELECT_ARGTYPES
+# AC_TYPE_SIGNAL
+
+cc-check-function-in-lib basename gen
+
+foreach i {ciphers/aes ciphers/safer ciphers/twofish encauth/ccm encauth/eax encauth/gcm encauth/ocb hashes hashes/chc
+	hashes/helper hashes/sha2 hashes/whirl mac/hmac mac/omac mac/pelican mac/pmac mac/f9 mac/xcbc math/fp
+	misc/base64 misc/crypt misc/mpi misc/pkcs5 modes/cbc modes/cfb modes/ctr modes/ecb modes/ofb modes/f8 modes/lrw
+	pk/asn1/der/bit pk/asn1/der/choice pk/asn1/der/ia5 pk/asn1/der/integer pk/asn1/der/object_identifier pk/asn1/der/octet
+	pk/asn1/der/printable_string pk/asn1/der/sequence pk/asn1/der/short_integer pk/asn1/der/utctime pk/dh pk/dsa pk/ecc
+	pk/pkcs1 pk/rsa prng} {
+
+	file mkdir libtomcrypt/src/$i
+}
+
+make-autoconf-h config.h {HAVE_* DISABLE_* AIX BROKEN_* BUNDLED_*} {SIZEOF_* _FILE_* CONF_*}
+make-template Makefile.in
+make-template libtomcrypt/Makefile.in
+make-template libtommath/Makefile.in
+
+if {$bundled_libtom} {
+	msg-result "Using bundled libtomcrypt and libtommath"
+} else {
+	msg-result "Using system libtomcrypt and libtommath"
+}
+
+msg-result "Now edit options.h to choose features."
