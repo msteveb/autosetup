@@ -130,7 +130,7 @@ proc automf_command_reference {} {
                 }
                 if {$hash eq "#"} {
                     set t code
-                } elseif {[regexp {^- (.*)} $cmd -> cmd} {
+                } elseif {[regexp {^- (.*)} $cmd -> cmd]} {
                     set t list
                 } else {
                     set t p
