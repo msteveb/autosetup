@@ -3,7 +3,7 @@
 
 # @synopsis:
 #
-# This module supports checking various 'features' of the C or C++
+# The 'cc' module supports checking various 'features' of the C or C++
 # compiler/linker environment. Common commands are cc-check-includes,
 # cc-check-types, cc-check-functions, cc-with, make-autoconf-h and make-template.
 #
@@ -51,6 +51,12 @@ proc cctest_type {type} {
 proc cctest_member {struct_member} {
 	lassign [split $struct_member .] struct member
 	cctest -code "static $struct _s; return sizeof(_s.$member);"
+}
+
+# Checks for the existence of the given define by compiling
+#
+proc cctest_define {name} {
+	cctest -code "#ifndef $name\n#error not defined\n#endif"
 }
 
 # @cc-check-sizeof type ...
@@ -113,6 +119,15 @@ proc cc-check-types {args} {
 	}
 }
 
+# @cc-check-defines define ...
+#
+# Checks that the given preprocessor symbol is defined
+proc cc-check-defines {args} {
+	cc-check-some-feature $args {
+		cctest_define $each
+	}
+}
+
 # @cc-check-functions function ...
 #
 # Checks that the given functions exist (can be linked)
@@ -150,7 +165,7 @@ proc cc-check-members {args} {
 # Returns 1 if found or 0 if not.
 # 
 proc cc-check-function-in-lib {function libs {otherlibs {}}} {
-	msg-checking "Checking for $function..."
+	msg-checking "Checking libs for $function..."
 	set found 0
 	cc-with [list -libs $otherlibs] {
 		if {[cctest_function $function]} {
@@ -161,7 +176,7 @@ proc cc-check-function-in-lib {function libs {otherlibs {}}} {
 			foreach lib $libs {
 				cc-with [list -libs -l$lib] {
 					if {[cctest_function $function]} {
-						msg-result $lib
+						msg-result -l$lib
 						define lib_$function -l$lib
 						define-append LIBS -l$lib
 						incr found
@@ -174,7 +189,7 @@ proc cc-check-function-in-lib {function libs {otherlibs {}}} {
 	if {$found} {
 		define [feature-define-name $function]
 	} else {
-		msg-result "not found"
+		msg-result "no"
 	}
 	return $found
 }
@@ -456,31 +471,51 @@ proc cctest {args} {
 	return $ok
 }
 
-# @make-autoconf-h outfile ?patternlist?
+# @make-autoconf-h outfile ?auto-patterns=HAVE_*? ?unquoted-patterns=SIZEOF_*?
 #
 # Examines all defined variables which match the given patterns
 # and writes an include file, $file, which defines each of these.
+# Variables which match 'auto-patterns' are output as follows:
 # - defines which have the value "0" are ignored.
 # - defines which have integer values are defined as the integer value.
 # - any other value is defined as a string, e.g. "value"
+#
+# Variables which match 'unquoted-patterns' are defined unquoted.
 # 
 # If the file would be unchanged, it is not written.
-proc make-autoconf-h {file {patterns {HAVE_* SIZEOF_*}}} {
+proc make-autoconf-h {file {autopatterns {HAVE_*}} {unquotedpatterns {SIZEOF_*}}} {
 	set guard _[string toupper [regsub -all {[^a-zA-Z0-9]} [file tail $file] _]]
 	file mkdir [file dirname $file]
 	set lines {}
 	lappend lines "#ifndef $guard"
 	lappend lines "#define $guard"
-	foreach pattern $patterns {
-		foreach n [lsort [array names ::define $pattern]] {
+
+	# Work out the type of each variable
+	array set types {}
+	foreach pattern $autopatterns {
+		foreach n [array names ::define $pattern] {
+			set types($n) auto
+		}
+	}
+	foreach pattern $unquotedpatterns {
+		foreach n [array names ::define $pattern] {
+			set types($n) unquoted
+		}
+	}
+	foreach n [lsort [array names types]] {
+		if {$types($n) eq "auto"} {
+			# Automatically determine the type
 			if {$::define($n) eq "0"} {
 				lappend lines "/* #undef $n */"
-			} elseif {[string is integer -strict $::define($n)]} {
-				lappend lines "#define $n $::define($n)"
-			} else {
+				continue
+			}
+			if {![string is integer -strict $::define($n)]} {
 				lappend lines "#define $n \"$::define($n)\""
+				continue
 			}
 		}
+		# Unquoted
+		lappend lines "#define $n $::define($n)"
 	}
 	lappend lines "#endif"
 	set buf [join $lines \n]
