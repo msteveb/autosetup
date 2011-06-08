@@ -50,7 +50,8 @@ proc autosetup_install {} {
 		}
 		exec chmod 755 autosetup/config.sub autosetup/config.guess autosetup/find-tclsh
 
-		writefile autosetup/README.autosetup "This is [autosetup_version]. See http://autosetup.workware.net.au/\n"
+		writefile autosetup/README.autosetup \
+			"This is [autosetup_version]. See http://msteveb.github.com/autosetup/\n"
 
 	} error]} {
 		user-error "Failed to install autosetup: $error"
