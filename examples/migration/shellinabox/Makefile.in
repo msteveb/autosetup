@@ -1,0 +1,8 @@
+# This is just an example which shows some of the
+# key variable definitions
+
+CFLAGS = @CFLAGS@
+LIBS = @LIBS@
+build = @build@
+target = @target@
+srcdir = @srcdir@

@@ -1,0 +1,95 @@
+
+# Configuration
+
+tinytcl_is_static := @TINYTCL_IS_STATIC@
+tinytcl_history := @TINYTCL_HISTORY@
+tinytcl_debug := @TINYTCL_DEBUG@
+tinytcl_nofork := @TINYTCL_NOFORK@
+
+# Defines the extensions to include from extension/...
+EXTENSIONS := @TINYTCL_EXTENSIONS@
+
+# Set to enable memory debugging commands
+# CFLAGS += -DTCL_MEM_DEBUG
+
+# Set an initial, default library and auto_path
+CFLAGS += -DTCL_LIBRARY=\"/lib/tcl6\"
+
+STATIC_LIBTCL := libtcl.a
+CFLAGS += -Wall -g -I.
+
+.EXPORT_ALL_VARIABLES:
+
+OBJS := panic.o tclAssem.o tclBasic.o tclCmdAH.o tclCmdIL.o tclCmdMZ.o tclEnv.o tclEnviron.o \
+tclExpr.o tclGet.o tclGlob.o tclHash.o tclParse.o tclProc.o tclHistory.o \
+tclUtil.o tclVar.o tclXdbg.o tclXgen.o tcl_array.o tcl_clock.o tcl_file.o tcl_info.o tcl_package.o \
+tcl_string.o tcl_bio.o tclalloc.o tclmod.o tclunxaz.o tcluxstr.o tcluxutl.o \
+
+ifdef tinytcl_is_static
+	LIBTCL := $(STATIC_LIBTCL)
+else
+	LIBTCL := libtcl.so
+	CFLAGS += -fPIC
+endif
+
+ifndef tinytcl_history
+	CFLAGS += -DTCL_NO_HISTORY
+endif
+ifndef tinytcl_debug
+	CFLAGS += -DTCL_NO_DEBUG
+endif
+ifdef tinytcl_nofork
+	CFLAGS += -DNO_FORK
+endif
+
+# For dynamic loading
+ifndef tinytcl_is_static
+	CFLAGS += -DHAVE_TCL_LOAD
+	LDFLAGS += -rdynamic
+	LIBDL += @LIBDL@
+	OBJS += tclLoad.o tclLoadDl.o noextensions.o
+else
+	OBJS += load_extensions.o
+endif
+
+TARGETS += tclsh $(LIBTCL)
+
+all: $(TARGETS)
+
+tclsh: $(LIBTCL) tinytcl.o
+	$(CC) $(LDFLAGS) -o $@ tinytcl.o $(LIBTCL) $(LDLIBS) $(LIBDL)
+
+tcltest: $(LIBTCL) tclTest.o
+	$(CC) $(LDFLAGS) -o $@ tclTest.o $(LIBTCL) $(LDLIBS) $(LIBDL)
+
+$(STATIC_LIBTCL): $(OBJS) build_extensions
+	$(AR) cr $@ $(OBJS)
+	-$(AR) r $@ extensions/*.o
+
+libtcl.so: $(OBJS) build_extensions
+	$(CC) -shared -o $@ $(SH_LDFLAGS) $(OBJS) $(SH_LDLIBS)
+
+# The dependency here is a bit overkill, but it's simple
+build_extensions: extensions/*/*
+	@for e in $(EXTENSIONS); do \
+		$(MAKE) -C extensions/$$e TCLDIR=../.. -$(MAKEFLAGS) || exit 1; \
+	done
+	touch build_extensions
+
+load_extensions.c:
+	sh make-load-extensions.sh $@ $(EXTENSIONS)
+
+install:
+ifndef tinytcl_is_static
+	install -d $(DESTDIR)/lib
+	install -t $(DESTDIR)/lib libtcl.so
+	for e in $(EXTENSIONS); do \
+		$(MAKE) -C extensions/$$e $@; \
+	done
+endif
+
+clean:
+	rm -f *.o lib*.a lib*.so $(TARGETS) load_extensions.c tcltest extensions/*.o build_extensions
+	for e in $(EXTENSIONS); do \
+		$(MAKE) -C extensions/$$e $@; \
+	done

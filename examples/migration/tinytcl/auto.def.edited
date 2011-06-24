@@ -1,0 +1,59 @@
+# This auto.def was created by migrate-autoconf
+# and then hand edited to:
+# - Use define rather than AC_SUBST for user options
+# - Change the --debug option to --cmdtrace
+# - define LIBDL as [get-define lib_dlopen]
+
+use cc cc-lib
+
+options {
+	shared=0         =>  {Build a shared library}
+	history=0        =>  {Enable history support}
+	cmdtrace=0       =>  {Enable debugging command: cmdtrace}
+	fork=1           =>  {Do not use fork (no exec, etc.)}
+	syslog=0         =>  {Build the syslog extension}
+}
+
+#                                               -*- Autoconf -*-
+# Process this file with autoconf to produce a configure script.
+
+
+# XXX AC_SUBST TARGET_PLATFORM {$ac_cv_host}
+
+# Checks for programs.
+
+define TINYTCL_IS_STATIC 1
+if {[opt-bool shared]} {
+	msg-result "* creating shared library"
+	define TINYTCL_IS_STATIC 0
+}
+
+define TINYTCL_HISTORY 0
+if {[opt-bool history]} {
+	msg-result "* enabling history"
+	define TINYTCL_HISTORY 1
+}
+
+define TINYTCL_DEBUG 0
+if {[opt-bool cmdtrace]} {
+	msg-result "* enabling debugging"
+	define TINYTCL_DEBUG 1
+}
+
+define TINYTCL_NOFORK 0
+if {![opt-bool fork]} {
+	msg-result "* disabling fork"
+	define TINYTCL_NOFORK 1
+}
+
+define TINYTCL_EXTENSIONS ""
+if {[opt-bool syslog]} {
+	msg-result "* enabling extension: syslog"
+	define-append TINYTCL_EXTENSIONS syslog
+}
+
+cc-check-function-in-lib dlopen dl
+define LIBDL [get-define lib_dlopen]
+
+make-template Makefile.in
+

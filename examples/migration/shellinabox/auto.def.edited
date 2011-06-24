@@ -1,0 +1,140 @@
+# This auto.def was created by migrate-autoconf 
+# and then small changes were made by hand.
+#
+# Note that this project uses automake in addition to autoconf.
+# The migration is simply intended as an example.
+
+use cc cc-lib
+
+options {
+	login=1          =>  {on some systems (e.g. Fedora), calling /bin/login
+                            does not work well. If you know that your system
+                            suffers from this problem, set this option to
+                            remove support for the LOGIN keyword in the
+                            service description.}
+	ssl=1            =>  {if available at built-time, support for SSL
+                            connections will be enabled. It can still be
+                            disabled at run-time, either on the daemon's
+                            command line or if the operating system does not
+                            have the OpenSSL libraries available.}
+	pam=1            =>  {PAM support is necessary in order to authenticate
+                            users for running programs other than their default
+                            login shell.}
+	runtime-loading=1  =>  {ShellInABox will try to load the OpenSSL, and PAM
+                            libraries at run-time, if it has been compiled with
+                            support for these libraries, and if the operating
+                            system supports dynamic loading of libraries. This
+                            allows you to install the same binary on different
+                            systems independent of whether they have OpenSSL
+                            and PAM enabled.  If you would rather directly link
+                            these libraries into the binary, thus making them a
+                            hard dependency, then disable runtime-loading.}
+}
+
+define VCS_REVISION 239
+
+# Note that CFLAGS shouldn't really be modified here.
+# The user controls CFLAGS and a separate variable such as EXTRA_CFLAGS
+# should be used instead.
+
+if {![string match *-O* [get-define CFLAGS]} {
+	define-append CFLAGS -Os
+}
+define-append CFLAGS -Werror
+cc-check-progs install
+cc-check-progs libtool
+
+cc-check-includes libutil.h pthread.h pty.h strings.h sys/prctl.h sys/uio.h  \
+                  util.h utmp.h utmpx.h
+
+
+cc-check-function-in-lib login_tty util
+cc-check-functions strlcat
+
+cc-check-functions getgrgid_r getgrnam_r gethostbyname_r getpwnam_r getpwuid_r  \
+                openpty strcasestr getresuid getresgid setresuid setresgid
+
+
+# Could just use 'cc-with' and 'cc-check-functions' here
+if {[cctest -link 1 -includes stdlib.h -declare {
+#ifndef _XOPEN_SOURCE
+#define _XOPEN_SOURCE
+#endif
+#ifndef _GNU_SOURCE
+#define _GNU_SOURCE
+#endif} -code {char buf[10]; ptsname_r(0, buf, sizeof(buf));}]} {
+	define HAVE_PTSNAME_R
+}
+
+
+if {[cctest -link 1 -includes {pthread.h signal.h} -code {sigset_t s; int n; sigwait(&s, &n);}]} {
+	define HAVE_SIGWAIT
+}
+
+# Probably want 'cc-with -libs -lm' here
+if {[cctest -link 1 -includes math.h -code {if (isnan(0.0)) return 1;}]} {
+	define HAVE_ISNAN
+}
+
+# Just cc-find-functions could be used here
+if {[cctest -link 1 -includes utmp.h -code {updwtmp(0, 0);}]} {
+	define HAVE_UPDWTMP
+}
+if {[cctest -link 1 -includes utmpx.h -code {updwtmpx(0, 0);}]} {
+	define HAVE_UPDWTMPX
+}
+
+
+if {[cctest -link 1 -declare {void x(void) { };
+void y(void) __attribute__((alias("x")));} -code {y();}]} {
+	define HAVE_ATTRIBUTE_ALIAS
+}
+
+if {[cctest -link 1 -declare {void x(int i __attribute__((unused))) __attribute__((unused));} -code {}]} {
+	define HAVE_ATTRIBUTE_UNUSED
+}
+
+if {[cctest -link 1 -includes {grp.h unistd.h} -declare {#define _BSD_SOURCE} -code {int (*f)(const char *, int, int *, int *) = getgrouplist;}]} {
+	define HAVE_GETGROUPLIST_TAKES_INTS
+}
+
+
+define HAVE_BIN_LOGIN [opt-bool login]
+
+if {[opt-bool ssl]} {
+	cc-check-includes openssl/bio.h openssl/err.h openssl/ssl.h
+}
+
+if {[opt-bool pam]} {
+	cc-check-includes security/pam_appl.h security/pam_client.h                 \
+						security/pam_misc.h
+}
+
+if {![opt-bool runtime-loading] || ![cc-check-function-in-lib dlopen dl]} {
+	# No runtime loading, so link against openssl and pam
+	# Should really just search for functions in these libs rather than headers
+	if {[opt-bool ssl]} {
+		if {[cc-check-includes openssl/bio.h]} {
+			if {[cc-check-includes openssl/err.h]} {
+				if {[cc-check-includes openssl/ssl.h]} {
+					define-append LIBS "-lssl -lcrypto"
+				}
+			}
+		}
+	}
+	if {[opt-bool pam]} {
+		if {[cc-check-includes security/pam_appl.h]} {
+			define-append LIBS "-lpam"
+		}
+		if {[cc-check-includes security/pam_misc.h]} {
+			define-append LIBS "-lpam_misc"
+		}
+	}
+}
+
+if {[cc-check-includes zlib.h]} {
+	cc-check-function-in-lib deflate z
+}
+
+make-template Makefile.in
+

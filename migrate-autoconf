@@ -1,0 +1,675 @@
+#!/bin/sh
+# Copyright (c) 2011 WorkWare Systems http://www.workware.net.au/
+# All rights reserved
+# vim:se syntax=tcl:
+# \
+dir=`dirname "$0"`; exec `"$dir/find-tclsh" || echo false` "$0" "$@"
+
+# Migrates configure.in or configure.ac to auto.def
+
+proc dputs {msg} {
+	# Uncomment this for debugging
+	#puts $msg
+}
+proc make-quoted-string {str} {
+	return \"[string map {\" \\" \[ \\[ \] \\]} $str]\"
+}
+
+# Remove white space and trailing backslash
+proc clean-arg {str} {
+	set str [string trim $str]
+	if {[string index $str end] eq "\\"} {
+		set str [string trim [string range $str 0 end-1]]
+	}
+	return $str
+}
+
+# Parse m4 macro args into a list, removing brackets
+proc split-comma-args {str} {
+	set args {}
+	# Step one char at a time and keep track of if we are in a bracketed expression
+	set inbracket 0
+	foreach c [split $str {}] {
+		if {!$inbracket} {
+			if {$c eq {[}} {
+				incr inbracket
+				continue
+			} elseif {$c eq ","} {
+				append arg ""
+				lappend args [clean-arg $arg]
+				unset arg
+				continue
+			}
+		} else {
+			if {$c eq {[}} {
+				incr inbracket
+			} elseif {$c eq {]}} {
+				if {[incr inbracket -1] == 0} {
+					continue
+				}
+			}
+		}
+		append arg $c
+	}
+	if {[info exists arg]} {
+		if {[string match "*\\\n" $arg]} {
+			set arg [string range $arg 0 end-2]
+		}
+		lappend args [clean-arg $arg]
+	}
+	return $args
+}
+
+proc count-chars {str c} {
+	set i 0
+	set n 0
+	while {[set i [string first $c $str $i]] >= 0} {
+		incr i
+		incr n
+	}
+	return $n
+}
+
+proc check-complete {str} {
+	if {[count-chars $str (] != [count-chars $str )]} {
+		return 0
+	}
+	if {[count-chars $str \[] != [count-chars $str \]]} {
+		return 0
+	}
+	return 1
+}
+
+proc add-complete-statement {n statement} {
+	if {![regexp {^(.*?)\((.*?)\)$} $statement -> cmd args]} {
+		# Maybe there is something after )
+		if {![regexp {^(.*?)\((.*?)\)(.*)$} $statement -> cmd args rest]} {
+			error "*** On line $n, failed to split $statement"
+		} else {
+			lappend args [list # $rest]
+		}
+	}
+	if {[string match {*,*} $args] || [string match {*\[*} $args]} {
+		# Contains brackets and/or commas.
+		# Need to split on commas and remove brackets
+		set args [split-comma-args $args]
+	} else {
+		set args [list $args]
+	}
+	return [list ! $n $cmd $args]
+}
+
+# Converts a list of lines into a "program"
+proc parse-autoconf {lines} {
+	set n 0
+	set statement {}
+	set prog {}
+	foreach line $lines {
+		incr n
+		set line [string trimright $line]
+		regsub {\mdnl\M.*$} $line "" line
+		if {$statement eq {}} {
+			set statement [string trimleft $line]
+			if {![string match {A[SCMX]_*} $statement]} {
+				lappend prog [list # $statement]
+				set statement {}
+				continue
+			}
+		} elseif {[string match {A[SCMX]_*} $line]} {
+			# Found a macro call in the left column, so assume the previous
+			# statement is complete
+			lappend prog [add-complete-statement [expr {$n - 1}] $statement]
+			set statement $line
+		} else {
+			append statement \n $line
+		}
+
+		if {![string match *(* $statement]} {
+			lappend prog [list ! $n $statement {}]
+			set statement {}
+			continue
+		}
+
+		# Is this statement complete?
+		if {![string match *)* $statement]} {
+			continue
+		}
+
+		if {[check-complete $statement]} {
+			lappend prog [add-complete-statement $n $statement]
+			set statement {}
+		}
+	}
+	if {$statement ne ""} {
+		dputs "Got some leftover: $statement"
+		#exit 1
+	}
+	return $prog
+}
+
+proc output {msg} {
+	puts $::outf "$::indent$msg"
+}
+
+# Finds AC_ARG_WITH and AC_ARG_ENABLE to
+# output an appropriate options declaration
+proc output-options {prog} {
+	output "options {"
+
+	# options
+	foreach l $prog {
+		set l [lassign $l type n cmd args]
+		if {$type ne "#" && $cmd eq "AC_ARG_WITH"} {
+			lassign $args opt help true false
+			if {![regexp {=(.*?)\s+(.*)} $help -> arg desc]} {
+				# This is actually a boolean option
+				set arg ""
+				set desc $help
+				regexp {\s+(.*)} $desc -> desc
+			} else {
+				set arg :$arg
+			}
+			set desc [string map {[ ( ] )} $desc]
+			output [format "\t%-15s  =>  %s" with-$opt$arg [list $desc]]
+			continue
+		}
+		if {$type ne "#" && $cmd eq "AC_ARG_ENABLE"} {
+			lassign $args opt help true false
+			set def 0
+			if {[regexp -- {--(enable|disable)-(.*?)\s+(.*)} $help -> ed arg desc]} {
+				if {$ed eq "disable"} {
+					set def 1
+				}
+			} else {
+				set desc $help
+			}
+			# Remember the sense of this option
+			set ::boolopts($opt) $def
+			set desc [string map {[ ( ] )} $desc]
+			output [format "\t%-15s  =>  %s" $opt=$def [list $desc]]
+		}
+	}
+	output "}\n"
+}
+
+proc output-unknown {action} {
+	set lines [lassign [split $action \n] first]
+	output "# XXX $first"
+	foreach l $lines {
+		output "#     $l"
+	}
+}
+
+proc output-auto-def {prog} {
+	foreach l $prog {
+		set l [lassign $l type]
+		if {$type eq "#"} {
+			lassign $l line
+			set line [string trim $line]
+			if {$line eq "" || [string match "#*" $line]} {
+				output $line
+			} elseif {[string match "dnl *" $line]} {
+				output "# [string range $line 4 end]"
+			} elseif {[regexp {([a-z0-9_]+)=(.*)} $line -> name val]} {
+				output "set $name $val"
+			} else {
+				output-unknown $line
+			}
+		} else {
+			lassign $l n cmd args
+			dputs "! $n $cmd [llength $args] [join $args |]"
+			if {[info procs $cmd] eq ""} {
+				output-unknown [concat $cmd {*}$args]
+				puts stderr "Unknown: $cmd"
+			} else {
+				if {[catch {$cmd {*}$args} msg]} {
+					puts stderr "At line $n, could understand $cmd"
+					output-unknown [concat $cmd {*}$args]
+				}
+			}
+		}
+	}
+}
+
+proc split-comma-fields {str} {
+	set result {}
+	foreach i [split $str ,] {
+		lappend result [string trim $i]
+	}
+	return $result
+}
+
+proc incr-level {} {
+	append ::indent \t
+}
+
+proc decr-level {} {
+	set ::indent [string range $::indent 0 end-1]
+}
+
+proc output-shell-action {action} {
+	set prog [parse-autoconf [split $action \n]]
+	incr-level
+	output-auto-def $prog
+	decr-level
+}
+
+proc AC_MSG_NOTICE {args} {
+	output "msg-result [make-quoted-string [join $args]]"
+}
+
+proc AC_MSG_RESULT {args} {
+	output "msg-result [make-quoted-string [join $args]]"
+}
+
+proc AC_MSG_WARN {args} {
+	output "msg-result Warning: [make-quoted-string [join $args]]"
+}
+
+proc AC_MSG_ERROR {args} {
+	output "user-error [make-quoted-string [join $args]]"
+}
+
+proc AC_MSG_CHECKING {args} {
+	output "msg-checking [make-quoted-string "Checking [join $args]..."]"
+}
+
+proc AC_CONFIG_FILES {files} {
+	foreach file $files {
+		# XXX input file can have a different name
+		output "make-template $file.in"
+	}
+}
+
+
+proc AC_OUTPUT {{filename {}}} {
+	AC_CONFIG_FILES $filename
+	foreach header $::output_headers {
+		output "make-config-header $header"
+	}
+	set ::output_headers {}
+}
+
+proc AC_CONFIG_HEADER {filename} {
+	lappend ::output_headers $filename
+}
+
+proc AC_CONFIG_HEADERS {{filename config.h} args} {
+	AC_CONFIG_HEADER $filename
+}
+
+proc AS_MKDIR_P {dir} {
+	output [list file mkdir $dir]
+}
+
+proc AC_SYS_LARGEFILE {args} {
+	output "use cc-lib"
+	output "cc-check-lfs"
+}
+
+proc AC_CHECK_TOOL {define name {false ""}} {
+	do-true-false "cc-check-tools $name" "" $false
+}
+proc AC_CHECK_PROG {define name def args} {
+	output "if {!\[cc-check-progs $name\]} { define $define $def }"
+}
+
+proc AC_PROG_INSTALL {} {
+	output "cc-check-progs install"
+}
+proc AC_PROG_LIBTOOL {} {
+	output "cc-check-progs libtool"
+}
+proc AC_PROG_RANLIB {} {
+	output "cc-check-tools ranlib"
+}
+proc AC_PROG_YACC {} {
+	output "foreach prog {bison yacc} { if {\[cc-check-progs \$prog\]} { define YACC \$prog; break } }"
+}
+
+proc check-headers {args} {
+	output "cc-check-includes $args"
+}
+
+proc AC_HEADER_STDC {args} {}
+proc AC_HEADER_SYS_WAIT {args} {
+	check-headers sys/wait.h
+}
+proc AC_HEADER_DIRENT {args} {
+	check-headers dirent.h
+}
+proc AC_HEADER_TIME {args} {
+	check-headers sys/time.h time.h
+}
+proc AC_HEADER_STAT {args} {
+	check-headers sys/stat.h stat.h
+}
+proc AC_HEADER_STDBOOL {args} {
+	check-headers stdbool.h
+}
+proc ac_type_xxx {type} {
+	output "cc-with {-includes {stdlib.h unistd.h fcntl.h sys/types.h netinet/in.h}} {\n\tcc-check-types $type\n}"
+}
+
+proc AC_CHECK_HEADERS {hdrlist {true {}} {false {}} {decl {}}} {
+	do-true-false "cc-check-includes $hdrlist" $true $false $decl
+}
+
+proc AC_CHECK_HEADER {header {true {}} {false {}}} {
+	AC_CHECK_HEADERS $header $true $false
+}
+
+proc AC_TYPE_UID_T {args} {
+	ac_type_xxx uid_t
+}
+
+proc AC_TYPE_MODE_T {args} {
+	ac_type_xxx mode_t
+}
+
+proc AC_TYPE_PID_T {args} {
+	ac_type_xxx pid_t
+}
+
+proc AC_TYPE_SIZE_T {args} {
+	ac_type_xxx size_t
+}
+
+proc AC_CHECK_MEMBERS {typelist {true {}} {false {}} {decl {}}} {
+	do-true-false [list cc-check-members {*}[split-comma-fields $typelist]] $true $false $decl
+}
+proc do-true-false {cmd true false {decl {}}} {
+	if {$decl ne ""} {
+		output "cc-with {[examine-cc-decl $decl]} \{"
+		incr-level
+	}
+	if {$true eq "" && $false eq ""} {
+		output $cmd
+	} else {
+		set not ""
+		if {$true eq ""} {
+			set not !
+			set true $false
+			set false ""
+		}
+		output "if {$not\[$cmd\]} \{"
+		output-shell-action $true
+		if {$false ne ""} {
+			output "\} else \{"
+			output-shell-action $false
+		}
+		output "\}"
+	}
+	if {$decl ne ""} {
+		decr-level
+		output "\}"
+	}
+}
+
+proc AC_CHECK_TYPE {types {true ""} {false ""} {decl ""}} {
+	do-true-false "cc-check-types $types" $true $false $decl
+}
+
+proc AC_CHECK_TYPES {types {true {}} {false {}} {decl {}}} {
+	AC_CHECK_TYPE [split-comma-fields $types] $true $false $decl
+}
+
+proc AC_CHECK_FUNCS {funcs {true {}} {false {}}} {
+	do-true-false "cc-check-functions $funcs" $true $false
+}
+
+proc AC_CHECK_DECLS {symbols {true {}} {false {}} {decl {}}} {
+	do-true-false "cc-check-decls [split-comma-fields $symbols]" $true $false $decl
+}
+
+
+proc AC_FUNC_MEMCMP {args} {
+	output "cc-check-functions memcmp"
+}
+
+proc AC_FUNC_FORK {args} {
+	output "cc-check-functions fork"
+}
+
+proc AC_CHECK_LIB {libname funcname {true {}} {false {}} {extralibs {}}} {
+	if {$extralibs ne ""} {
+		output "cc-with {-libs {$extralibs}} \{"
+		incr-level
+	}
+	do-true-false "cc-check-function-in-lib $funcname $libname" $true $false
+	if {$extralibs ne ""} {
+		output "\}"
+		decr-level
+	}
+}
+
+proc AC_SEARCH_LIBS {funcname libnames {true {}} {false {}}} {
+	AC_CHECK_LIB $libnames $funcname $true $false
+}
+
+proc AC_ARG_WITH {opt help true {false {}}} {
+	output "if {\[opt-val with-$opt\] ne {}} {"
+	output "\tset withval \[opt-val with-$opt\]"
+	output-shell-action $true
+	if {$false ne ""} {
+		output "\} else \{"
+		output-shell-action $false
+	}
+	output "}"
+}
+
+proc AC_ARG_ENABLE {opt help {true {}} {false {}}} {
+	set not ""
+	if {$::boolopts($opt)} {
+		set not !
+	}
+	output "if {$not\[opt-bool $opt\]} {"
+	output-shell-action $true
+	if {$false ne ""} {
+		output "\} else \{"
+		output-shell-action $false
+	}
+	output "}"
+}
+
+proc AC_CACHE_CHECK {desc var action} {
+	output-shell-action $action
+}
+proc AC_COMPILE_IFELSE {action {true {}} {false {}}} {
+	# The macro definition here is nested, so we need to "unnest" it
+	set action [split [string map {[[ [ ]] ]} $action] \n]
+	set prog [parse-autoconf $action]
+	lassign [lindex $prog 0] type n cmd args
+
+	if {$cmd ne "AC_LANG_PROGRAM"} {
+		output-unknown "AC_COMPILE_IFELSE $action $true $false"
+	} else {
+		lassign $args decl code
+		AC_TRY_COMPILE $decl $code $true $false
+	}
+}
+
+proc AC_LINK_IFELSE {action {true {}} {false {}}} {
+	# The macro definition here is nested, so we need to "unnest" it
+	set action [split [string map {[[ [ ]] ]} $action] \n]
+	set prog [parse-autoconf $action]
+	lassign [lindex $prog 0] type n cmd args
+
+	if {$cmd ne "AC_LANG_PROGRAM"} {
+		output-unknown "AC_COMPILE_IFELSE $action $true $false"
+	} else {
+		lassign $args decl code
+		AC_TRY_LINK $decl $code $true $false
+	}
+}
+
+proc AC_CACHE_VAL {var action args} {
+	output-shell-action $action
+}
+
+proc AC_DEFINE {def args} {
+	output "define $def"
+}
+
+proc AC_DEFINE_UNQUOTED {def value args} {
+	output "define $def [make-quoted-string $value ]"
+}
+
+proc AC_CHECK_DECL {def {true {}} {false {}} {decl {}}} {
+	do-true-false "cc-check-decls $def" $true $false $decl
+}
+
+proc AC_CHECK_SIZEOF {type {def ""}} {
+	output "cc-check-sizeof [make-quoted-string $type]"
+}
+
+proc AC_FUNC_ALLOCA {} {
+	output "cc-check-functions alloca"
+}
+proc AC_FUNC_GETPGRP {} {
+	output "cc-check-functions getpgrp"
+}
+proc AC_FUNC_VPRINTF {} {
+	output "cc-check-functions vprintf"
+}
+proc AC_FUNC_WAIT3 {} {
+	output "cc-check-functions wait3"
+}
+proc AC_FUNC_STRCOLL {} {
+	output "cc-check-functions strcoll"
+}
+proc AC_CHECK_FUNC {func {true {}} {false {}}} {
+	do-true-false "cc-check-functions $func" $true $false
+}
+
+# Examine declarations and try to pull out things like:
+#   #include <abc/def.h>
+# and
+#   #ifdef HAVE_ABC_DEF_H
+#   #include <abc/def.h>
+#   #endif
+#
+# Returns a list like:
+#   -includes {list} -declare {list}
+#
+proc examine-cc-decl {decl} {
+	set omit_endif 0
+	set includes {}
+	set decls {}
+	foreach line [split $decl \n] {
+		if {$line eq ""} {
+			continue
+		}
+		if {[regexp {#\s*if(def)?\s+HAVE_} $line]} {
+			incr omit_endif
+			continue
+		}
+		if {$omit_endif && [string match "*#*endif*" $line]} {
+			set omit_endif 0
+			continue
+		}
+		if {[regexp {#\s*include.*<(.*)>} $line -> i]} {
+			lappend includes $i
+			continue
+		}
+		lappend decls [string trim $line]
+	}
+	set result {}
+	if {[llength $includes]} {
+		lappend result -includes $includes
+	}
+	if {[llength $decls]} {
+		lappend result -declare [join $decls \n]
+	}
+	return $result
+}
+
+proc AC_TRY_LINK {decl code {true {}} {false {}}} {
+	do-true-false "cctest -link 1 [examine-cc-decl $decl] -code {$code}" $true $false
+}
+
+proc AC_TRY_COMPILE {decl code {true {}} {false {}}} {
+	do-true-false "cctest [examine-cc-decl $decl] -code {$code}" $true $false
+}
+
+proc AC_LANG_WERROR {args} {
+	output "define-append CFLAGS -Werror"
+}
+
+proc AC_GNU_SOURCE {args} {
+	output "define-append CFLAGS -D_GNU_SOURCE"
+}
+
+proc AC_C_BIGENDIAN {args} {
+	output "cc-check-endian"
+}
+
+set subst_msg 0
+proc AC_SUBST {args} {
+	if {$::subst_msg == 0} {
+		incr ::subst_msg
+		output "# XXX autosetup automatically substitutes all define'd values"
+		output "#     In general, simply 'define' the value rather than using a shell"
+		output "#     variable and AC_SUBST."
+		output "#"
+	}
+	output-unknown [concat AC_SUBST {*}$args]
+}
+
+proc AC_PREREQ {version} {}
+proc AC_INIT {filename args} {}
+proc AC_PROG_CC {args} {}
+proc AC_PROG_MAKE_SET {args} {}
+proc AC_CANONICAL_HOST {args} {}
+proc AC_C_CONST {args} {}
+proc AC_PROG_GCC_TRADITIONAL {args} {}
+proc AC_CONFIG_SRCDIR {args} {}
+proc AC_CANONICAL_SYSTEM {args} {}
+proc AC_EXEEXT {args} {}
+
+# -------------------------
+
+set infile [glob -nocomplain configure.in configure.ac]
+switch [llength $infile] {
+	0 {
+		puts stderr "Could not find either configure.in or configure.ac"
+		exit 1
+	}
+	2 {
+		puts stderr "Both configure.in and configure.ac found. Please remove one"
+		exit 1
+	}
+}
+
+lassign $argv autodef
+if {$autodef eq ""} {
+	set autodef auto.def
+}
+
+if {[file exists $autodef]} {
+	puts stderr "$autodef already exists. Will not overwrite it"
+	exit 1
+}
+
+puts "Migrating $infile to $autodef"
+
+set f [open $infile]
+set lines [split [read $f] \n]
+close $f
+
+set prog [parse-autoconf $lines]
+
+set outf [open $autodef w]
+
+set indent ""
+set output_headers {}
+
+output "# Created by [file tail $argv0] - fix items marked XXX\n"
+output "use cc cc-lib\n"
+
+output-options $prog
+
+output-auto-def $prog
+close $outf
+
+puts "Created $autodef. Now edit to resolved items marked XXX"

@@ -29,8 +29,24 @@ autosetup is *not*:
   * A replacement for automake
   * Intended to replace all possible uses of autoconf
 
-Try: ./autosetup --help or ./autosetup --manual
+Try: ./autosetup --help or ./autosetup --reference
 
 Or view the manual on github at:
 
   <http://msteveb.github.com/autosetup/>
+
+Quick Start
+-----------
+
+To install autosetup into your project, 'cd' to the top level
+of your project and run:
+
+  <path-to-autosetup>/autosetup --install
+
+Once autosetup is installed, create auto.def, run:
+
+  ./configure
+
+To migrate an autoconf-enabled project to autosetup:
+
+  <path-to-autosetup>/migrate-autoconf
