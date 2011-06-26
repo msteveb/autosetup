@@ -58,6 +58,9 @@ cc-with {-includes sys/stat.h} {
 }
 cc-check-function-in-lib percent_m wrap
 
+# Checking the same thing twice is automatically cached
+cc-check-includes sys/socket.h sys/stat.h
+
 use cc-lib
 cc-check-lfs
 cc-check-endian

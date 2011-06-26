@@ -435,6 +435,7 @@ proc cctest {args} {
 	# complete source to be compiled. Get the result from cache if
 	# we can
 	if {[info exists ::cc_cache($cmdline,$lines)]} {
+		msg-checking "(cached) "
 		set ok $::cc_cache($cmdline,$lines)
 		if {$::autosetup(debug)} {
 			configlog "From cache (ok=$ok): [join $cmdline]"
