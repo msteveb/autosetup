@@ -58,14 +58,9 @@ cc-with {-includes sys/stat.h} {
 }
 cc-check-function-in-lib percent_m wrap
 
-# The equivalent of the AC_SYS_LARGEFILE macro
-if {[opt-bool largefile] && [opt-bool lfs]} {
-	if {![cc-check-lfs]} {
-		user-error "LFS not available"
-	}
-} else {
-	msg-result "LFS disabled by user"
-}
+use cc-lib
+cc-check-lfs
+cc-check-endian
 
 # Now try some C++ features
 # Does the C compiler understand -fno-rtti?
