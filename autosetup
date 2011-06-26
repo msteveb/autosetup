@@ -93,12 +93,18 @@ proc main {argv} {
 		nopager
 		quiet
 		timing
+		conf:
 	}
 
 	#parray ::useropts
 	if {[opt-bool version]} {
 		puts $autosetup(version)
 		exit 0
+	}
+
+	# autosetup --conf=alternate-auto.def
+	if {[opt-val conf] ne ""} {
+		set autosetup(autodef) [opt-val conf]
 	}
 
 	# Debugging output (set this early)
