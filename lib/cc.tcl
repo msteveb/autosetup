@@ -59,6 +59,13 @@ proc cctest_define {name} {
 	cctest -code "#ifndef $name\n#error not defined\n#endif"
 }
 
+# Checks for the existence of the given name either as
+# a macro (#define) or an rvalue (such as an enum)
+#
+proc cctest_decl {name} {
+	cctest -code "#ifndef $name\n(void)$name;\n#endif"
+}
+
 # @cc-check-sizeof type ...
 #
 # Checks the size of the given types (between 1 and 32, inclusive).
@@ -126,6 +133,27 @@ proc cc-check-defines {args} {
 	cc-check-some-feature $args {
 		cctest_define $each
 	}
+}
+
+# @cc-check-decls name ...
+#
+# Checks that the given name is either a preprocessor symbol or rvalue
+# such as an enum. Note that the define used for a decl is HAVE_DECL_xxx
+# rather than HAVE_xxx
+proc cc-check-decls {args} {
+	set ret 1
+	foreach name $args {
+		msg-checking "Checking for $name..."
+		set r [cctest_decl $name]
+		define-feature "decl $name" $r
+		if {$r} {
+			msg-result "ok"
+		} else {
+			msg-result "not found"
+			set ret 0
+		}
+	}
+	return $ret
 }
 
 # @cc-check-functions function ...
@@ -503,10 +531,13 @@ proc make-autoconf-h {file {autopatterns {HAVE_*}} {unquotedpatterns {SIZEOF_*}}
 			set types($n) unquoted
 		}
 	}
+	foreach n [array names ::define HAVE_DECL_*] {
+		set types($n) decl
+	}
 	foreach n [lsort [array names types]] {
-		if {$types($n) eq "auto"} {
+		if {$types($n) ne "unquoted"} {
 			# Automatically determine the type
-			if {$::define($n) eq "0"} {
+			if {$types($n) eq "auto" && $::define($n) eq "0"} {
 				lappend lines "/* #undef $n */"
 				continue
 			}
