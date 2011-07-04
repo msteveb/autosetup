@@ -5,7 +5,7 @@
 # \
 exec $($(dirname "$0")/find-tclsh || echo false) "$0" "$@"
 
-set autosetup(version) 0.6.1
+set autosetup(version) 0.6.2
 
 # Can be set to 1 to debug early-init problems
 set autosetup(debug) 0
