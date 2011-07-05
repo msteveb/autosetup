@@ -12,6 +12,8 @@ options {
 	utf8=1    => "Disable utf8 support"
 	# --lfs is a synonym for --largefile
 	lfs=1 largefile=1 => "Disable large file support"
+	opt1:value => "Options with a value"
+	opt2:=value => "Option with optional value"
 }
 
 # In general, the cc-check-* commands return true

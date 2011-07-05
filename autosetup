@@ -290,6 +290,9 @@ proc options-add {opts {header ""}} {
 	}
 }
 
+# @module-options optionlist
+#
+# Like 'options', but used within a module.
 proc module-options {opts} {
 	set header ""
 	if {$::autosetup(showhelp) > 1 && [llength $opts]} {
@@ -358,6 +361,34 @@ proc options-show {} {
 	}
 }
 
+# @options options-spec
+#
+# Specifies configuration-time options which may be selected by the user
+# and checked with opt-val and opt-bool. The format of options-spec follows.
+#
+# A boolean option is of the form:
+#
+## name[=0|1]  => "Description of this boolean option"
+#
+# The default is name=0, meaning that the option is disabled by default.
+# If name=1 is used to make the option enabled by default, the description should reflect
+# that with text like "Disable support for ...".
+#
+# An argument option (one which takes a parameter) is of the form:
+#
+## name:[=]value  => "Description of this option"
+#
+# If the name:value form is used, the value must be provided with the option (as --name=myvalue).
+# If the name:=value form is used, the value is optional and the given value is used as the default
+# if is not provided.
+#
+# Undocumented options are also supported by omitting the "=> description.
+# These options are not displayed with --help and can be useful for internal options or as aliases.
+#
+# For example, --disable-lfs is an alias for --disable=largefile:
+#
+## lfs=1 largefile=1 => "Disable large file support"
+# 
 proc options {optlist} {
 	# Allow options as a list or args
 	options-add $optlist "Local Options:"
