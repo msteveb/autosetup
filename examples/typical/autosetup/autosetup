@@ -1,10 +1,11 @@
 #!/bin/sh
 # Copyright (c) 2006-2010 WorkWare Systems http://www.workware.net.au/
 # All rights reserved
+# vim:se syntax=tcl:
 # \
 exec $($(dirname "$0")/find-tclsh || echo false) "$0" "$@"
 
-set autosetup(version) 0.6.1
+set autosetup(version) 0.6.2
 
 # Can be set to 1 to debug early-init problems
 set autosetup(debug) 0
@@ -92,12 +93,18 @@ proc main {argv} {
 		nopager
 		quiet
 		timing
+		conf:
 	}
 
 	#parray ::useropts
 	if {[opt-bool version]} {
 		puts $autosetup(version)
 		exit 0
+	}
+
+	# autosetup --conf=alternate-auto.def
+	if {[opt-val conf] ne ""} {
+		set autosetup(autodef) [opt-val conf]
 	}
 
 	# Debugging output (set this early)
@@ -657,7 +664,7 @@ proc dputs {msg} {
 proc user-error {msg} {
 	show-notices
 	puts stderr "Error: $msg"
-	puts stderr "Try: autosetup --help for options"
+	puts stderr "Try: '[file tail $::autosetup(exe)] --help' for options"
 	exit 1
 }
 

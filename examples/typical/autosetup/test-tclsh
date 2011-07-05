@@ -5,12 +5,13 @@
 
 if {[catch {info version} version] == 0} {
 	if {$version >= 0.70} {
+		# Ensure that regexp works
+		regexp a a
+
 		# Unlike Tcl, [info nameofexecutable] can return a relative path
 		puts [file join [pwd] [info nameofexecutable]]
 		exit 0
 	}
-	# Ensure that at least regexp works
-	regexp a a
 } elseif {[catch {info tclversion} version] == 0} {
 	if {$version >= 8.5} {
 		puts [info nameofexecutable]

@@ -38,5 +38,5 @@ if {[opt-bool shared]} {
 	define shared ""
 }
 
-make-autoconf-h config.h {HAVE_* SIZEOF_* ENABLE_* PACKAGE_*}
+make-config-header config.h -auto {ENABLE_* PACKAGE_*}
 make-template Makefile.in

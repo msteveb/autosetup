@@ -59,6 +59,13 @@ proc cctest_define {name} {
 	cctest -code "#ifndef $name\n#error not defined\n#endif"
 }
 
+# Checks for the existence of the given name either as
+# a macro (#define) or an rvalue (such as an enum)
+#
+proc cctest_decl {name} {
+	cctest -code "#ifndef $name\n(void)$name;\n#endif"
+}
+
 # @cc-check-sizeof type ...
 #
 # Checks the size of the given types (between 1 and 32, inclusive).
@@ -126,6 +133,27 @@ proc cc-check-defines {args} {
 	cc-check-some-feature $args {
 		cctest_define $each
 	}
+}
+
+# @cc-check-decls name ...
+#
+# Checks that the given name is either a preprocessor symbol or rvalue
+# such as an enum. Note that the define used for a decl is HAVE_DECL_xxx
+# rather than HAVE_xxx
+proc cc-check-decls {args} {
+	set ret 1
+	foreach name $args {
+		msg-checking "Checking for $name..."
+		set r [cctest_decl $name]
+		define-feature "decl $name" $r
+		if {$r} {
+			msg-result "ok"
+		} else {
+			msg-result "not found"
+			set ret 0
+		}
+	}
+	return $ret
 }
 
 # @cc-check-functions function ...
@@ -435,6 +463,7 @@ proc cctest {args} {
 	# complete source to be compiled. Get the result from cache if
 	# we can
 	if {[info exists ::cc_cache($cmdline,$lines)]} {
+		msg-checking "(cached) "
 		set ok $::cc_cache($cmdline,$lines)
 		if {$::autosetup(debug)} {
 			configlog "From cache (ok=$ok): [join $cmdline]"
@@ -471,57 +500,90 @@ proc cctest {args} {
 	return $ok
 }
 
-# @make-autoconf-h outfile ?auto-patterns=HAVE_*? ?unquoted-patterns=SIZEOF_*?
+# @make-autoconf-h outfile ?auto-patterns=HAVE_*? ?bare-patterns=SIZEOF_*?
+#
+# Deprecated - see make-config-header
+proc make-autoconf-h {file {autopatterns {HAVE_*}} {barepatterns {SIZEOF_* HAVE_DECL_*}}} {
+	user-notice "*** make-autoconf-h is deprecated -- use make-config-header instead"
+	make-config-header $file -auto $autopatterns -bare $barepatterns
+}
+
+# @make-config-header outfile ?-auto patternlist? ?-bare patternlist? ?-none patternlist? ?-str patternlist? ...
 #
 # Examines all defined variables which match the given patterns
 # and writes an include file, $file, which defines each of these.
-# Variables which match 'auto-patterns' are output as follows:
+# Variables which match '-auto' are output as follows:
 # - defines which have the value "0" are ignored.
 # - defines which have integer values are defined as the integer value.
 # - any other value is defined as a string, e.g. "value"
+# Variables which match '-bare' are defined as-is.
+# Variables which match '-str' are defined as a string, e.g. "value"
+# Variables which match '-none' are omitted.
 #
-# Variables which match 'unquoted-patterns' are defined unquoted.
-# 
+# Note that order is important. The first pattern which matches is selected
+# Default behaviour is:
+#
+#  -bare {SIZEOF_* HAVE_DECL_*} -auto HAVE_* -none *
+#
 # If the file would be unchanged, it is not written.
-proc make-autoconf-h {file {autopatterns {HAVE_*}} {unquotedpatterns {SIZEOF_*}}} {
+proc make-config-header {file args} {
 	set guard _[string toupper [regsub -all {[^a-zA-Z0-9]} [file tail $file] _]]
 	file mkdir [file dirname $file]
 	set lines {}
 	lappend lines "#ifndef $guard"
 	lappend lines "#define $guard"
 
-	# Work out the type of each variable
-	array set types {}
-	foreach pattern $autopatterns {
-		foreach n [array names ::define $pattern] {
-			set types($n) auto
-		}
-	}
-	foreach pattern $unquotedpatterns {
-		foreach n [array names ::define $pattern] {
-			set types($n) unquoted
-		}
-	}
-	foreach n [lsort [array names types]] {
-		if {$types($n) eq "auto"} {
-			# Automatically determine the type
-			if {$::define($n) eq "0"} {
-				lappend lines "/* #undef $n */"
+	# Add some defaults
+	lappend args -bare {SIZEOF_* HAVE_DECL_*} -auto HAVE_*
+
+	foreach n [lsort [dict keys [all-defines]]] {
+		set value [get-define $n]
+		set type [calc-define-output-type $n $args]
+		switch -exact -- $type {
+			-bare {
+				# Just output the value unchanged
+			}
+			-none {
 				continue
 			}
-			if {![string is integer -strict $::define($n)]} {
-				lappend lines "#define $n \"$::define($n)\""
+			-str {
+				set value \"$value\"
+			}
+			-auto {
+				# Automatically determine the type
+				if {$value eq "0"} {
+					lappend lines "/* #undef $n */"
+					continue
+				}
+				if {![string is integer -strict $value]} {
+					set value \"$value\"
+				}
+			}
+			"" {
 				continue
 			}
+			default {
+				autosetup-error "Unknown type in make-config-header: $type"
+			}
 		}
-		# Unquoted
-		lappend lines "#define $n $::define($n)"
+		lappend lines "#define $n $value"
 	}
 	lappend lines "#endif"
 	set buf [join $lines \n]
 	write-if-changed $file $buf {
 		msg-result "Created $file"
 	}
+}
+
+proc calc-define-output-type {name spec} {
+	foreach {type patterns} $spec {
+		foreach pattern $patterns {
+			if {[string match $pattern $name]} {
+				return $type
+			}
+		}
+	}
+	return ""
 }
 
 # Initialise some values from the environment or commandline or default settings

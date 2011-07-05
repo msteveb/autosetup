@@ -209,5 +209,5 @@ if {$resolver eq "ares"} {
     }
 }
 
-make-autoconf-h config.h {HAVE_* NEED_* IFTOP_*}
+make-config-header config.h -auto {NEED_* IFTOP_*}
 make-template Makefile.in

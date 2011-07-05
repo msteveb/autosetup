@@ -335,7 +335,7 @@ foreach i {ciphers/aes ciphers/safer ciphers/twofish encauth/ccm encauth/eax enc
 	file mkdir libtomcrypt/src/$i
 }
 
-make-autoconf-h config.h {HAVE_* DISABLE_* AIX BROKEN_* BUNDLED_*} {SIZEOF_* _FILE_* CONF_*}
+make-config-header config.h -auto {DISABLE_* AIX BROKEN_* BUNDLED_*} -bare {_FILE_* CONF_*}
 make-template Makefile.in
 make-template libtomcrypt/Makefile.in
 make-template libtommath/Makefile.in
