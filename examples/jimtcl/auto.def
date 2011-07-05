@@ -166,7 +166,7 @@ set needs(exec) {have-feature vfork}
 set needs(load) {expr {[have-feature dlopen-compat] || [cc-check-function-in-lib dlopen dl]}}
 set needs(posix) {have-feature waitpid}
 set needs(readdir) {have-feature opendir}
-set needs(readline) {cc-check-function-in-lib sqlite_open sqlite}
+set needs(readline) {cc-check-function-in-lib readline readline}
 set needs(signal) {expr {[have-feature sigaction] && [have-feature vfork]}}
 set needs(sqlite) {cc-check-function-in-lib sqlite_open sqlite}
 set needs(sqlite3) {cc-check-function-in-lib sqlite3_open sqlite3}

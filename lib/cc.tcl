@@ -137,7 +137,7 @@ proc cc-check-defines {args} {
 
 # @cc-check-decls name ...
 #
-# Checks that the given name is either a preprocessor symbol or rvalue
+# Checks that each given name is either a preprocessor symbol or rvalue
 # such as an enum. Note that the define used for a decl is HAVE_DECL_xxx
 # rather than HAVE_xxx
 proc cc-check-decls {args} {
@@ -177,7 +177,7 @@ proc cc-check-members {args} {
 
 # @cc-check-function-in-lib function libs ?otherlibs?
 #
-# Checks that the given given function can be found on one of the libs.
+# Checks that the given given function can be found in one of the libs.
 #
 # First checks for no library required, then checks each of the libraries
 # in turn.
@@ -186,7 +186,7 @@ proc cc-check-members {args} {
 # to -l$lib where the function was found, or "" if no library required.
 # In addition, -l$lib is added to the LIBS define.
 #
-# If additional libraries may be needed to linked, they should be specified
+# If additional libraries may be needed for linking, they should be specified
 # as $extralibs as "-lotherlib1 -lotherlib2".
 # These libraries are not automatically added to LIBS.
 #
@@ -327,6 +327,22 @@ proc cc-get-settings {} {
 	return $::autosetup(ccsettings)
 }
 
+# Similar to cc-add-settings, but each given setting
+# simply replaces the existing value.
+#
+# Returns the previous settings
+proc cc-update-settings {args} {
+	set prev [cc-get-settings]
+	array set new $prev
+
+	foreach {name value} $args {
+		set new($name) $value
+	}
+	cc-store-settings $new
+
+	return $prev
+}
+
 # @cc-with settings ?{ script }?
 #
 # Sets the given 'cctest' settings and then runs the tests in 'script'.
@@ -416,10 +432,17 @@ proc cctest {args} {
 		set lines $opts(-source)
 	} else {
 		foreach i $opts(-includes) {
+			if {$opts(-code) ne "" && ![feature-checked $i]} {
+				# Compiling real code with an unchecked header file
+				# Quickly (and silently) check for it now
+
+				# Remove all -includes from settings before checking
+				set saveopts [cc-update-settings -includes {}]
+				msg-quiet cc-check-includes $i
+				cc-store-settings $saveopts
+			}
 			if {$opts(-code) eq "" || [have-feature $i]} {
 				lappend source "#include <$i>"
-			} elseif {![feature-checked $i]} {
-				user-notice "Warning: using #include <$i> which has not been checked -- ignoring"
 			}
 		}
 		lappend source {*}$opts(-declare)

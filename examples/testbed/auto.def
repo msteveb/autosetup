@@ -47,10 +47,11 @@ if {[have-feature -std=c99]} {
 }
 define version1 "with spaces"
 
-# Note that autosetup will complain about the use of the following headers
-# if they haven't been checked, so check them now.
-cc-check-includes sys/socket.h sys/stat.h
-cc-with {-includes sys/socket.h} {
+# autosetup will check for the existence of any include files
+# mentioned in -includes before including them, silently excluding
+# any which don't exist.
+#
+cc-with {-includes {sys/socket.h blah/blah.h}} {
 	cc-check-members "struct msghdr.msg_control"
 }
 cc-with {-includes sys/stat.h} {
