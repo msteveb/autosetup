@@ -2,13 +2,32 @@
 <feed xmlns="http://www.w3.org/2005/Atom">
   <id>http://msteveb.github.com/autosetup/</id>
   <title>autosetup News</title>
-  <updated>2011-05-04T14:00:00Z</updated>
+  <updated>2011-07-05T14:00:00Z</updated>
   <link rel="alternate" href="http://msteveb.github.com/autosetup/"/>
   <link rel="self" href="http://msteveb.github.com/autosetup/feed.xml"/>
   <author>
     <name>steveb@workware.net.au</name>
     <uri>mailto:steveb@workware.net.au</uri>
   </author>
+  <entry>
+    <id>tag:msteveb.github.com,2011-07-06:/autosetup/articles/autosetup-062/</id>
+    <title type="html">autosetup 0.6.2</title>
+    <published>2011-07-05T14:00:00Z</published>
+    <updated>2011-07-05T14:00:00Z</updated>
+    <link rel="alternate" href="http://msteveb.github.com/autosetup/articles/autosetup-062/"/>
+    <content type="html">&lt;p&gt;&lt;strong&gt;autosetup&lt;/strong&gt; has seen continuing improvements recently, so I've bumped the version to 0.6.2&lt;/p&gt;
+
+&lt;p&gt;Here is a summary of recent changes:&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;make-autoconf-h is now deprecated in favour of the more flexible make-config-header&lt;/li&gt;
+  &lt;li&gt;New: cc-check-defines, cc-check-decls&lt;/li&gt;
+  &lt;li&gt;New module: cc-lib contains cc-check-lfs and cc-check-endian&lt;/li&gt;
+  &lt;li&gt;Include files are automatically checked as needed&lt;/li&gt;
+  &lt;li&gt;Improved documentation&lt;/li&gt;
+&lt;/ul&gt;
+</content>
+  </entry>
   <entry>
     <id>tag:msteveb.github.com,2011-05-05:/autosetup/articles/2011-05-05/</id>
     <title type="html">New Website Launched</title>

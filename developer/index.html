@@ -136,7 +136,7 @@ if {[opt-bool utf8] &amp;&amp; [have-feature fork]} {
     msg-result "Enabling UTF-8"
     define JIM_UTF8
 }
-make-autoconf-h config.h
+make-config-header config.h
 make-template Makefile.in
 </pre>
 
@@ -209,13 +209,13 @@ The example above gives.</p>
 <pre class="sh_unix">
 $ ./configure --help
 ...standard help...
-  Local Options:      
+  Local Options:
   --boolopt             a boolean option which defaults to disabled
   --disable-boolopt2    a boolean option which defaults to enabled
   --stringopt=          an option which takes an argument, e.g. --stringopt=value
   --stringopt2?=value?  an option where the argument is optional and defaults to 'value'
   --booltopt3           a boolean with a hidden alias. --optalias is not shown in --help
-  --boolopt4          
+  --boolopt4
         Multiline description for this option
         which is carefully formatted.
 </pre>
@@ -304,9 +304,9 @@ example, any instance of <code>@CC@</code> is replace with the value of <code>CC
 
 <p>This approach is ideal for creating a Makefile from a template, Makefile.in.</p>
 
-<h4 id="header-file-generation-----make-autoconf-h">2. Header File Generation &mdash; make-autoconf-h</h4>
+<h4 id="header-file-generation-----make-config-header">2. Header File Generation &mdash; make-config-header</h4>
 
-<p>The <code>make-autoconf-h</code> command creates a C/C++ header file based on the <em>configuration variables</em>.
+<p>The <code>make-config-header</code> command creates a C/C++ header file based on the <em>configuration variables</em>.
 By default, every true feature test is defined in the generated header file. It is also possible
 to output only a subset of the configuration variables, and also to include string variables
 in addition to boolean variables.</p>
@@ -371,6 +371,9 @@ variables in Makefile format.</p>
         
             
             <li><a href="../license/">License</a></li>
+        
+            
+            <li><a href="../why/">Motivation</a></li>
         
       </ul>
       <h2>Community</h2>

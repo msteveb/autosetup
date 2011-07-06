@@ -44,7 +44,7 @@
         </div>
         <div class="main" id="main">
         
-        <h1 id="autosetup-v061----command-reference">autosetup v0.6.1 &ndash; Command Reference</h1>
+        <h1 id="autosetup-v062----command-reference">autosetup v0.6.2 &ndash; Command Reference</h1>
 
 <h2 id="introduction">Introduction</h2>
 
@@ -66,6 +66,35 @@
 </code></pre>
 
 <p>If no options were set, $default is returned (exactly, not as a list).</p>
+
+<h3 id="module-options-optionlist"><code>module-options optionlist</code></h3>
+
+<p>Like <strong><code>options</code></strong>, but used within a module.</p>
+
+<h3 id="options-options-spec"><code>options options-spec</code></h3>
+
+<p>Specifies configuration-time options which may be selected by the user and checked with opt-val and opt-bool. The format of options-spec follows.</p>
+
+<p>A boolean option is of the form:</p>
+
+<pre><code>name[=0|1]  =&gt; "Description of this boolean option"
+</code></pre>
+
+<p>The default is name=0, meaning that the option is disabled by default. If name=1 is used to make the option enabled by default, the description should reflect that with text like &ldquo;Disable support for &hellip;&rdquo;.</p>
+
+<p>An argument option (one which takes a parameter) is of the form:</p>
+
+<pre><code>name:[=]value  =&gt; "Description of this option"
+</code></pre>
+
+<p>If the name:value form is used, the value must be provided with the option (as &ndash;name=myvalue). If the name:=value form is used, the value is optional and the given value is used as the default if is not provided.</p>
+
+<p>Undocumented options are also supported by omitting the &ldquo;=&gt; description. These options are not displayed with &ndash;help and can be useful for internal options or as aliases.</p>
+
+<p>For example, &ndash;disable-lfs is an alias for &ndash;disable=largefile:</p>
+
+<pre><code>lfs=1 largefile=1 =&gt; "Disable large file support"
+</code></pre>
 
 <h3 id="define-name-value1"><code>define name ?value=1?</code></h3>
 
@@ -145,6 +174,26 @@
 
 <p>Load the given library modules. e.g. use cc cc-shared</p>
 
+<h2 id="module-cc-lib">Module: cc-lib</h2>
+
+<p>Provides a library of common tests on top of the <strong><code>cc</code></strong> module.</p>
+
+<h3 id="cc-check-lfs"><code>cc-check-lfs</code></h3>
+
+<p>The equivalent of the AC_SYS_LARGEFILE macro</p>
+
+<p>defines <strong><code>HAVE_LFS</code></strong> if LFS is available, and defines <strong><code>_FILE_OFFSET_BITS=64</code></strong> if necessary</p>
+
+<p>Returns 1 if <strong><code>LFS</code></strong> is available or 0 otherwise</p>
+
+<h3 id="cc-check-endian"><code>cc-check-endian</code></h3>
+
+<p>The equivalent of the AC_C_BIGENDIAN macro</p>
+
+<p>defines <strong><code>HAVE_BIG_ENDIAN</code></strong> if endian is known to be big, or <strong><code>HAVE_LITTLE_ENDIAN</code></strong> if endian is known to be little.</p>
+
+<p>Returns 1 if determined, or 0 if not.</p>
+
 <h2 id="module-cc-shared">Module: cc-shared</h2>
 
 <p>The <strong><code>cc-shared</code></strong> module provides support for shared libraries and shared objects. It defines the following variables:</p>
@@ -197,6 +246,10 @@ LD
 
 <p>Checks that the given preprocessor symbol is defined</p>
 
+<h3 id="cc-check-decls-name-"><code>cc-check-decls name ...</code></h3>
+
+<p>Checks that each given name is either a preprocessor symbol or rvalue such as an enum. Note that the define used for a decl is HAVE_DECL_xxx rather than HAVE_xxx</p>
+
 <h3 id="cc-check-functions-function-"><code>cc-check-functions function ...</code></h3>
 
 <p>Checks that the given functions exist (can be linked)</p>
@@ -207,13 +260,13 @@ LD
 
 <h3 id="cc-check-function-in-lib-function-libs-otherlibs"><code>cc-check-function-in-lib function libs ?otherlibs?</code></h3>
 
-<p>Checks that the given given function can be found on one of the libs.</p>
+<p>Checks that the given given function can be found in one of the libs.</p>
 
 <p>First checks for no library required, then checks each of the libraries in turn.</p>
 
 <p>If the function is found, the feature is defined and lib_$function is defined to -l$lib where the function was found, or &ldquo;&rdquo; if no library required. In addition, -l$lib is added to the LIBS define.</p>
 
-<p>If additional libraries may be needed to linked, they should be specified as $extralibs as &ldquo;-lotherlib1 -lotherlib2&rdquo;. These libraries are not automatically added to LIBS.</p>
+<p>If additional libraries may be needed for linking, they should be specified as $extralibs as &ldquo;-lotherlib1 -lotherlib2&rdquo;. These libraries are not automatically added to LIBS.</p>
 
 <p>Returns 1 if found or 0 if not.</p>
 
@@ -293,9 +346,13 @@ LD
 
 <p>Any failures are recorded in <strong><code>config.log</code></strong></p>
 
-<h3 id="make-autoconf-h-outfile-auto-patternshave-unquoted-patternssizeof"><code>make-autoconf-h outfile ?auto-patterns=HAVE_*? ?unquoted-patterns=SIZEOF_*?</code></h3>
+<h3 id="make-autoconf-h-outfile-auto-patternshave-bare-patternssizeof"><code>make-autoconf-h outfile ?auto-patterns=HAVE_*? ?bare-patterns=SIZEOF_*?</code></h3>
 
-<p>Examines all defined variables which match the given patterns and writes an include file, $file, which defines each of these. Variables which match <strong><code>auto-patterns</code></strong> are output as follows:</p>
+<p>Deprecated - see make-config-header</p>
+
+<h3 id="make-config-header-outfile--auto-patternlist--bare-patternlist--none-patternlist--str-patternlist-"><code>make-config-header outfile ?-auto patternlist? ?-bare patternlist? ?-none patternlist? ?-str patternlist? ...</code></h3>
+
+<p>Examines all defined variables which match the given patterns and writes an include file, $file, which defines each of these. Variables which match <strong><code>-auto</code></strong> are output as follows:</p>
 
 <ul>
   <li>defines which have the value &ldquo;0&rdquo; are ignored.</li>
@@ -303,7 +360,11 @@ LD
   <li>any other value is defined as a string, e.g. &ldquo;value&rdquo;</li>
 </ul>
 
-<p>Variables which match <strong><code>unquoted-patterns</code></strong> are defined unquoted.</p>
+<p>Variables which match <strong><code>-bare</code></strong> are defined as-is. Variables which match <strong><code>-str</code></strong> are defined as a string, e.g. &ldquo;value&rdquo; Variables which match <strong><code>-none</code></strong> are omitted.</p>
+
+<p>Note that order is important. The first pattern which matches is selected Default behaviour is:</p>
+
+<p>-bare {SIZEOF<em>* HAVE_DECL</em><em>} -auto HAVE_</em> -none *</p>
 
 <p>If the file would be unchanged, it is not written.</p>
 
@@ -365,6 +426,9 @@ LD
         
             
             <li><a href="../../license/">License</a></li>
+        
+            
+            <li><a href="../../why/">Motivation</a></li>
         
       </ul>
       <h2>Community</h2>
