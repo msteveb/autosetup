@@ -345,7 +345,11 @@ proc options-show {} {
 		set max [max $max [string length $opt]]
 	}
 	set indent [string repeat " " [expr $max+4]]
-
+	set cols [env COLUMNS 80]
+	catch {
+		lassign [exec stty size] rows cols
+	}
+	incr cols -1
 	# Now output
 	foreach {opt desc} $::autosetup(optionhelp) {
 		if {[string match =* $opt]} {
@@ -356,7 +360,7 @@ proc options-show {} {
 		if {[string match \n* $desc]} {
 			puts $desc
 		} else {
-			options-wrap-desc [string trim $desc] 90 "  " $indent [expr $max + 2]
+			options-wrap-desc [string trim $desc] $cols "  " $indent [expr $max + 2]
 		}
 	}
 }
