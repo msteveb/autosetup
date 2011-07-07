@@ -500,7 +500,7 @@ proc cctest {args} {
 	writefile $src $lines\n
 
 	set ok 1
-	if {[catch {exec {*}$cmdline 2>@1} result errinfo]} {
+	if {[catch {exec-with-stderr {*}$cmdline} result errinfo]} {
 		configlog "Failed: [join $cmdline]"
 		configlog $result
 		configlog "============"

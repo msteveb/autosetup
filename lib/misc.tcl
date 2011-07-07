@@ -2,12 +2,42 @@
 # All rights reserved
 
 # Module containing misc procs useful to modules
+# Largely for platform compatibility
 
-set ::autosetup(istcl) [info exists ::tcl_library]
+set autosetup(istcl) [info exists ::tcl_library]
+set autosetup(iswin) [string equal windows $tcl_platform(platform)]
 
-# Tcl doesn't have the env command
-if {$::autosetup(istcl)} {
-	proc env {var args} {
+if {$autosetup(iswin)} {
+	# mingw/windows separates $PATH with semicolons
+	# and doesn't have an executable bit
+	proc split-path {} {
+		split [getenv PATH .] {;}
+	}
+	proc file-isexec {exec} {
+		# Basic test for windows. We ignore .bat
+		if {[file isfile $exec] || [file isfile $exec.exe]} {
+			return 1
+		}
+		return 0
+	}
+} else {
+	# unix separates $PATH with colons and has and executable bit
+	proc split-path {} {
+		split [env PATH .] :
+	}
+	proc file-isexec {exec} {
+		file executable $exec
+	}
+}
+
+# Assume that exec can return stdout and stderr
+proc exec-with-stderr {args} {
+	exec {*}$args 2>@1
+}
+
+if {$autosetup(istcl)} {
+	# Tcl doesn't have the env command
+	proc getenv {name args} {
 		if {[info exists ::env($var)]} {
 			return $::env($var)
 		}
@@ -16,6 +46,24 @@ if {$::autosetup(istcl)} {
 		}
 		return -code error "environment variable \"$var\" does not exist"
 	}
+} elseif {$autosetup(iswin)} {
+	# On Windows, backslash convert all environment variables
+	# (Assume that Tcl does this for us)
+	proc getenv {name args} {
+		string map {\\ /} [env $name {*}$args]
+	}
+	# Jim uses system() for exec under mingw, so
+	# we need to fetch the output ourselves
+	proc exec-with-stderr {args} {
+			set tmpfile /tmp/autosetup.[format %05x [rand 10000]].tmp
+			set rc [catch [list exec {*}$args >$tmpfile 2>&1] result]
+			set result [readfile $tmpfile]
+			file delete $tmpfile
+			return -code $rc $result
+	}
+} else {
+	# Jim on unix is simple
+	alias getenv env
 }
 
 # In case 'file normalize' doesn't exist

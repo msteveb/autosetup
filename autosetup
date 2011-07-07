@@ -28,7 +28,7 @@ proc main {argv} {
 	# c. The build directory, where output files are created
 
 	# This is also complicated by the fact that autosetup may
-	# have been run via the configure wrapper ([env WRAPPER] is set)
+	# have been run via the configure wrapper ([getenv WRAPPER] is set)
 
 	# Here are the rules.
 	# a. This script is $::argv0
@@ -47,7 +47,7 @@ proc main {argv} {
 	# (a)
 	set autosetup(dir) [realdir [file dirname [realpath $::argv0]]]
 	set autosetup(prog) [file join $autosetup(dir) [file tail $::argv0]]
-	set autosetup(exe) [env WRAPPER $autosetup(prog)]
+	set autosetup(exe) [getenv WRAPPER $autosetup(prog)]
 	if {$autosetup(installed)} {
 		set autosetup(libdir) $autosetup(dir)
 	} else {
@@ -56,7 +56,7 @@ proc main {argv} {
 	autosetup_add_dep $autosetup(prog)
 
 	# (b)
-	if {[env WRAPPER ""] eq ""} {
+	if {[getenv WRAPPER ""] eq ""} {
 		# Invoked directly
 		set autosetup(srcdir) [pwd]
 	} else {
@@ -159,7 +159,7 @@ proc main {argv} {
 	define AUTOREMAKE $cmd
 
 	# Log how we were invoked
-	configlog "Invoked as: [env WRAPPER $::argv0] [quote-argv $autosetup(argv)]"
+	configlog "Invoked as: [getenv WRAPPER $::argv0] [quote-argv $autosetup(argv)]"
 
 	source $autosetup(autodef)
 
@@ -413,8 +413,8 @@ proc options {optlist} {
 }
 
 proc config_guess {} {
-	if {[file executable $::autosetup(dir)/config.guess]} {
-		exec $::autosetup(dir)/config.guess
+	if {[file-isexec $::autosetup(dir)/config.guess]} {
+		exec-with-stderr sh $::autosetup(dir)/config.guess
 	} else {
 		configlog "No config.guess, so using uname"
 		string tolower [exec uname -p]-unknown-[exec uname -s][exec uname -r]
@@ -422,8 +422,8 @@ proc config_guess {} {
 }
 
 proc config_sub {alias} {
-	if {[file executable $::autosetup(dir)/config.sub]} {
-		exec $::autosetup(dir)/config.sub $alias
+	if {[file-isexec $::autosetup(dir)/config.sub]} {
+		exec-with-stderr sh $::autosetup(dir)/config.sub $alias
 	} else {
 		return $alias
 	}
@@ -506,7 +506,7 @@ proc get-env {name default} {
 	if {[dict exists $::autosetup(cmdline) $name]} {
 		return [dict get $::autosetup(cmdline) $name]
 	}
-	env $name $default
+	getenv $name $default
 }
 
 # @env-is-set name
@@ -575,9 +575,10 @@ proc find-executable {name} {
 		# The empty string is never a valid executable
 		return 0
 	}
-	foreach p [split [env PATH .] :] {
+	foreach p [split-path] {
+		dputs "Looking for $name in $p"
 		set exec [file join $p $name]
-		if {[file isfile $exec] && [file executable $exec]} {
+		if {[file-isexec $exec]} {
 			dputs "Found $name -> $exec"
 			return 1
 		}
@@ -755,7 +756,6 @@ proc realdir {dir} {
 
 # Follow symlinks until we get to something which is not a symlink
 proc realpath {path} {
-	#puts -nonewline "$path -> "
 	while {1} {
 		if {[catch {
 			set path [file link $path]
@@ -764,7 +764,6 @@ proc realpath {path} {
 			break
 		}
 	}
-	#puts "$path"
 	return $path
 }
 
