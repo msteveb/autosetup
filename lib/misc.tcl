@@ -23,7 +23,7 @@ if {$autosetup(iswin)} {
 } else {
 	# unix separates $PATH with colons and has and executable bit
 	proc split-path {} {
-		split [env PATH .] :
+		split [getenv PATH .] :
 	}
 	proc file-isexec {exec} {
 		file executable $exec
@@ -38,13 +38,13 @@ proc exec-with-stderr {args} {
 if {$autosetup(istcl)} {
 	# Tcl doesn't have the env command
 	proc getenv {name args} {
-		if {[info exists ::env($var)]} {
-			return $::env($var)
+		if {[info exists ::env($name)]} {
+			return $::env($name)
 		}
 		if {[llength $args]} {
 			return [lindex $args 0]
 		}
-		return -code error "environment variable \"$var\" does not exist"
+		return -code error "environment variable \"$name\" does not exist"
 	}
 } elseif {$autosetup(iswin)} {
 	# On Windows, backslash convert all environment variables

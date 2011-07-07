@@ -345,7 +345,7 @@ proc options-show {} {
 		set max [max $max [string length $opt]]
 	}
 	set indent [string repeat " " [expr $max+4]]
-	set cols [env COLUMNS 80]
+	set cols [getenv COLUMNS 80]
 	catch {
 		lassign [exec stty size] rows cols
 	}
