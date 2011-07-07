@@ -2,13 +2,66 @@
 <feed xmlns="http://www.w3.org/2005/Atom">
   <id>http://msteveb.github.com/autosetup/</id>
   <title>autosetup News</title>
-  <updated>2011-07-05T14:00:00Z</updated>
+  <updated>2011-07-07T14:00:00Z</updated>
   <link rel="alternate" href="http://msteveb.github.com/autosetup/"/>
   <link rel="self" href="http://msteveb.github.com/autosetup/feed.xml"/>
   <author>
     <name>steveb@workware.net.au</name>
     <uri>mailto:steveb@workware.net.au</uri>
   </author>
+  <entry>
+    <id>tag:msteveb.github.com,2011-07-08:/autosetup/articles/msys-mingw-support/</id>
+    <title type="html">MSYS/MinGW support</title>
+    <published>2011-07-07T14:00:00Z</published>
+    <updated>2011-07-07T14:00:00Z</updated>
+    <link rel="alternate" href="http://msteveb.github.com/autosetup/articles/msys-mingw-support/"/>
+    <content type="html">&lt;p&gt;Apparently there is considerable interest in supporting builds
+within &lt;a href="http://www.mingw.org/wiki/MSYS"&gt;MSYS/MinGW&lt;/a&gt; for Windows
+rather than cygwin or cross compiling MinGW from (e.g.) Linux.&lt;/p&gt;
+
+&lt;p&gt;The main difficulty in supporting this platform is that MinGW
+doesn&amp;rsquo;t support fork/exec (or actually vfork/exec) and thus &lt;code&gt;exec&lt;/code&gt;
+support in the bootstrap jimsh is limited.&lt;/p&gt;
+
+&lt;p&gt;Fortunately, autosetup has few requirements of &lt;code&gt;exec&lt;/code&gt; and these
+limitations can be worked around, along with other differences
+such as the use of backlashes in paths.&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;autosetup running under the MSYS bash shell&lt;/strong&gt;&lt;/p&gt;
+
+&lt;pre class="sh_unix"&gt;
+$ cd examples/typical
+$ ./configure
+No installed jimsh or tclsh, building local bootstrap jimsh0
+Host System...i686-pc-mingw32
+Build System...i686-pc-mingw32
+C compiler... gcc -g -O2
+C++ compiler... c++ -g -O2
+Checking for stdlib.h...ok
+Checking for long long...ok
+Checking for sizeof long long...8
+Checking for sizeof void *...4
+Checking for sys/un.h...not found
+Checking for regcomp...not found
+Checking for waitpid...not found
+Checking for sigaction...not found
+Checking for sys_signame...not found
+Checking for sys_siglist...not found
+Checking for syslog...not found
+Checking for opendir...ok
+Checking for readlink...not found
+Checking for sleep...not found
+Checking for usleep...ok
+Checking for pipe...not found
+Checking for inet_ntop...not found
+Checking for getaddrinfo...not found
+Enabling UTF-8
+Building static library
+Created config.h
+Created Makefile from Makefile.in
+&lt;/pre&gt;
+</content>
+  </entry>
   <entry>
     <id>tag:msteveb.github.com,2011-07-06:/autosetup/articles/autosetup-062/</id>
     <title type="html">autosetup 0.6.2</title>
