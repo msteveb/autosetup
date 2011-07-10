@@ -113,6 +113,12 @@ proc main {argv} {
 	incr autosetup(msg-quiet) [opt-bool quiet]
 	incr autosetup(msg-timing) [opt-bool timing]
 
+	# If the local module exists, source it now to allow for
+	# project-local customisations
+	if {[file exists $autosetup(libdir)/local.tcl]} {
+		use local
+	}
+
 	if {[opt-val help] ne ""} {
 		incr autosetup(showhelp)
 		use help
