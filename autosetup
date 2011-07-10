@@ -3,7 +3,7 @@
 # All rights reserved
 # vim:se syntax=tcl:
 # \
-exec $($(dirname "$0")/find-tclsh || echo false) "$0" "$@"
+dir=`dirname "$0"`; exec `"$dir/find-tclsh" || echo false` "$0" "$@"
 
 set autosetup(version) 0.6.2
 

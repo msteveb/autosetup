@@ -27,8 +27,8 @@ proc autosetup_init {} {
 		} else {
 			writefile configure \
 {#!/bin/sh
-dir="$(dirname "$0")/autosetup"
-WRAPPER="$0" exec $("$dir/find-tclsh" || echo false) "$dir/autosetup" "$@"
+dir="`dirname "$0"`/autosetup"
+WRAPPER="$0" exec `"$dir/find-tclsh" || echo false` "$dir/autosetup" "$@"
 }
 		}
 		catch {exec chmod 755 configure}

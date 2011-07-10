@@ -1,7 +1,7 @@
 #!/bin/sh
 # Looks for a suitable tclsh or jimsh in the PATH
 # If not found, builds a bootstrap jimsh from source
-d=$(dirname "$0")
+d=`dirname "$0"`
 PATH="$PATH:$d"
 for tclsh in jimsh tclsh tclsh8.5 tclsh8.6 jimsh0; do
 	$tclsh "$d/test-tclsh" 2>/dev/null && exit 0
