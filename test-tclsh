@@ -9,7 +9,7 @@ if {[catch {info version} version] == 0} {
 		# Ensure that regexp works
 		regexp (a.*?) a
 
-		# Unlike Tcl, [info nameofexecutable] can return a relative path
+		# Older versions of jimsh may return a relative path for [info nameofexecutable]
 		puts [file join [pwd] [info nameofexecutable]]
 		exit 0
 	}
