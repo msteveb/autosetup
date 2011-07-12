@@ -22,7 +22,7 @@ proc autosetup_install {} {
 			# Insert the static modules here
 			# i.e. those which don't contain @synopsis:
 			puts $f "set autosetup(installed) 1"
-			foreach file [glob $::autosetup(libdir)/*.tcl] {
+			foreach file [lsort [glob $::autosetup(libdir)/*.tcl]] {
 				set buf [readfile $file]
 				if {[string match "*\n# @synopsis:*" $buf]} {
 					lappend publicmodules $file
