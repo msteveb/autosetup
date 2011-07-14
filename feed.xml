@@ -2,13 +2,34 @@
 <feed xmlns="http://www.w3.org/2005/Atom">
   <id>http://msteveb.github.com/autosetup/</id>
   <title>autosetup News</title>
-  <updated>2011-07-07T14:00:00Z</updated>
+  <updated>2011-07-13T14:00:00Z</updated>
   <link rel="alternate" href="http://msteveb.github.com/autosetup/"/>
   <link rel="self" href="http://msteveb.github.com/autosetup/feed.xml"/>
   <author>
     <name>steveb@workware.net.au</name>
     <uri>mailto:steveb@workware.net.au</uri>
   </author>
+  <entry>
+    <id>tag:msteveb.github.com,2011-07-14:/autosetup/articles/fossil-adopts-autosetup/</id>
+    <title type="html">Fossil adopts autosetup</title>
+    <published>2011-07-13T14:00:00Z</published>
+    <updated>2011-07-13T14:00:00Z</updated>
+    <link rel="alternate" href="http://msteveb.github.com/autosetup/articles/fossil-adopts-autosetup/"/>
+    <content type="html">&lt;p&gt;Recently the &lt;a href="http://fossil-scm.org/"&gt;Fossil SCM&lt;/a&gt; has been adopted
+by &lt;a href="http://wiki.tcl.tk/"&gt;Tcl/Tk&lt;/a&gt; as a replacement for cvs.  Now the
+Tcl-based &lt;a href="http://msteveb.github.com/autosetup/"&gt;autosetup&lt;/a&gt; has
+been adopted as the development configuration system for
+&lt;a href="http://www.fossil-scm.org/"&gt;Fossil&lt;/a&gt;.&lt;/p&gt;
+
+&lt;p&gt;Fossil is similar to many open source projects that are required
+to support a number of different platforms. The obvious approach
+is to use autoconf and possibly automake, but &lt;a href="http://identi.ca/group/fossil#notice-76160895"&gt;many people&lt;/a&gt;
+find that approach &lt;a href="http://www.mail-archive.com/fossil-users@lists.fossil-scm.org/msg04899.html"&gt;frustrating&lt;/a&gt;.&lt;/p&gt;
+
+&lt;p&gt;Some of the immediate benefits of autosetup are support for cross compilation
+and easily allowing Fossil to be build with different options.&lt;/p&gt;
+</content>
+  </entry>
   <entry>
     <id>tag:msteveb.github.com,2011-07-08:/autosetup/articles/msys-mingw-support/</id>
     <title type="html">MSYS/MinGW support</title>
