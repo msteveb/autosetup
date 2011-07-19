@@ -3,8 +3,9 @@
 
 # Module which can install autosetup
 
-proc autosetup_install {} {
+proc autosetup_install {dir} {
 	if {[catch {
+		cd $dir
 		file mkdir autosetup
 
 		set f [open autosetup/autosetup w]

@@ -41,7 +41,7 @@ Quick Start
 To install autosetup into your project, 'cd' to the top level
 of your project and run:
 
-  <path-to-autosetup>/autosetup --install
+  &lt;path-to-autosetup&gt;/autosetup --install
 
 Once autosetup is installed, create auto.def, run:
 
@@ -49,4 +49,4 @@ Once autosetup is installed, create auto.def, run:
 
 To migrate an autoconf-enabled project to autosetup:
 
-  <path-to-autosetup>/migrate-autoconf
+  &lt;path-to-autosetup&gt;/migrate-autoconf
