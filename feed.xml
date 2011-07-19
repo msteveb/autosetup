@@ -2,13 +2,104 @@
 <feed xmlns="http://www.w3.org/2005/Atom">
   <id>http://msteveb.github.com/autosetup/</id>
   <title>autosetup News</title>
-  <updated>2011-07-13T14:00:00Z</updated>
+  <updated>2011-07-18T14:00:00Z</updated>
   <link rel="alternate" href="http://msteveb.github.com/autosetup/"/>
   <link rel="self" href="http://msteveb.github.com/autosetup/feed.xml"/>
   <author>
     <name>steveb@workware.net.au</name>
     <uri>mailto:steveb@workware.net.au</uri>
   </author>
+  <entry>
+    <id>tag:msteveb.github.com,2011-07-19:/autosetup/articles/autoconf-migration/</id>
+    <title type="html">Automatic autoconf migration tool</title>
+    <published>2011-07-18T14:00:00Z</published>
+    <updated>2011-07-18T14:00:00Z</updated>
+    <link rel="alternate" href="http://msteveb.github.com/autosetup/articles/autoconf-migration/"/>
+    <content type="html">&lt;p&gt;Although &lt;strong&gt;autosetup&lt;/strong&gt; configurations are generally easy to create,
+developers moving a complex project from &lt;strong&gt;autoconf&lt;/strong&gt; to autosetup
+may still find it tedious to create the &lt;strong&gt;auto.def&lt;/strong&gt; configuration
+file.&lt;/p&gt;
+
+&lt;p&gt;To simplify migration from autoconf, autosetup includes a migration
+tool which will automatically convert a &lt;strong&gt;configure.in&lt;/strong&gt; or &lt;strong&gt;configure.ac&lt;/strong&gt;
+file to an auto.def file.&lt;/p&gt;
+
+&lt;p&gt;Consider the following migration of &lt;a href="http://tinytcl.sourceforge.net/"&gt;tinytcl&lt;/a&gt;:&lt;/p&gt;
+
+&lt;pre class="sh_unix"&gt;
+$ cd tinytcl
+$ ~/src/autosetup.git/migrate-autoconf
+Migrating configure.ac to auto.def
+Created auto.def. Now edit to resolve items marked XXX
+$ ~/src/autosetup.git/autosetup --install
+Installed autosetup v0.6.2 to autosetup/
+I see configure, but not created by autosetup, so I won't overwrite it.
+Use autosetup --init --force to overwrite.
+$ ./autosetup/autosetup --init --force
+I will overwrite the existing configure because you used --force.
+&lt;/pre&gt;
+
+&lt;p&gt;Now the migrated auto.def can be edited. Before editing it looks something like this:&lt;/p&gt;
+
+&lt;pre class="sh_autosetup"&gt;
+# Created by migrate-autoconf - fix items marked XXX
+
+use cc cc-lib
+
+options {
+    shared=0         =&amp;gt;  {Build a shared library}
+    history=0        =&amp;gt;  {Enable history support}
+    debug=0          =&amp;gt;  {Enable debugging command: cmdtrace}
+    fork=1           =&amp;gt;  {Do not use fork (no exec, etc.)}
+    syslog=0         =&amp;gt;  {Build the syslog extension}
+}
+
+#                                               -*- Autoconf -*-
+# Process this file with autoconf to produce a configure script.
+
+
+# XXX autosetup automatically substitutes all define'd values
+#     In general, simply 'define' the value rather than using a shell
+#     variable and AC_SUBST.
+#
+# XXX AC_SUBST TARGET_PLATFORM $ac_cv_host
+
+# Checks for programs.
+
+# XXX TINYTCL_IS_STATIC=1
+if {[opt-bool shared]} {
+    # XXX if test "x$enableval" = "xyes" ; then
+    msg-result "* creating shared library"
+    # XXX TINYTCL_IS_STATIC=
+    # XXX fi
+}
+# XXX AC_SUBST TINYTCL_IS_STATIC $TINYTCL_IS_STATIC
+...
+&lt;/pre&gt;
+
+&lt;p&gt;After editing, &lt;em&gt;auto.def&lt;/em&gt; looks more like:&lt;/p&gt;
+
+&lt;pre class="sh_autosetup"&gt;
+...
+define TARGET_PLATFORM [get-define host]
+
+define TINYTCL_IS_STATIC 1
+if {[opt-bool shared]} {
+    msg-result "* creating shared library"
+    define TINYTCL_IS_STATIC 0
+}
+...
+&lt;/pre&gt;
+
+&lt;p&gt;The final edited version is available at in the autosetup repository
+as &lt;a href="https://github.com/msteveb/autosetup/blob/master/examples/migration/tinytcl/auto.def.edited"&gt;auto.def.edited&lt;/a&gt;
+along with additional examples.&lt;/p&gt;
+
+&lt;p&gt;Note that &lt;strong&gt;migrate-autoconf&lt;/strong&gt; only understands a common subset of autoconf macros and
+uses various heuristics to perform the migration. Nonetheless, migrate-autoconf can 
+significantly speed up migration from autoconf.&lt;/p&gt;
+</content>
+  </entry>
   <entry>
     <id>tag:msteveb.github.com,2011-07-14:/autosetup/articles/fossil-adopts-autosetup/</id>
     <title type="html">Fossil adopts autosetup</title>

@@ -1,0 +1,175 @@
+<!DOCTYPE HTML>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>autosetup - Automatic autoconf migration tool</title>
+    <link rel="stylesheet" type="text/css" href="../../css/style.css" media="screen">
+    <link rel="stylesheet" type="text/css" href="../../css/sh_style.css" media="screen">
+    
+    <script src="../../javascript/sh_main.min.js" type="text/javascript"></script>
+    <script src="../../javascript/sh_lang.js" type="text/javascript"></script>
+ 	
+ 	<script type="text/javascript">
+ 	  var _gaq = _gaq || [];
+ 	  _gaq.push(['_setAccount', 'UA-23178588-3']);
+ 	  _gaq.push(['_trackPageview']);
+ 
+ 	  (function() {
+ 		var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+ 		ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+ 		var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+ 	  })();
+ 	</script>
+ 	
+    <meta name="generator" content="nanoc 3.1.6">
+  </head>
+  <body>
+    <div id="header">
+      <h1 id="blog-title">autosetup</h1>
+      <p id="description">A build environment "autoconfigurator"</p>
+    </div>
+    <div id="content">
+        <div class="breadcrumbs">
+        
+        
+            <a href="../../">Overview</a> 
+            » 
+        
+            <a href="../">All News Articles</a> 
+            » 
+        
+            <a href="./">Automatic autoconf migration tool</a> 
+             
+        
+        </div>
+        <div class="main" id="main">
+        
+            <p class="articledate">Tuesday, 19 July 2011</p>
+            <h2 class="news">Automatic autoconf migration tool</h2>
+        
+        <p>Although <strong>autosetup</strong> configurations are generally easy to create,
+developers moving a complex project from <strong>autoconf</strong> to autosetup
+may still find it tedious to create the <strong>auto.def</strong> configuration
+file.</p>
+
+<p>To simplify migration from autoconf, autosetup includes a migration
+tool which will automatically convert a <strong>configure.in</strong> or <strong>configure.ac</strong>
+file to an auto.def file.</p>
+
+<p>Consider the following migration of <a href="http://tinytcl.sourceforge.net/">tinytcl</a>:</p>
+
+<pre class="sh_unix">
+$ cd tinytcl
+$ ~/src/autosetup.git/migrate-autoconf
+Migrating configure.ac to auto.def
+Created auto.def. Now edit to resolve items marked XXX
+$ ~/src/autosetup.git/autosetup --install
+Installed autosetup v0.6.2 to autosetup/
+I see configure, but not created by autosetup, so I won't overwrite it.
+Use autosetup --init --force to overwrite.
+$ ./autosetup/autosetup --init --force
+I will overwrite the existing configure because you used --force.
+</pre>
+
+<p>Now the migrated auto.def can be edited. Before editing it looks something like this:</p>
+
+<pre class="sh_autosetup">
+# Created by migrate-autoconf - fix items marked XXX
+
+use cc cc-lib
+
+options {
+    shared=0         =&gt;  {Build a shared library}
+    history=0        =&gt;  {Enable history support}
+    debug=0          =&gt;  {Enable debugging command: cmdtrace}
+    fork=1           =&gt;  {Do not use fork (no exec, etc.)}
+    syslog=0         =&gt;  {Build the syslog extension}
+}
+
+#                                               -*- Autoconf -*-
+# Process this file with autoconf to produce a configure script.
+
+
+# XXX autosetup automatically substitutes all define'd values
+#     In general, simply 'define' the value rather than using a shell
+#     variable and AC_SUBST.
+#
+# XXX AC_SUBST TARGET_PLATFORM $ac_cv_host
+
+# Checks for programs.
+
+# XXX TINYTCL_IS_STATIC=1
+if {[opt-bool shared]} {
+    # XXX if test "x$enableval" = "xyes" ; then
+    msg-result "* creating shared library"
+    # XXX TINYTCL_IS_STATIC=
+    # XXX fi
+}
+# XXX AC_SUBST TINYTCL_IS_STATIC $TINYTCL_IS_STATIC
+...
+</pre>
+
+<p>After editing, <em>auto.def</em> looks more like:</p>
+
+<pre class="sh_autosetup">
+...
+define TARGET_PLATFORM [get-define host]
+
+define TINYTCL_IS_STATIC 1
+if {[opt-bool shared]} {
+    msg-result "* creating shared library"
+    define TINYTCL_IS_STATIC 0
+}
+...
+</pre>
+
+<p>The final edited version is available at in the autosetup repository
+as <a href="https://github.com/msteveb/autosetup/blob/master/examples/migration/tinytcl/auto.def.edited">auto.def.edited</a>
+along with additional examples.</p>
+
+<p>Note that <strong>migrate-autoconf</strong> only understands a common subset of autoconf macros and
+uses various heuristics to perform the migration. Nonetheless, migrate-autoconf can 
+significantly speed up migration from autoconf.</p>
+
+        </div>
+    </div>
+    <div id="sidebar">
+      <h2>About autosetup</h2>
+      <ul>
+        
+            
+            <li><a href="../../">Overview</a></li>
+        
+            
+            <li><a href="../../news/">News</a></li>
+        
+            
+            <li><a href="../../download/">Download</a></li>
+        
+            
+            <li><a href="../../user/">Running autosetup</a></li>
+        
+            
+            <li><a href="../../developer/">Developing</a></li>
+        
+            
+            <li><a href="../../developer/examples/">Examples</a></li>
+        
+            
+            <li><a href="../../license/">License</a></li>
+        
+            
+            <li><a href="../../why/">Motivation</a></li>
+        
+      </ul>
+      <h2>Community</h2>
+      <ul>
+        <li><a href="https://github.com/msteveb/autosetup">autosetup on github</a></li>
+        <li><a href="https://github.com/msteveb/autosetup/commits/master">» commit history</a></li>
+        <li><a href="https://github.com/msteveb/autosetup/issues">» open issues</a></li>
+      </ul>
+    </div>
+    
+    <script language="javascript">sh_highlightDocument();</script>
+  </body>
+</html>
