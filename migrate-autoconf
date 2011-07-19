@@ -672,4 +672,4 @@ output-options $prog
 output-auto-def $prog
 close $outf
 
-puts "Created $autodef. Now edit to resolved items marked XXX"
+puts "Created $autodef. Now edit to resolve items marked XXX"
