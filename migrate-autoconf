@@ -84,7 +84,10 @@ proc add-complete-statement {n statement} {
 	if {![regexp {^(.*?)\((.*?)\)$} $statement -> cmd args]} {
 		# Maybe there is something after )
 		if {![regexp {^(.*?)\((.*?)\)(.*)$} $statement -> cmd args rest]} {
-			error "*** On line $n, failed to split $statement"
+			puts stderr "*** On line $n, failed to interpret:"
+			puts stderr $statement
+			puts stderr "\n*** If this is a nested macro, try indenting embedded macros"
+			exit 1
 		} else {
 			lappend args [list # $rest]
 		}
