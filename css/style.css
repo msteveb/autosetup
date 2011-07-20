@@ -247,3 +247,14 @@ code {
 	font-size: larger;
 	font-weight: bold;
 }
+
+.floatimg {
+	float: right;
+	width: 330;
+	margin-left: 20px;
+}
+
+.floatimg img {
+	border: solid 1px black;
+	background-color: #eee;
+}
