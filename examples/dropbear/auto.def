@@ -275,7 +275,7 @@ if {![opt-bool lastlog]} {
 				set ll LASTLOG_FILE
 			} elseif {[cctest -code {const char *lastlog = _PATH_LASTLOG;}]} {
 				set ll _PATH_LASTLOG
-			} elseif {
+			} else {
 				user-error "You need to tell me where lastlog is with --with-lastlog"
 			}
 		}
