@@ -43,7 +43,7 @@ use cc
 options {
 }
 
-make-autoconf-h config.h
+make-config-header config.h
 make-template Makefile.in
 }
 	}
