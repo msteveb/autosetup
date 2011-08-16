@@ -55,7 +55,7 @@ if {$autosetup(istcl)} {
 	# Jim uses system() for exec under mingw, so
 	# we need to fetch the output ourselves
 	proc exec-with-stderr {args} {
-			set tmpfile /tmp/autosetup.[format %05x [rand 10000]].tmp
+			set tmpfile auto[format %04x [rand 10000]].tmp
 			set rc [catch [list exec {*}$args >$tmpfile 2>&1] result]
 			set result [readfile $tmpfile]
 			file delete $tmpfile
