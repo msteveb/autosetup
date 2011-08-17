@@ -122,6 +122,11 @@ define _TEST
 define PACKAGE_NAME testbed
 define PACKAGE_VERSION 1.0
 
+define TRUEVAL
+define FALSEVAL 0
+define EMPTYVAL ""
+define STRVAL strval
+
 # And apply these settings for the rest of the file
 cc-with {-lang c++}
 

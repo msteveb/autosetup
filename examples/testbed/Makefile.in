@@ -15,3 +15,41 @@ endif
 
 reconfig:
 	@AUTOREMAKE@
+
+# Test conditional sections
+# define TRUEVAL
+# define FALSEVAL 0
+# define EMPTYVAL ""
+# define STRVAL strval
+
+# Should output only "+" lines
+@if TRUEVAL
+# + if TRUEVAL
+@else
+# - if TRUEVAL
+@endif
+@if FALSEVAL == 1
+# - if FALSEVAL == 1
+@else
+# + if FALSEVAL == 1
+@endif
+@if FALSEVAL
+# - if FALSEVAL
+@else
+# + if FALSEVAL
+@endif
+@if EMPTYVAL
+# - if EMPTYVAL
+@else
+# + if EMPTYVAL
+@endif
+@if STRVAL != test
+# + STRVAL != test
+@else
+# - STRVAL != test
+@endif
+@if UNDEFVAL
+# - UNDEFVAL
+@else
+# + UNDEFVAL
+@endif
