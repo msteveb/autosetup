@@ -52,15 +52,6 @@ if {$autosetup(istcl)} {
 	proc getenv {name args} {
 		string map {\\ /} [env $name {*}$args]
 	}
-	# Jim uses system() for exec under mingw, so
-	# we need to fetch the output ourselves
-	proc exec-with-stderr {args} {
-			set tmpfile auto[format %04x [rand 10000]].tmp
-			set rc [catch [list exec {*}$args >$tmpfile 2>&1] result]
-			set result [readfile $tmpfile]
-			file delete $tmpfile
-			return -code $rc $result
-	}
 } else {
 	# Jim on unix is simple
 	alias getenv env
