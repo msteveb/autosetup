@@ -26,12 +26,20 @@ proc clean-arg {str} {
 
 # Parse m4 macro args into a list, removing brackets
 proc split-comma-args {str} {
+	#dputs "split-comma-args $str"
 	set args {}
 	# Step one char at a time and keep track of if we are in a bracketed expression
 	set inbracket 0
+	set inparen 0
 	foreach c [split $str {}] {
 		if {!$inbracket} {
-			if {$c eq {[}} {
+			if {$inparen} {
+				if {$c eq ")"} {
+					incr inparen -1
+				}
+			} elseif {$c eq "("} {
+				incr inparen
+			} elseif {$c eq {[}} {
 				incr inbracket
 				continue
 			} elseif {$c eq ","} {
@@ -57,6 +65,7 @@ proc split-comma-args {str} {
 		}
 		lappend args [clean-arg $arg]
 	}
+	#dputs "===> $args"
 	return $args
 }
 
@@ -172,6 +181,7 @@ proc output-options {prog} {
 			} else {
 				set arg :$arg
 			}
+			regsub -all {[()]} $desc "" desc
 			set desc [string map {[ ( ] )} $desc]
 			output [format "\t%-15s  =>  %s" with-$opt$arg [list $desc]]
 			continue
@@ -188,6 +198,7 @@ proc output-options {prog} {
 			}
 			# Remember the sense of this option
 			set ::boolopts($opt) $def
+			regsub -all {[()]} $desc "" desc
 			set desc [string map {[ ( ] )} $desc]
 			output [format "\t%-15s  =>  %s" $opt=$def [list $desc]]
 		}
