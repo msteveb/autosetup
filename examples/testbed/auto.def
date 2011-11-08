@@ -4,7 +4,7 @@
 # and features.
 #
 
-use cc cc-lib
+use cc cc-lib cc-db
 
 options {
 	# Comment lines are allowed in options
@@ -48,6 +48,8 @@ if {[have-feature -std=c99]} {
 	define-append EXTRA_CFLAGS -std=c99 -fpedantic {-Dversion="my version"}
 }
 define version1 "with spaces"
+
+cc-check-includes netinet/in.h
 
 # autosetup will check for the existence of any include files
 # mentioned in -includes before including them, silently excluding
