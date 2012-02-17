@@ -23,12 +23,12 @@ proc autosetup_init {} {
 		if {!$::autosetup(installed)} {
 			user-notice "Warning: Initialising from the development version of autosetup"
 
-			writefile configure "#!/bin/sh\nWRAPPER=\"\$0\" exec $::autosetup(dir)/autosetup \"\$@\"\n"
+			writefile configure "#!/bin/sh\nWRAPPER=\"\$0\"; export WRAPPER; exec $::autosetup(dir)/autosetup \"\$@\"\n"
 		} else {
 			writefile configure \
 {#!/bin/sh
 dir="`dirname "$0"`/autosetup"
-WRAPPER="$0" exec "`$dir/find-tclsh`" "$dir/autosetup" "$@"
+WRAPPER="$0"; export WRAPPER; exec "`$dir/find-tclsh`" "$dir/autosetup" "$@"
 }
 		}
 		catch {exec chmod 755 configure}
