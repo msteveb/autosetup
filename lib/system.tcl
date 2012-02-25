@@ -254,7 +254,7 @@ define SHELL [get-env SHELL [find-an-executable sh bash ksh]]
 
 # Windows vs. non-Windows
 switch -glob -- [get-define host] {
-	*-*-ming* - *-*-cygwin {
+	*-*-ming* - *-*-cygwin - *-*-msys {
 		define-feature windows
 		define EXEEXT .exe
 	}
