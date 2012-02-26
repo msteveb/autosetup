@@ -39,6 +39,7 @@
 #define TCL_PLATFORM_PATH_SEPARATOR ":"
 #define HAVE_VFORK
 #define HAVE_WAITPID
+#define HAVE_ISATTY
 #define HAVE_SYS_TIME_H
 #define HAVE_DIRENT_H
 #define HAVE_UNISTD_H
@@ -1111,7 +1112,7 @@ int Jim_globInit(Jim_Interp *interp)
 "		if {[string match {*[[*?]*} $pattern]} {\n"
 "\n"
 "			set files [readdir -nocomplain $dir]\n"
-"		} elseif {[file isdir $dir] && [file exists $dir/$pattern]} {\n"
+"		} elseif {[file isdir $dir] && [file exists [file join $dir $pattern]]} {\n"
 "			set files [list $pattern]\n"
 "		} else {\n"
 "			set files \"\"\n"
@@ -1937,6 +1938,18 @@ static int aio_cmd_puts(Jim_Interp *interp, int argc, Jim_Obj *const *argv)
     return JIM_ERR;
 }
 
+static int aio_cmd_isatty(Jim_Interp *interp, int argc, Jim_Obj *const *argv)
+{
+#ifdef HAVE_ISATTY
+    AioFile *af = Jim_CmdPrivData(interp);
+    Jim_SetResultInt(interp, isatty(fileno(af->fp)));
+#else
+    Jim_SetResultInt(interp, 0);
+#endif
+
+    return JIM_OK;
+}
+
 
 static int aio_cmd_flush(Jim_Interp *interp, int argc, Jim_Obj *const *argv)
 {
@@ -2168,6 +2181,13 @@ static const jim_subcmd_type aio_command_table[] = {
         aio_cmd_puts,
         1,
         2,
+        
+    },
+    {   "isatty",
+        NULL,
+        aio_cmd_isatty,
+        0,
+        0,
         
     },
     {   "flush",
@@ -3118,12 +3138,13 @@ static int file_cmd_normalize(Jim_Interp *interp, int argc, Jim_Obj *const *argv
 
     if (realpath(path, newname)) {
         Jim_SetResult(interp, Jim_NewStringObjNoAlloc(interp, newname, -1));
+        return JIM_OK;
     }
     else {
         Jim_Free(newname);
-        Jim_SetResult(interp, argv[0]);
+        Jim_SetResultFormatted(interp, "can't normalize \"%#s\": %s", argv[0], strerror(errno));
+        return JIM_ERR;
     }
-    return JIM_OK;
 #else
     Jim_SetResultString(interp, "Not implemented", -1);
     return JIM_ERR;
@@ -7392,23 +7413,6 @@ void Jim_InvalidateStringRep(Jim_Obj *objPtr)
     objPtr->bytes = NULL;
 }
 
-#define Jim_SetStringRep(o, b, l) \
-    do { (o)->bytes = b; (o)->length = l; } while (0)
-
-void Jim_InitStringRep(Jim_Obj *objPtr, const char *bytes, int length)
-{
-    if (length == 0) {
-        objPtr->bytes = JimEmptyStringRep;
-        objPtr->length = 0;
-    }
-    else {
-        objPtr->bytes = Jim_Alloc(length + 1);
-        objPtr->length = length;
-        memcpy(objPtr->bytes, bytes, length);
-        objPtr->bytes[length] = '\0';
-    }
-}
-
 
 Jim_Obj *Jim_DuplicateObj(Jim_Interp *interp, Jim_Obj *objPtr)
 {
@@ -7419,8 +7423,18 @@ Jim_Obj *Jim_DuplicateObj(Jim_Interp *interp, Jim_Obj *objPtr)
         
         dupPtr->bytes = NULL;
     }
+    else if (objPtr->length == 0) {
+        
+        dupPtr->bytes = JimEmptyStringRep;
+        dupPtr->length = 0;
+        dupPtr->typePtr = NULL;
+        return dupPtr;
+    }
     else {
-        Jim_InitStringRep(dupPtr, objPtr->bytes, objPtr->length);
+        dupPtr->bytes = Jim_Alloc(objPtr->length + 1);
+        dupPtr->length = objPtr->length;
+        
+        memcpy(dupPtr->bytes, objPtr->bytes, objPtr->length + 1);
     }
 
     
@@ -7598,9 +7612,8 @@ Jim_Obj *Jim_NewStringObjNoAlloc(Jim_Interp *interp, char *s, int len)
 {
     Jim_Obj *objPtr = Jim_NewObj(interp);
 
-    if (len == -1)
-        len = strlen(s);
-    Jim_SetStringRep(objPtr, s, len);
+    objPtr->bytes = s;
+    objPtr->length = len == -1 ? strlen(s) : len;
     objPtr->typePtr = NULL;
     return objPtr;
 }
@@ -10824,8 +10837,6 @@ static int SetListFromAny(Jim_Interp *interp, struct Jim_Obj *objPtr)
         return JIM_OK;
     }
 
-#if 0
-    
     if (Jim_IsDict(objPtr)) {
         Jim_Obj **listObjPtrPtr;
         int len;
@@ -10845,7 +10856,6 @@ static int SetListFromAny(Jim_Interp *interp, struct Jim_Obj *objPtr)
 
         return JIM_OK;
     }
-#endif
 
     
     if (objPtr->typePtr == &sourceObjType) {
@@ -15081,11 +15091,36 @@ int Jim_EvalFile(Jim_Interp *interp, const char *filename)
     return retcode;
 }
 
-static int JimParseSubstStr(struct JimParserCtx *pc)
+static void JimParseSubst(struct JimParserCtx *pc, int flags)
 {
     pc->tstart = pc->p;
     pc->tline = pc->linenr;
-    while (pc->len && *pc->p != '$' && *pc->p != '[') {
+
+    if (pc->len == 0) {
+        pc->tend = pc->p;
+        pc->tt = JIM_TT_EOL;
+        pc->eof = 1;
+        return;
+    }
+    if (*pc->p == '[' && !(flags & JIM_SUBST_NOCMD)) {
+        JimParseCmd(pc);
+        return;
+    }
+    if (*pc->p == '$' && !(flags & JIM_SUBST_NOVAR)) {
+        if (JimParseVar(pc) == JIM_OK) {
+            return;
+        }
+        
+        pc->tstart = pc->p;
+        flags |= JIM_SUBST_NOVAR;
+    }
+    while (pc->len) {
+        if (*pc->p == '$' && !(flags & JIM_SUBST_NOVAR)) {
+            break;
+        }
+        if (*pc->p == '[' && !(flags & JIM_SUBST_NOCMD)) {
+            break;
+        }
         if (*pc->p == '\\' && pc->len > 1) {
             pc->p++;
             pc->len--;
@@ -15094,61 +15129,7 @@ static int JimParseSubstStr(struct JimParserCtx *pc)
         pc->len--;
     }
     pc->tend = pc->p - 1;
-    pc->tt = JIM_TT_ESC;
-    return JIM_OK;
-}
-
-static int JimParseSubst(struct JimParserCtx *pc, int flags)
-{
-    int retval;
-
-    if (pc->len == 0) {
-        pc->tstart = pc->tend = pc->p;
-        pc->tline = pc->linenr;
-        pc->tt = JIM_TT_EOL;
-        pc->eof = 1;
-        return JIM_OK;
-    }
-    switch (*pc->p) {
-        case '[':
-            retval = JimParseCmd(pc);
-            if (flags & JIM_SUBST_NOCMD) {
-                pc->tstart--;
-                pc->tend++;
-                pc->tt = (flags & JIM_SUBST_NOESC) ? JIM_TT_STR : JIM_TT_ESC;
-            }
-            return retval;
-            break;
-        case '$':
-            if (JimParseVar(pc) == JIM_ERR) {
-                pc->tstart = pc->tend = pc->p++;
-                pc->len--;
-                pc->tline = pc->linenr;
-                pc->tt = JIM_TT_STR;
-            }
-            else {
-                if (flags & JIM_SUBST_NOVAR) {
-                    pc->tstart--;
-                    if (flags & JIM_SUBST_NOESC)
-                        pc->tt = JIM_TT_STR;
-                    else
-                        pc->tt = JIM_TT_ESC;
-                    if (*pc->tstart == '{') {
-                        pc->tstart--;
-                        if (*(pc->tend + 1))
-                            pc->tend++;
-                    }
-                }
-            }
-            break;
-        default:
-            retval = JimParseSubstStr(pc);
-            if (flags & JIM_SUBST_NOESC)
-                pc->tt = JIM_TT_STR;
-            return retval;
-            break;
-    }
-    return JIM_OK;
+    pc->tt = (flags & JIM_SUBST_NOESC) ? JIM_TT_STR : JIM_TT_ESC;
 }
 
 
