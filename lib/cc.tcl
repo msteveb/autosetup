@@ -256,6 +256,8 @@ proc cc-check-function-in-lib {function libs {otherlibs {}}} {
 # simply "ar" is assumed depending upon whether cross compiling.
 # The path is searched for this executable, and if found AR is defined
 # to the executable name.
+# Note that even when cross compiling, the simple "ar" is used as a fallback,
+# but a warning is generated. This is necessary for some toolchains.
 #
 # It is an error if the executable is not found.
 #
@@ -263,10 +265,16 @@ proc cc-check-tools {args} {
 	foreach tool $args {
 		set TOOL [string toupper $tool]
 		set exe [get-env $TOOL [get-define cross]$tool]
-		if {![find-executable $exe]} {
-			user-error "Failed to find $exe"
+		if {[find-executable {*}$exe]} {
+			define $TOOL $exe
+			continue
 		}
-		define $TOOL $exe
+		if {[find-executable {*}$tool]} {
+			msg-result "Warning: Failed to find $exe, falling back to $tool which may be incorrect"
+			define $TOOL $tool
+			continue
+		}
+		user-error "Failed to find $exe"
 	}
 }
 
@@ -658,8 +666,6 @@ if {[env-is-set CXX]} {
 
 # CXXFLAGS default to CFLAGS if not specified
 define CXXFLAGS [get-env CXXFLAGS [get-define CFLAGS]]
-
-cc-check-tools ld
 
 # May need a CC_FOR_BUILD, so look for one
 define CC_FOR_BUILD [find-an-executable [get-env CC_FOR_BUILD ""] cc gcc false]
