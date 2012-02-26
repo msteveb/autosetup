@@ -46,15 +46,28 @@ if {$autosetup(istcl)} {
 		}
 		return -code error "environment variable \"$name\" does not exist"
 	}
-} elseif {$autosetup(iswin)} {
-	# On Windows, backslash convert all environment variables
-	# (Assume that Tcl does this for us)
-	proc getenv {name args} {
-		string map {\\ /} [env $name {*}$args]
+	proc isatty? {channel} {
+		dict exists [fconfigure $channel] -xchar
 	}
 } else {
-	# Jim on unix is simple
-	alias getenv env
+	if {$autosetup(iswin)} {
+		# On Windows, backslash convert all environment variables
+		# (Assume that Tcl does this for us)
+		proc getenv {name args} {
+			string map {\\ /} [env $name {*}$args]
+		}
+	} else {
+		# Jim on unix is simple
+		alias getenv env
+	}
+	proc isatty? {channel} {
+		set tty 0
+		catch {
+			# isatty is a recent addition to Jim Tcl
+			set tty [$channel isatty]
+		}
+		return $tty
+	}
 }
 
 # In case 'file normalize' doesn't exist
