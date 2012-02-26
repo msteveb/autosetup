@@ -421,6 +421,10 @@ proc options {optlist} {
 proc config_guess {} {
 	if {[file-isexec $::autosetup(dir)/config.guess]} {
 		exec-with-stderr sh $::autosetup(dir)/config.guess
+		if {[catch {exec-with-stderr sh $::autosetup(dir)/config.guess} alias]} {
+			user-error $alias
+		}
+		return $alias
 	} else {
 		configlog "No config.guess, so using uname"
 		string tolower [exec uname -p]-unknown-[exec uname -s][exec uname -r]
@@ -429,10 +433,11 @@ proc config_guess {} {
 
 proc config_sub {alias} {
 	if {[file-isexec $::autosetup(dir)/config.sub]} {
-		exec-with-stderr sh $::autosetup(dir)/config.sub $alias
-	} else {
-		return $alias
+		if {[catch {exec-with-stderr sh $::autosetup(dir)/config.sub $alias} alias]} {
+			user-error $alias
+		}
 	}
+	return $alias
 }
 
 # @define name ?value=1?
