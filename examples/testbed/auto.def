@@ -49,6 +49,9 @@ if {[have-feature -std=c99]} {
 }
 define version1 "with spaces"
 
+# Many apps want to know if they are building with gcc (or at least a compatible compiler)
+cc-check-decls __GNUC__
+
 cc-check-includes netinet/in.h
 
 # autosetup will check for the existence of any include files
