@@ -597,7 +597,7 @@ proc make-config-header {file args} {
 				continue
 			}
 			-str {
-				set value \"$value\"
+				set value \"[string map [list \\ \\\\ \" \\\"] $value]\"
 			}
 			-auto {
 				# Automatically determine the type
@@ -606,7 +606,7 @@ proc make-config-header {file args} {
 					continue
 				}
 				if {![string is integer -strict $value]} {
-					set value \"$value\"
+					set value \"[string map [list \\ \\\\ \" \\\"] $value]\"
 				}
 			}
 			"" {
