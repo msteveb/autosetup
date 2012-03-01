@@ -174,7 +174,11 @@ proc main {argv} {
 	show-notices
 
 	if {$autosetup(debug)} {
-		parray define
+		msg-result "Writing all defines to config.log"
+		configlog "================ defines ======================"
+		foreach n [lsort [array names define]] {
+			configlog "define $n $define($n)"
+		}
 	}
 
 	exit 0
