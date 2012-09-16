@@ -116,7 +116,7 @@ proc cc-check-includes {args} {
 		set with {}
 		if {[dict exists $::autosetup(cc-include-deps) $each]} {
 			set deps [dict keys [dict get $::autosetup(cc-include-deps) $each]]
-			msg-quiet cc-check-includes $deps
+			msg-quiet cc-check-includes {*}$deps
 			foreach i $deps {
 				if {[have-feature $i]} {
 					lappend with $i
@@ -133,12 +133,14 @@ proc cc-check-includes {args} {
 	}
 }
 
-# @cc-include-needs include required
+# @cc-include-needs include required ...
 #
 # Ensures that when checking for 'include', a check is first
-# made for 'required', and if found, it is #included
-proc cc-include-needs {file depfile} {
-	dict set ::autosetup(cc-include-deps) $file $depfile 1
+# made for each 'required' file, and if found, it is #included
+proc cc-include-needs {file args} {
+	foreach depfile $args {
+		dict set ::autosetup(cc-include-deps) $file $depfile 1
+	}
 }
 
 # @cc-check-types type ...
