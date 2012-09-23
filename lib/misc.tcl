@@ -116,45 +116,41 @@ proc error-location {msg} {
 	return $msg
 }
 
-# Similar to error-location, but called when user code generates an error
-# In this case we want to show the stack trace in user code, but not in autosetup code
-# (unless --debug is enabled)
+# If everything is working properly, the only errors which occur
+# should be generated in user code (e.g. auto.def).
+# By default, we only want to show the error location in user code.
+# We use [info frame] to achieve this, but it works differently on Tcl and Jim.
+#
+# This is designed to be called for incorrect usage in auto.def, via autosetup-error
 #
 proc error-stacktrace {msg} {
-	if {$::autosetup(istcl)} {
-		if {[regexp {file "([^ ]*)" line ([0-9]*)} $::errorInfo dummy file line]} {
-			return "[relative-path $file]:$line $msg\n$::errorInfo"
-		}
-		return $::errorInfo
-	} else {
-		# Prepend a live stacktrace to the error stacktrace, omitting the current level
-		set stacktrace [concat [info stacktrace] [lrange [stacktrace] 3 end]]
-
-		if {!$::autosetup(debug)} {
-			# Omit any levels from autosetup or with no file
-			set newstacktrace {}
-			foreach {p f l} $stacktrace {
-				if {[string match "*autosetup" $f] || $f eq ""} {
-					#puts "Skipping $p $f:$l"
-					continue
-				}
-				lappend newstacktrace $p $f $l
-			}
-			set stacktrace $newstacktrace
-		}
-
-		# Convert filenames to relative paths
-		set newstacktrace {}
-		foreach {p f l} $stacktrace {
-			lappend newstacktrace $p [relative-path $f] $l
-		}
-		lassign $newstacktrace p f l
-		if {$f ne ""} {
-			set prefix "$f:$l: "
+	if {$::autosetup(debug)} {
+		return -code error $msg
+	}
+	# Search back through the stack trace for the first error in a .def file
+	for {set i 1} {$i < [info level]} {incr i} {
+		if {$::autosetup(istcl)} {
+			array set info [info frame -$i]
 		} else {
-			set prefix ""
+			lassign [info frame -$i] info(caller) info(file) info(line)
 		}
+		if {[string match *.def $info(file)]} {
+			return "[relative-path $info(file)]:$info(line): Error: $msg"
+		}
+		#puts "Skipping $info(file):$info(line)"
+	}
+	return $msg
+}
 
-		return "${prefix}Error: $msg\n[stackdump $newstacktrace]"
+# Given the return from [catch {...} msg opts], returns an appropriate
+# error message. A nice one for Jim and a less-nice one for Tcl.
+#
+# This is designed for developer errors, e.g. in module code
+#
+proc error-dump {msg opts} {
+	if {$::autosetup(istcl)} {
+		return "Error: [dict get $opts -errorinfo]"
+	} else {
+		return "Error: $msg\n[stackdump $opts(-errorinfo)]"
 	}
 }

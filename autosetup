@@ -167,6 +167,7 @@ proc main {argv} {
 	# Log how we were invoked
 	configlog "Invoked as: [getenv WRAPPER $::argv0] [quote-argv $autosetup(argv)]"
 
+	# Note that auto.def is *not* loaded in the global scope
 	source $autosetup(autodef)
 
 	# Could warn here if options {} was not specified
@@ -763,8 +764,13 @@ proc user-notice {msg} {
 
 # Incorrect usage in the auto.def file. Identify the location.
 proc autosetup-error {msg} {
+	autosetup-full-error [error-location $msg]
+}
+
+# Like autosetup-error, except $msg is the full error message.
+proc autosetup-full-error {msg} {
 	show-notices
-	puts stderr [error-location $msg]
+	puts stderr $msg
 	exit 1
 }
 
@@ -874,7 +880,14 @@ proc autosetup_add_dep {filename} {
 # @use module ...
 #
 # Load the given library modules.
-# e.g. use cc cc-shared
+# e.g. 'use cc cc-shared'
+#
+# Note that module 'X' is implemented in either 'autosetup/X.tcl'
+# or 'autosetup/X/init.tcl'
+#
+# The latter form is useful for a complex module which requires additional
+# support file. In this form, '$::usedir' is set to the module directory
+# when it is loaded.
 #
 proc use {args} {
 	foreach m $args {
@@ -883,17 +896,33 @@ proc use {args} {
 		}
 		set ::libmodule($m) 1
 		if {[info exists ::modsource($m)]} {
-			uplevel #0 eval $::modsource($m)
+			automf_load eval $::modsource($m)
 		} else {
-			set source $::autosetup(libdir)/${m}.tcl
-			if {[file exists $source]} {
-				uplevel #0 [list source $source]
+			set sources [list $::autosetup(libdir)/${m}.tcl $::autosetup(libdir)/${m}/init.tcl]
+			set found 0
+			foreach source $sources {
+				if {[file exists $source]} {
+					incr found
+					break
+				}
+			}
+			if {$found} {
+				# For the convenience of the "use" source, point to the directory
+				# it is being loaded from
+				set ::usedir [file dirname $source]
+				automf_load source $source
 				autosetup_add_dep $source
 			} else {
-				puts "Looking for $source"
 				autosetup-error "use: No such module: $m"
 			}
 		}
+	}
+}
+
+# Load module source in the global scope by executing the given command
+proc automf_load {args} {
+	if {[catch [list uplevel #0 $args] msg opts] ni {0 2 3}} {
+		autosetup-full-error [error-dump $msg $opts]
 	}
 }
 
