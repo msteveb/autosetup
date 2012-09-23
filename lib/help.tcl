@@ -34,7 +34,7 @@ proc autosetup_help {what} {
 proc use_pager {} {
     if {![opt-bool nopager] && [getenv PAGER ""] ne "" && [isatty? stdin] && [isatty? stdout]} {
         catch {
-            exec [info nameofexecutable] $::argv0 --nopager {*}$::argv | [getenv PAGER] >@stdout <@stdin 2>/dev/null
+            exec [info nameofexecutable] $::argv0 --nopager {*}$::argv |& [getenv PAGER] >@stdout <@stdin
         }
         exit 0
     }
