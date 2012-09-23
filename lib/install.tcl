@@ -58,9 +58,34 @@ proc autosetup_install {dir} {
 		user-error "Failed to install autosetup: $error"
 	}
 	puts "Installed [autosetup_version] to autosetup/"
-	catch {exec [info nameofexecutable] autosetup/autosetup --init >@stdout 2>@stderr}
+
+	# Now create 'configure' if necessary
+	autosetup_create_configure
 
 	exit 0
+}
+
+proc autosetup_create_configure {} {
+	if {[file exists configure]} {
+		if {!$::autosetup(force)} {
+			# Could this be an autosetup configure?
+			if {![string match "*\nWRAPPER=*" [readfile configure]]} {
+				puts "I see configure, but not created by autosetup, so I won't overwrite it."
+				puts "Remove it or use --force to overwrite."
+				return
+			}
+		} else {
+			puts "I will overwrite the existing configure because you used --force."
+		}
+	} else {
+		puts "I don't see configure, so I will create it."
+	}
+	writefile configure \
+{#!/bin/sh
+dir="`dirname "$0"`/autosetup"
+WRAPPER="$0"; export WRAPPER; exec "`$dir/find-tclsh`" "$dir/autosetup" "$@"
+}
+	catch {exec chmod 755 configure}
 }
 
 # Append the contents of $file to filehandle $f
