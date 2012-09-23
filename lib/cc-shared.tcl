@@ -16,6 +16,7 @@
 ## SHOBJ_LDFLAGS_R   - as above, but all symbols must be resolved
 ## SH_LINKFLAGS      Flags to use linking an executable which will load shared objects
 ## LD_LIBRARY_PATH   Environment variable which specifies path to shared libraries
+## STRIPLIBFLAGS     Arguments to strip to strip a dynamic library
 
 module-options {}
 
@@ -29,6 +30,7 @@ define SH_SOEXT .so
 define SH_SOEXTVER .so.%s
 define SH_SOPREFIX -Wl,-soname,
 define LD_LIBRARY_PATH LD_LIBRARY_PATH
+define STRIPLIBFLAGS --strip-unneeded
 
 # Note: This is a helpful reference for identifying the toolchain
 #       http://sourceforge.net/apps/mediawiki/predef/index.php?title=Compilers
@@ -45,6 +47,7 @@ switch -glob -- [get-define host] {
 		define SH_SOEXTVER .%s.dylib
 		define SH_SOPREFIX -Wl,-install_name,
 		define LD_LIBRARY_PATH DYLD_LIBRARY_PATH
+		define STRIPLIBFLAGS -x
 	}
 	*-*-ming* - *-*-cygwin - *-*-msys {
 		define SHOBJ_CFLAGS ""
