@@ -87,7 +87,7 @@ proc main {argv} {
 		reference:=text => "display the autosetup command reference. 'text', 'wiki', 'asciidoc' or 'markdown'"
 		debug        => "display debugging output as autosetup runs"
 		install:=.   => "install autosetup to the current or given directory (in the 'autosetup/' subdirectory)"
-		force init   => "create an initial 'configure' script if none exists"
+		force init:=help   => "create initial auto.def, etc.  Use --init=help for known types"
 		# Undocumented options
 		option-checking=1
 		nopager
@@ -119,6 +119,11 @@ proc main {argv} {
 		use local
 	}
 
+	# Now any auto-load modules
+	foreach file [glob -nocomplain $autosetup(libdir)/*.auto $autosetup(libdir)/*/*.auto] {
+		automf_load source $file
+	}
+
 	if {[opt-val help] ne ""} {
 		incr autosetup(showhelp)
 		use help
@@ -130,9 +135,9 @@ proc main {argv} {
 		autosetup_reference [opt-val {manual ref reference}]
 	}
 
-	if {[opt-bool init]} {
+	if {[opt-val init] ne ""} {
 		use init
-		autosetup_init
+		autosetup_init [opt-val init]
 	}
 
 	if {[opt-val install] ne ""} {
@@ -143,7 +148,7 @@ proc main {argv} {
 	if {![file exists $autosetup(autodef)]} {
 		# Check for invalid option first
 		options {}
-		user-error "No auto.def found in $autosetup(srcdir)"
+		user-error "No auto.def found in \"$autosetup(srcdir)\" (use [file tail $::autosetup(exe)] --init to create one)"
 	}
 
 	# Parse extra arguments into autosetup(cmdline)

@@ -10,7 +10,7 @@ proc autosetup_install {dir} {
 
 		set f [open autosetup/autosetup w]
 
-		set publicmodules {}
+		set publicmodules $::autosetup(libdir)/default.auto
 
 		# First the main script, but only up until "CUT HERE"
 		set in [open $::autosetup(dir)/autosetup]
