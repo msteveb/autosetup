@@ -501,14 +501,8 @@ proc cctest {args} {
 		set tmp conftest__.o
 		lappend cmdline -c
 	}
-	lappend cmdline {*}$opts(-cflags)
+	lappend cmdline {*}$opts(-cflags) {*}[get-define cc-default-debug ""]
 
-	switch -glob -- [get-define host] {
-		*-*-darwin* {
-			# Don't generate .dSYM directories
-			lappend cmdline -gstabs
-		}
-	}
 	lappend cmdline $src -o $tmp {*}$opts(-libs)
 
 	# At this point we have the complete command line and the
@@ -687,6 +681,16 @@ if {[get-define CXX] ne "false"} {
 	msg-result "C++ compiler...[get-define CCACHE] [get-define CXX] [get-define CXXFLAGS]"
 }
 msg-result "Build C compiler...[get-define CC_FOR_BUILD]"
+
+# On Darwin, we prefer to use -gstabs to avoid creating .dSYM directories
+# but some compilers don't support -gstabs, so test for it here.
+switch -glob -- [get-define host] {
+	*-*-darwin* {
+		if {[cctest -cflags {-gstabs}]} {
+			define cc-default-debug -gstabs
+		}
+	}
+}
 
 if {![cc-check-includes stdlib.h]} {
 	user-error "Compiler does not work. See config.log"
