@@ -927,7 +927,7 @@ proc use {args} {
 # Load module source in the global scope by executing the given command
 proc automf_load {args} {
 	if {[catch [list uplevel #0 $args] msg opts] ni {0 2 3}} {
-		autosetup-full-error [error-dump $msg $opts]
+		autosetup-full-error [error-dump $msg $opts $::autosetup(debug)]
 	}
 }
 
@@ -949,10 +949,10 @@ set autosetup(msg-quiet) 0
 if {$autosetup(debug)} {
 	main $argv
 }
-if {[catch {main $argv} msg] == 1} {
+if {[catch {main $argv} msg opts] == 1} {
 	show-notices
-	puts stderr [error-stacktrace $msg]
-	if {!$autosetup(debug) && !$autosetup(istcl)} {
+	autosetup-full-error [error-dump $msg $opts $::autosetup(debug)]
+	if {!$autosetup(debug)} {
 		puts stderr "Try: '[file tail $autosetup(exe)] --debug' for a full stack trace"
 	}
 	exit 1

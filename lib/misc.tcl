@@ -144,13 +144,30 @@ proc error-stacktrace {msg} {
 
 # Given the return from [catch {...} msg opts], returns an appropriate
 # error message. A nice one for Jim and a less-nice one for Tcl.
+# If 'fulltrace' is set, a full stack trace is provided.
+# Otherwise a simple message is provided.
 #
-# This is designed for developer errors, e.g. in module code
+# This is designed for developer errors, e.g. in module code or auto.def code
 #
-proc error-dump {msg opts} {
+#
+proc error-dump {msg opts fulltrace} {
 	if {$::autosetup(istcl)} {
-		return "Error: [dict get $opts -errorinfo]"
+		if {$fulltrace} {
+			return "Error: [dict get $opts -errorinfo]"
+		} else {
+			return "Error: $msg"
+		}
 	} else {
-		return "Error: $msg\n[stackdump $opts(-errorinfo)]"
+		lassign $opts(-errorinfo) p f l
+		if {$f ne ""} {
+			set result "$f:$l: Error: "
+		}
+		append result "$msg\n"
+		if {$fulltrace} {
+			append result [stackdump $opts(-errorinfo)]
+		}
+
+		# Remove the trailing newline
+		string trim $result
 	}
 }
