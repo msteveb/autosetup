@@ -682,12 +682,12 @@ if {[get-define CXX] ne "false"} {
 }
 msg-result "Build C compiler...[get-define CC_FOR_BUILD]"
 
-# On Darwin, we prefer to use -gstabs to avoid creating .dSYM directories
-# but some compilers don't support -gstabs, so test for it here.
+# On Darwin, we prefer to use -g0 to avoid creating .dSYM directories
+# but some compilers may not support it, so test here.
 switch -glob -- [get-define host] {
 	*-*-darwin* {
-		if {[cctest -cflags {-gstabs}]} {
-			define cc-default-debug -gstabs
+		if {[cctest -cflags {-g0}]} {
+			define cc-default-debug -g0
 		}
 	}
 }
