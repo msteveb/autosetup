@@ -110,6 +110,19 @@ cc-with {-cflags -DX=1} {
 	}
 }
 
+cc-with {-nooutput 1} {
+	check-feature warning-as-error {
+		cctest -code {
+			#warning This warning should be treated as an error
+		}
+	}
+}
+check-feature warning-ignored {
+	cctest -code {
+		#warning This warning should be ignored
+	}
+}
+
 # cc-check-decls recognises both defines and rvalues
 cc-check-includes stdio.h
 cc-with {-cflags -DABC -includes stdio.h} {

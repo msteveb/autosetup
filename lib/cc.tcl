@@ -335,7 +335,7 @@ proc cc-add-settings {settings} {
 				# Note that new libraries are added before previous libraries
 				set new($name) [list {*}$value {*}$new($name)]
 			}
-			-link - -lang {
+			-link - -lang - -nooutput {
 				set new($name) $value
 			}
 			-source - -sourcefile - -code {
@@ -430,6 +430,7 @@ proc cc-with {settings args} {
 ## -code code          Code to compile in the body of main()
 ## -source code        Compile a complete program. Ignore -includes, -declare and -code
 ## -sourcefile file    Shorthand for -source [readfile [get-define srcdir]/$file]
+## -nooutput 1         Treat any compiler output (e.g. a warning) as an error
 #
 # Unless -source or -sourcefile is specified, the C program looks like:
 #
@@ -523,7 +524,8 @@ proc cctest {args} {
 	writefile $src $lines\n
 
 	set ok 1
-	if {[catch {exec-with-stderr {*}$cmdline} result errinfo]} {
+	set err [catch {exec-with-stderr {*}$cmdline} result errinfo]
+	if {$err || ($opts(-nooutput) && [string length $result])} {
 		configlog "Failed: [join $cmdline]"
 		configlog $result
 		configlog "============"
@@ -673,7 +675,7 @@ if {[get-define CC] eq ""} {
 define CCACHE [find-an-executable [get-env CCACHE ccache]]
 
 # Initial cctest settings
-cc-store-settings {-cflags {} -includes {} -declare {} -link 0 -lang c -libs {} -code {}}
+cc-store-settings {-cflags {} -includes {} -declare {} -link 0 -lang c -libs {} -code {} -nooutput 0}
 set autosetup(cc-include-deps) {}
 
 msg-result "C compiler...[get-define CCACHE] [get-define CC] [get-define CFLAGS]"
