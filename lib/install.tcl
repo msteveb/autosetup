@@ -3,14 +3,47 @@
 
 # Module which can install autosetup
 
-proc autosetup_install {dir} {
-	if {[catch {
+# autosetup(installed)=1 means that autosetup is not running from source
+# autosetup(sysinstall)=1 means that autosetup is running from a sysinstall verion
+# shared=1 means that we are trying to do a sysinstall. This is only possible from the development source.
+
+proc autosetup_install {dir {shared 0}} {
+	if {$shared && $::autosetup(installed)} {
+		user-error "Can only --sysinstall from development sources"
+	}
+
+	if {$::autosetup(sysinstall)} {
+		# This is the sysinstall version, so install just uses references
 		cd $dir
+
+		puts "[autosetup_version] creating configure to use system-installed autosetup"
+		autosetup_create_configure 1
+		puts "Creating autosetup/README.autosetup"
 		file mkdir autosetup
+		autosetup_install_readme autosetup/README.autosetup 1
+		return
+	}
 
-		set f [open autosetup/autosetup w]
+	if {[catch {
+		if {$shared} {
+			set target $dir/bin/autosetup
+			set installedas $target
+		} else {
+			if {$dir eq "."} {
+				set installedas autosetup
+			} else {
+				set installedas $dir/autosetup
+			}
+			cd $dir
+			file mkdir autosetup
+			set target autosetup/autosetup
+		}
+		set targetdir [file dirname $target]
+		file mkdir $targetdir
 
-		set publicmodules [glob $::autosetup(libdir)/*.auto]
+		set f [open $target w]
+
+		set publicmodules {}
 
 		# First the main script, but only up until "CUT HERE"
 		set in [open $::autosetup(dir)/autosetup]
@@ -22,48 +55,88 @@ proc autosetup_install {dir} {
 
 			# Insert the static modules here
 			# i.e. those which don't contain @synopsis:
+			# All modules are inserted if $shared is set
 			puts $f "set autosetup(installed) 1"
-			foreach file [lsort [glob $::autosetup(libdir)/*.tcl]] {
+			puts $f "set autosetup(sysinstall) $shared"
+			foreach file [lsort [glob $::autosetup(libdir)/*.{tcl,auto}]] {
+				set modname [file tail $file]
+				set ext [file ext $modname]
 				set buf [readfile $file]
-				if {[string match "*\n# @synopsis:*" $buf]} {
-					lappend publicmodules $file
-					continue
+				if {!$shared} {
+					if {$ext eq ".auto" || [string match "*\n# @synopsis:*" $buf]} {
+						lappend publicmodules $file
+						continue
+					}
 				}
-				set modname [file rootname [file tail $file]]
-				puts $f "# ----- module $modname -----"
+				dputs "install: importing lib/[file tail $file]"
+				puts $f "# ----- @module $modname -----"
 				puts $f "\nset modsource($modname) \{"
 				puts $f $buf
+				puts $f "\}\n"
+			}
+			if {$shared} {
+				dputs "install: importing lib/[file tail $file]"
+				puts $f "\nset modsource(README.autosetup) \{"
+				puts $f [readfile $::autosetup(libdir)/README.autosetup-lib]
 				puts $f "\}\n"
 			}
 		}
 		close $in
 		close $f
-		exec chmod 755 autosetup/autosetup
+		exec chmod 755 $target
 
-		# Install public modules
-		foreach file $publicmodules {
-			autosetup_install_file $file autosetup
+		set installfiles {autosetup-config.guess autosetup-config.sub autosetup-test-tclsh}
+		set removefiles {}
+
+		if {!$shared} {
+			autosetup_install_readme $targetdir/README.autosetup 0
+
+			# Install public modules
+			foreach file $publicmodules {
+				set tail [file tail $file]
+				autosetup_install_file $file $targetdir/$tail
+			}
+			lappend installfiles jimsh0.c autosetup-find-tclsh LICENSE
+			lappend removefiles config.guess config.sub test-tclsh find-tclsh
+		} else {
+			lappend installfiles {sys-find-tclsh autosetup-find-tclsh}
 		}
 
 		# Install support files
-		foreach file {config.guess config.sub jimsh0.c find-tclsh test-tclsh LICENSE} {
-			autosetup_install_file $::autosetup(dir)/$file autosetup
+		foreach fileinfo $installfiles {
+			if {[llength $fileinfo] == 2} {
+				lassign $fileinfo source dest
+			} else {
+				lassign $fileinfo source
+				set dest $source
+			}
+			autosetup_install_file $::autosetup(dir)/$source $targetdir/$dest
+			exec chmod 755 $targetdir/$dest
 		}
-		exec chmod 755 autosetup/config.sub autosetup/config.guess autosetup/find-tclsh
 
-		writefile autosetup/README.autosetup \
-			"This is [autosetup_version]. See http://msteveb.github.com/autosetup/\n"
-
+		# Remove obsolete files
+		foreach file $removefiles {
+			if {[file exists $targetdir/$file]} {
+				file delete $targetdir/$file
+			}
+		}
 	} error]} {
 		user-error "Failed to install autosetup: $error"
 	}
-	puts "Installed [autosetup_version] to autosetup/"
+	if {$shared} {
+		set type "system"
+	} else {
+		set type "local"
+	}
+	puts "Installed $type [autosetup_version] to $installedas"
 
-	# Now create 'configure' if necessary
-	autosetup_create_configure
+	if {!$shared} {
+		# Now create 'configure' if necessary
+		autosetup_create_configure 0
+	}
 }
 
-proc autosetup_create_configure {} {
+proc autosetup_create_configure {shared} {
 	if {[file exists configure]} {
 		if {!$::autosetup(force)} {
 			# Could this be an autosetup configure?
@@ -78,28 +151,60 @@ proc autosetup_create_configure {} {
 	} else {
 		puts "I don't see configure, so I will create it."
 	}
-	writefile configure \
+	if {$shared} {
+		writefile configure \
+{#!/bin/sh
+# Note that WRAPPER is set here purely to detect an autosetup-created script
+WRAPPER="-"; "autosetup" "$@"
+}
+	} else {
+		writefile configure \
 {#!/bin/sh
 dir="`dirname "$0"`/autosetup"
-WRAPPER="$0"; export WRAPPER; exec "`$dir/find-tclsh`" "$dir/autosetup" "$@"
+WRAPPER="$0"; export WRAPPER; exec "`$dir/autosetup-find-tclsh`" "$dir/autosetup" "$@"
 }
+	}
 	catch {exec chmod 755 configure}
 }
 
 # Append the contents of $file to filehandle $f
 proc autosetup_install_append {f file} {
+	dputs "install: include $file"
 	set in [open $file]
 	puts $f [read $in]
 	close $in
 }
 
-proc autosetup_install_file {file dir} {
-	if {![file exists $file]} {
-		error "Missing installation file '$file'"
+proc autosetup_install_file {source target} {
+	dputs "install: $source => $target"
+	if {![file exists $source]} {
+		error "Missing installation file '$source'"
 	}
-	writefile [file join $dir [file tail $file]] [readfile $file]\n
+	writefile $target [readfile $source]\n
 }
 
-if {$::autosetup(installed)} {
-	user-error "autosetup can only be installed from development source, not from installed copy"
+proc autosetup_install_readme {target sysinstall} {
+	set readme "README.autosetup created by [autosetup_version]\n\n"
+	if {$sysinstall} {
+		append readme \
+{This is the autosetup directory for a system install of autosetup.
+Loadable modules can be added here.
+}
+	} else {
+		append readme \
+{This is the autosetup directory for a local install of autosetup.
+It contains autosetup, support files and loadable modules.
+}
+}
+
+	append readme {
+*.tcl files in this directory are optional modules which
+can be loaded with the 'use' directive.
+
+*.auto files in this directory are auto-loaded.
+
+For more information, see http://msteveb.github.com/autosetup/
+}
+	dputs "install: autosetup/README.autosetup"
+	writefile $target $readme
 }

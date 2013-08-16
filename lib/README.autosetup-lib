@@ -1,11 +1,15 @@
-Files (*.tcl and *.auto) in this directory are optional modules which
+This README documents the 'lib' directory in the autosetup source repository.
+
+*.tcl files in this directory are optional modules which
 can be loaded with the 'use' directive.
 
 Files named *.auto are auto-load modules.
 
-Modules which are publically documented (@MODULE ...), and auto-load modules are installed
-stand-alone in order to facilitate understanding by autosetup
+Modules which are publically documented (those that contain @synopsis: ...), and auto-load modules are installed
+stand-alone in a local autosetup installation to facilitate understanding by autosetup
 end-users.
 
 All other modules are private/internal and are combined with the
-main script when installed.
+main autosetup script when installed.
+
+A system-installed version of autosetup (--sysinstall) contains all modules.

@@ -108,9 +108,15 @@ proc automf_command_reference {} {
     set cmd {}
 
     foreach file $files {
+        set modulename [file rootname [file tail $file]]
         set f [open $file]
         while {![eof $f]} {
             set line [gets $f]
+
+            # Find embedded module names
+            if {[regexp {^#.*@module ([^ ]*)} $line -> modulename]} {
+                continue
+            }
 
             # Find lines starting with "# @*" and continuing through the remaining comment lines
             if {![regexp {^# @(.*)} $line -> cmd]} {
@@ -119,7 +125,7 @@ proc automf_command_reference {} {
 
             # Synopsis or command?
             if {$cmd eq "synopsis:"} {
-                section "Module: [file rootname [file tail $file]]"
+                section "Module: $modulename"
             } else {
                 subsection $cmd
             }
