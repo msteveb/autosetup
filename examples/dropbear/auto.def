@@ -17,8 +17,10 @@ options {
 
 	loginfunc=1  => "Disable use of login() etc."
 	utmp=1       => "Disable use of utmp even if detected"
+	with-utmp:file  => "Specify the location of utmp"
 	utmpx=1      => "Disable use of utmpx even if detected"
 	wtmp=1       => "Disable use of wtmp even if detected"
+	with-wtmp:file  => "Specify the location of wtmp"
 	wtmpx=1      => "Disable use of wtmpx even if detected"
 	pututline=1  => "Disable use of pututline even if detected"
 	pututxline=1 => "Disable use of pututxline even if detected"
@@ -284,29 +286,62 @@ if {![opt-bool lastlog]} {
 	define CONF_LASTLOG_FILE $ll
 }
 
-# utmp detection
-msg-checking "For the location of utmp..."
-cc-with {-includes {utmp.h lastlog.h paths.h}} {
-	if {[cctest -code {const char *lastlog = UTMP_FILE;}]} {
-		set ll UTMP_FILE
-	} elseif {
-		user-error "You need to tell me where utmp is with --with-utmp"
-	}
-}
-msg-result $ll
-define CONF_UTMP_FILE $ll
 
-# wtmp detection
-msg-checking "For the location of wtmp..."
-cc-with {-includes {utmp.h lastlog.h paths.h}} {
-	if {[cctest -code {const char *lastlog = WTMP_FILE;}]} {
-		set ll WTMP_FILE
-	} elseif {
-		user-error "You need to tell me where wtmp is with --with-wtmp"
+set enable 0
+if {[opt-bool utmp]} {
+	# utmp detection
+	set ll [opt-val with-utmp]
+	msg-checking "For the location of utmp..."
+	if {$ll eq ""} {
+		cc-with {-includes {utmp.h lastlog.h paths.h}} {
+			if {[cctest -code {const char *lastlog = UTMP_FILE;}]} {
+				set ll UTMP_FILE
+			}
+		}
+	}
+	if {$ll ne ""} {
+		msg-result $ll
+		define CONF_UTMP_FILE $ll
+		set enable 1
+	} else {
+		msg-result "unknown (disabled)"
+		if {[opt-bool -nodefault utmp] > 0} {
+			# If explcitly enabled...
+			user-error "You need to tell me where utmp is with --with-utmp"
+		}
 	}
 }
-msg-result $ll
-define CONF_WTMP_FILE $ll
+if {!$enable} {
+	define DISABLE_UTMP
+}
+
+set enable 0
+if {[opt-bool wtmp]} {
+	# wtmp detection
+	set ll [opt-val with-wtmp]
+	msg-checking "For the location of wtmp..."
+	if {$ll eq ""} {
+		cc-with {-includes {utmp.h lastlog.h paths.h}} {
+			if {[cctest -code {const char *lastlog = WTMP_FILE;}]} {
+				set ll WTMP_FILE
+			}
+		}
+	}
+	if {$ll ne ""} {
+		msg-result $ll
+		define CONF_WTMP_FILE $ll
+		set enable 1
+	} else {
+		msg-result "unknown (disabled)"
+		if {[opt-bool -nodefault wtmp] > 0} {
+			# If explcitly enabled...
+			user-error "You need to tell me where wtmp is with --with-wtmp"
+		}
+	}
+}
+if {!$enable} {
+	define DISABLE_WTMP
+}
 
 # utmpx detection - I don't know any system so perverse as to require
 #  utmpx, but not define UTMPX_FILE (ditto wtmpx.)
