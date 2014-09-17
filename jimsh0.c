@@ -40,6 +40,7 @@
 #define HAVE_VFORK
 #define HAVE_WAITPID
 #define HAVE_ISATTY
+#define HAVE_MKSTEMP
 #define HAVE_SYS_TIME_H
 #define HAVE_DIRENT_H
 #define HAVE_UNISTD_H
@@ -2554,7 +2555,7 @@ int Jim_MakeTempFile(Jim_Interp *interp, const char *template)
     fd = mkstemp(filenameObj->bytes);
     umask(mask);
     if (fd < 0) {
-        Jim_SetResultString(interp, "Failed to create tempfile", -1);
+        JimAioSetError(interp, filenameObj);
         Jim_FreeNewObj(interp, filenameObj);
         return -1;
     }
@@ -2562,7 +2563,7 @@ int Jim_MakeTempFile(Jim_Interp *interp, const char *template)
     Jim_SetResult(interp, filenameObj);
     return fd;
 #else
-    Jim_SetResultString(interp, "tempfile not supported", -1);
+    Jim_SetResultString(interp, "platform has no tempfile support", -1);
     return -1;
 #endif
 }
@@ -5324,18 +5325,16 @@ static int JimCreateTemp(Jim_Interp *interp, const char *contents, int len)
 {
     int fd = Jim_MakeTempFile(interp, NULL);
 
-    if (fd == JIM_BAD_FD) {
-        Jim_SetResultErrno(interp, "couldn't create temp file");
-        return -1;
-    }
-    unlink(Jim_String(Jim_GetResult(interp)));
-    if (contents) {
-        if (write(fd, contents, len) != len) {
-            Jim_SetResultErrno(interp, "couldn't write temp file");
-            close(fd);
-            return -1;
+    if (fd != JIM_BAD_FD) {
+        unlink(Jim_String(Jim_GetResult(interp)));
+        if (contents) {
+            if (write(fd, contents, len) != len) {
+                Jim_SetResultErrno(interp, "couldn't write temp file");
+                close(fd);
+                return -1;
+            }
+            lseek(fd, 0L, SEEK_SET);
         }
-        lseek(fd, 0L, SEEK_SET);
     }
     return fd;
 }
