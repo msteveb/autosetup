@@ -33,11 +33,8 @@ proc autosetup_help {what} {
 # This is done by reinvoking autosetup with --nopager added
 proc use_pager {} {
     if {![opt-bool nopager] && [getenv PAGER ""] ne "" && [isatty? stdin] && [isatty? stdout]} {
-        catch {
-            exec [info nameofexecutable] $::argv0 --nopager {*}$::argv |& [getenv PAGER] >@stdout <@stdin
-        }
         if {[catch {
-            exec [info nameofexecutable] $::argv0 --nopager {*}$::argv |& [getenv PAGER] >@stdout <@stdin 2>@stderr
+            exec [info nameofexecutable] $::argv0 --nopager {*}$::argv |& {*}[getenv PAGER] >@stdout <@stdin 2>@stderr
         } msg opts] == 1} {
             if {[dict get $opts -errorcode] eq "NONE"} {
                 # an internal/exec error
