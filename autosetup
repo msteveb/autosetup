@@ -818,7 +818,7 @@ proc realdir {dir} {
 proc realpath {path} {
 	while {1} {
 		if {[catch {
-			set path [file link $path]
+			set path [file readlink $path]
 		}]} {
 			# Not a link
 			break
