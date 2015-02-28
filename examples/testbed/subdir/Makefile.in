@@ -4,3 +4,6 @@ CC = @CC@
 # This one is special in that it will be relative
 # to where this file is created
 srcdir = @srcdir@
+
+# And this will be relative to the top level source directory
+top_srcdir = @top_srcdir@
