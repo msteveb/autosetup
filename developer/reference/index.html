@@ -1,6 +1,7 @@
 <!DOCTYPE HTML>
 <html lang="en">
   <head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
     <meta charset="utf-8">
     <title>autosetup - Command Reference</title>
     <link rel="stylesheet" type="text/css" href="../../css/style.css" media="screen">
@@ -44,7 +45,7 @@
         </div>
         <div class="main" id="main">
         
-        <h1 id="autosetup-v062----command-reference">autosetup v0.6.2 &ndash; Command Reference</h1>
+        <h1 id="autosetup-v065----command-reference">autosetup v0.6.5 – Command Reference</h1>
 
 <h2 id="introduction">Introduction</h2>
 
@@ -80,18 +81,18 @@
 <pre><code>name[=0|1]  =&gt; "Description of this boolean option"
 </code></pre>
 
-<p>The default is name=0, meaning that the option is disabled by default. If name=1 is used to make the option enabled by default, the description should reflect that with text like &ldquo;Disable support for &hellip;&rdquo;.</p>
+<p>The default is name=0, meaning that the option is disabled by default. If name=1 is used to make the option enabled by default, the description should reflect that with text like “Disable support for …”.</p>
 
 <p>An argument option (one which takes a parameter) is of the form:</p>
 
 <pre><code>name:[=]value  =&gt; "Description of this option"
 </code></pre>
 
-<p>If the name:value form is used, the value must be provided with the option (as &ndash;name=myvalue). If the name:=value form is used, the value is optional and the given value is used as the default if is not provided.</p>
+<p>If the name:value form is used, the value must be provided with the option (as –name=myvalue). If the name:=value form is used, the value is optional and the given value is used as the default if is not provided.</p>
 
-<p>Undocumented options are also supported by omitting the &ldquo;=&gt; description. These options are not displayed with &ndash;help and can be useful for internal options or as aliases.</p>
+<p>Undocumented options are also supported by omitting the “=&gt; description. These options are not displayed with –help and can be useful for internal options or as aliases.</p>
 
-<p>For example, &ndash;disable-lfs is an alias for &ndash;disable=largefile:</p>
+<p>For example, –disable-lfs is an alias for –disable=largefile:</p>
 
 <pre><code>lfs=1 largefile=1 =&gt; "Disable large file support"
 </code></pre>
@@ -124,25 +125,39 @@
 
 <h3 id="env-is-set-name"><code>env-is-set name</code></h3>
 
-<p>Returns 1 if the $name was specified on the command line or in the environment.</p>
+<p>Returns 1 if the $name was specified on the command line or in the environment. Note that an empty environment variable is not considered to be set.</p>
 
 <h3 id="readfile-filename-default"><code>readfile filename ?default=""?</code></h3>
 
-<p>Return the contents of the file, without the trailing newline. If the doesn&rsquo;t exist or can&rsquo;t be read, returns $default.</p>
+<p>Return the contents of the file, without the trailing newline. If the doesn’t exist or can’t be read, returns $default.</p>
 
 <h3 id="writefile-filename-value"><code>writefile filename value</code></h3>
 
 <p>Creates the given file containing $value. Does not add an extra newline.</p>
 
+<h3 id="suffix-suf-list"><code>suffix suf list</code></h3>
+
+<p>Takes a list and returns a new list with $suf appended to each element</p>
+
+<pre><code>suffix .c {a b c} =&gt; {a.c b.c c.c}
+</code></pre>
+
+<h3 id="prefix-pre-list"><code>prefix pre list</code></h3>
+
+<p>Takes a list and returns a new list with $pre prepended to each element</p>
+
+<pre><code>prefix jim- {a.c b.c} =&gt; {jim-a.c jim-b.c}
+</code></pre>
+
 <h3 id="find-executable-name"><code>find-executable name</code></h3>
 
-<p>Searches the path for an executable with the given name. Note that the name may include some parameters, e.g. &ldquo;cc -mbig-endian&rdquo;, in which case the parameters are ignored. Returns 1 if found, or 0 if not.</p>
+<p>Searches the path for an executable with the given name. Note that the name may include some parameters, e.g. “cc -mbig-endian”, in which case the parameters are ignored. Returns 1 if found, or 0 if not.</p>
 
 <h3 id="find-an-executable--required-name-"><code>find-an-executable ?-required? name ...</code></h3>
 
 <p>Given a list of possible executable names, searches for one of these on the path.</p>
 
-<p>Returns the name found, or &ldquo;&rdquo; if none found. If the first parameter is <strong><code>-required</code></strong>, an error is generated if no executable is found.</p>
+<p>Returns the name found, or “” if none found. If the first parameter is <strong><code>-required</code></strong>, an error is generated if no executable is found.</p>
 
 <h3 id="configlog-msg"><code>configlog msg</code></h3>
 
@@ -158,9 +173,9 @@
 
 <h3 id="msg-quiet-command-"><code>msg-quiet command ...</code></h3>
 
-<p>msg-quiet evaluates it&rsquo;s arguments as a command with output from msg-checking and msg-result suppressed.</p>
+<p>msg-quiet evaluates it’s arguments as a command with output from msg-checking and msg-result suppressed.</p>
 
-<p>This is useful if a check needs to run a subcheck which isn&rsquo;t of interest to the user.</p>
+<p>This is useful if a check needs to run a subcheck which isn’t of interest to the user.</p>
 
 <h3 id="user-error-msg"><code>user-error msg</code></h3>
 
@@ -172,7 +187,15 @@
 
 <h3 id="use-module-"><code>use module ...</code></h3>
 
-<p>Load the given library modules. e.g. use cc cc-shared</p>
+<p>Load the given library modules. e.g. <strong><code>use cc cc-shared</code></strong></p>
+
+<p>Note that module <strong><code>X</code></strong> is implemented in either <strong><code>autosetup/X.tcl</code></strong> or <strong><code>autosetup/X/init.tcl</code></strong></p>
+
+<p>The latter form is useful for a complex module which requires additional support file. In this form, <strong><code>$::usedir</code></strong> is set to the module directory when it is loaded.</p>
+
+<h2 id="module-cc-db">Module: cc-db</h2>
+
+<p>The <strong><code>cc-db</code></strong> module provides a knowledge based of system idiosyncracies In general, this module can always be included</p>
 
 <h2 id="module-cc-lib">Module: cc-lib</h2>
 
@@ -194,16 +217,33 @@
 
 <p>Returns 1 if determined, or 0 if not.</p>
 
+<h3 id="cc-check-flags-flag-"><code>cc-check-flags flag ?...?</code></h3>
+
+<p>Checks whether the given C/C++ compiler flags can be used. Defines feature names prefixed with <strong><code>HAVE_CFLAG</code></strong> and <strong><code>HAVE_CXXFLAG</code></strong> respectively, and appends working flags to <strong><code>-cflags</code></strong> and <strong><code>CFLAGS</code></strong> or <strong><code>CXXFLAGS</code></strong>.</p>
+
+<h3 id="cc-check-standards-ver-"><code>cc-check-standards ver ?...?</code></h3>
+
+<p>Checks whether the C/C++ compiler accepts one of the specified <strong><code>-std=$ver</code></strong> options, and appends the first working one to <strong><code>-cflags</code></strong> and <strong><code>CFLAGS</code></strong> or <strong><code>CXXFLAGS</code></strong>.</p>
+
+<h3 id="cc-check-c11"><code>cc-check-c11</code></h3>
+
+<p>Checks for several C11/C++11 extensions and their alternatives. Currently checks for <strong><code>_Static_assert</code></strong>, <strong><code>_Alignof</code></strong>, <strong><code>__alignof__</code></strong>, <strong><code>__alignof</code></strong>.</p>
+
 <h2 id="module-cc-shared">Module: cc-shared</h2>
 
 <p>The <strong><code>cc-shared</code></strong> module provides support for shared libraries and shared objects. It defines the following variables:</p>
 
 <pre><code>SH_CFLAGS         Flags to use compiling sources destined for a shared library
-SH_LDFLAGS        Flags to use linking a shared library
+SH_LDFLAGS        Flags to use linking (creating) a shared library
+SH_SOPREFIX       Prefix to use to set the soname when creating a shared library
+SH_SOEXT          Extension for shared libs
+SH_SOEXTVER       Format for versioned shared libs - %s = version
 SHOBJ_CFLAGS      Flags to use compiling sources destined for a shared object
-SHOBJ_LDFLAGS     Flags to use linking a shared object
+SHOBJ_LDFLAGS     Flags to use linking a shared object, undefined symbols allowed
+SHOBJ_LDFLAGS_R   - as above, but all symbols must be resolved
 SH_LINKFLAGS      Flags to use linking an executable which will load shared objects
 LD_LIBRARY_PATH   Environment variable which specifies path to shared libraries
+STRIPLIBFLAGS     Arguments to strip to strip a dynamic library
 </code></pre>
 
 <h2 id="module-cc">Module: cc</h2>
@@ -232,11 +272,15 @@ LD
 
 <h3 id="cc-check-sizeof-type-"><code>cc-check-sizeof type ...</code></h3>
 
-<p>Checks the size of the given types (between 1 and 32, inclusive). Defines a variable with the size determined, or &ldquo;unknown&rdquo; otherwise. e.g. for type <strong><code>long long</code></strong>, defines SIZEOF_LONG_LONG. Returns the size of the last type.</p>
+<p>Checks the size of the given types (between 1 and 32, inclusive). Defines a variable with the size determined, or “unknown” otherwise. e.g. for type <strong><code>long long</code></strong>, defines SIZEOF_LONG_LONG. Returns the size of the last type.</p>
 
 <h3 id="cc-check-includes-includes-"><code>cc-check-includes includes ...</code></h3>
 
 <p>Checks that the given include files can be used</p>
+
+<h3 id="cc-include-needs-include-required-"><code>cc-include-needs include required ...</code></h3>
+
+<p>Ensures that when checking for <strong><code>include</code></strong>, a check is first made for each <strong><code>required</code></strong> file, and if found, it is #included</p>
 
 <h3 id="cc-check-types-type-"><code>cc-check-types type ...</code></h3>
 
@@ -256,7 +300,7 @@ LD
 
 <h3 id="cc-check-members-typemember-"><code>cc-check-members type.member ...</code></h3>
 
-<p>Checks that the given type/structure members exist. A structure member is of the form &ldquo;struct stat.st_mtime&rdquo;</p>
+<p>Checks that the given type/structure members exist. A structure member is of the form “struct stat.st_mtime”</p>
 
 <h3 id="cc-check-function-in-lib-function-libs-otherlibs"><code>cc-check-function-in-lib function libs ?otherlibs?</code></h3>
 
@@ -264,9 +308,9 @@ LD
 
 <p>First checks for no library required, then checks each of the libraries in turn.</p>
 
-<p>If the function is found, the feature is defined and lib_$function is defined to -l$lib where the function was found, or &ldquo;&rdquo; if no library required. In addition, -l$lib is added to the LIBS define.</p>
+<p>If the function is found, the feature is defined and lib_$function is defined to -l$lib where the function was found, or “” if no library required. In addition, -l$lib is added to the LIBS define.</p>
 
-<p>If additional libraries may be needed for linking, they should be specified as $extralibs as &ldquo;-lotherlib1 -lotherlib2&rdquo;. These libraries are not automatically added to LIBS.</p>
+<p>If additional libraries may be needed for linking, they should be specified as $extralibs as “-lotherlib1 -lotherlib2”. These libraries are not automatically added to LIBS.</p>
 
 <p>Returns 1 if found or 0 if not.</p>
 
@@ -274,7 +318,7 @@ LD
 
 <p>Checks for existence of the given compiler tools, taking into account any cross compilation prefix.</p>
 
-<p>For example, when checking for &ldquo;ar&rdquo;, first AR is checked on the command line and then in the environment. If not found, &ldquo;${host}-ar&rdquo; or simply &ldquo;ar&rdquo; is assumed depending upon whether cross compiling. The path is searched for this executable, and if found AR is defined to the executable name.</p>
+<p>For example, when checking for “ar”, first AR is checked on the command line and then in the environment. If not found, “${host}-ar” or simply “ar” is assumed depending upon whether cross compiling. The path is searched for this executable, and if found AR is defined to the executable name. Note that even when cross compiling, the simple “ar” is used as a fallback, but a warning is generated. This is necessary for some toolchains.</p>
 
 <p>It is an error if the executable is not found.</p>
 
@@ -282,7 +326,7 @@ LD
 
 <p>Checks for existence of the given executables on the path.</p>
 
-<p>For example, when checking for &ldquo;grep&rdquo;, the path is searched for the executable, <strong><code>grep</code></strong>, and if found GREP is defined as &ldquo;grep&rdquo;.</p>
+<p>For example, when checking for “grep”, the path is searched for the executable, <strong><code>grep</code></strong>, and if found GREP is defined as “grep”.</p>
 
 <p>It the executable is not found, the variable is defined as false. Returns 1 if all programs were found, or 0 otherwise.</p>
 
@@ -328,6 +372,7 @@ LD
 -code code          Code to compile in the body of main()
 -source code        Compile a complete program. Ignore -includes, -declare and -code
 -sourcefile file    Shorthand for -source [readfile [get-define srcdir]/$file]
+-nooutput 1         Treat any compiler output (e.g. a warning) as an error
 </code></pre>
 
 <p>Unless -source or -sourcefile is specified, the C program looks like:</p>
@@ -355,12 +400,12 @@ LD
 <p>Examines all defined variables which match the given patterns and writes an include file, $file, which defines each of these. Variables which match <strong><code>-auto</code></strong> are output as follows:</p>
 
 <ul>
-  <li>defines which have the value &ldquo;0&rdquo; are ignored.</li>
+  <li>defines which have the value “0” are ignored.</li>
   <li>defines which have integer values are defined as the integer value.</li>
-  <li>any other value is defined as a string, e.g. &ldquo;value&rdquo;</li>
+  <li>any other value is defined as a string, e.g. “value”</li>
 </ul>
 
-<p>Variables which match <strong><code>-bare</code></strong> are defined as-is. Variables which match <strong><code>-str</code></strong> are defined as a string, e.g. &ldquo;value&rdquo; Variables which match <strong><code>-none</code></strong> are omitted.</p>
+<p>Variables which match <strong><code>-bare</code></strong> are defined as-is. Variables which match <strong><code>-str</code></strong> are defined as a string, e.g. “value” Variables which match <strong><code>-none</code></strong> are omitted.</p>
 
 <p>Note that order is important. The first pattern which matches is selected Default behaviour is:</p>
 
@@ -370,7 +415,7 @@ LD
 
 <h2 id="module-system">Module: system</h2>
 
-<p>This module supports common system interrogation and options such as &ndash;host, &ndash;build, &ndash;prefix, and setting srcdir, builddir, and EXEXT.</p>
+<p>This module supports common system interrogation and options such as –host, –build, –prefix, and setting srcdir, builddir, and EXEXT.</p>
 
 <p>It also support the <strong><code>feature</code></strong> naming convention, where searching for a feature such as sys/type.h defines HAVE_SYS_TYPES_H</p>
 
@@ -398,7 +443,28 @@ LD
 
 <p>Each pattern of the form @define@ is replaced the the corresponding define, if it exists, or left unchanged if not.</p>
 
-<p>The special value @srcdir@ is subsituted with the relative path to the source directory from the directory where the output file is created. Use @top_srcdir@ for the absolute path.</p>
+<p>The special value @srcdir@ is substituted with the relative path to the source directory from the directory where the output file is created, while the special value @top_srcdir@ is substituted with the relative path to the top level source directory.</p>
+
+<p>Conditional sections may be specified as follows:</p>
+
+<pre><code>@if name == value
+lines
+@else
+lines
+@endif
+</code></pre>
+
+<p>Where <strong><code>name</code></strong> is a defined variable name and @else is optional. If the expression does not match, all lines through <strong><code>@endif</code></strong> are ignored.</p>
+
+<p>The alternative forms may also be used:</p>
+
+<pre><code>@if name
+@if name != value
+</code></pre>
+
+<p>Where the first form is true if the variable is defined, but not empty or 0</p>
+
+<p>Currently these expressions can’t be nested.</p>
 
         </div>
     </div>

@@ -3,7 +3,7 @@
   <head>
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
     <meta charset="utf-8">
-    <title>autosetup - Initial release of autosetup</title>
+    <title>autosetup - autosetup Modules</title>
     <link rel="stylesheet" type="text/css" href="../../css/style.css" media="screen">
     <link rel="stylesheet" type="text/css" href="../../css/sh_style.css" media="screen">
     
@@ -36,17 +36,33 @@
             <a href="../../">Overview</a> 
             » 
         
-            <a href="../">All News Articles</a> 
+            <a href="../">Developing with autosetup</a> 
             » 
         
-            <a href="./">Initial release of autosetup</a> 
+            <a href="./">autosetup Modules</a> 
              
         
         </div>
         <div class="main" id="main">
         
-        <p>The initial version of <strong>autosetup</strong> — a faster, better autoconf — has been released.
-Find it on github at <a href="https://github.com/msteveb/autosetup/">https://github.com/msteveb/autosetup/</a></p>
+        <h1 id="creating-autosetup-modules">Creating autosetup modules</h1>
+
+<h2 id="introduction">Introduction</h2>
+
+<p><strong>Note:</strong> This page is still be completed.</p>
+
+<p>In the meantime, here is the information from the developer reference manual:</p>
+
+<hr>
+
+<p>Note that module X is implemented in either autosetup/X.tcl or
+autosetup/X/init.tcl</p>
+
+<p>The latter form is useful for a complex module which requires additional
+support file. In this form, $::usedir is set to the module directory when it
+is loaded.</p>
+
+<hr>
 
         </div>
     </div>
@@ -67,10 +83,10 @@ Find it on github at <a href="https://github.com/msteveb/autosetup/">https://git
             <li><a href="../../user/">Running autosetup</a></li>
         
             
-            <li><a href="../../developer/">Developing</a></li>
+            <li><a href="../">Developing</a></li>
         
             
-            <li><a href="../../developer/examples/">Examples</a></li>
+            <li><a href="../examples/">Examples</a></li>
         
             
             <li><a href="../../license/">License</a></li>

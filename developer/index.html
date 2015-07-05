@@ -1,6 +1,7 @@
 <!DOCTYPE HTML>
 <html lang="en">
   <head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
     <meta charset="utf-8">
     <title>autosetup - Developing with autosetup</title>
     <link rel="stylesheet" type="text/css" href="../css/style.css" media="screen">
@@ -51,7 +52,7 @@ first, including the <a href="../download/">download instructions</a>. The <a hr
 <h2 id="the-moving-parts">The Moving Parts</h2>
 
 <p><strong>autosetup</strong> is deployed directly into the source tree of a project.
-(This approach was inspired by <a href="http://code.google.com/p/waf/">waf</a>,
+(This approach was inspired by <a href="http://waf.io/">waf</a>,
 and means that there are no dependency issues with different versions
 of autosetup since an appropriate version is part of the project.)</p>
 
@@ -103,7 +104,7 @@ as support files.</p>
 is included and automatically used in case no suitable interpreter
 is found.</p>
 
-<h2 id="configuration-description-----autodef">Configuration Description &mdash; auto.def</h2>
+<h2 id="configuration-description-----autodef">Configuration Description — auto.def</h2>
 
 <p>The configuration process is controlled by the <code>auto.def</code> file.
 This file consists of the following sections.</p>
@@ -239,13 +240,17 @@ SIZEOF_LONG_LONG=8
 <p>These <strong>defines</strong>, or <em>configuration variables</em> fall into three broad categories:</p>
 
 <ol>
-  <li>Standard system <strong>defines</strong> are lower case, such as <code>srcdir</code>, <code>host_alias</code> and <code>prefix</code></li>
+  <li>Standard system <strong>defines</strong> are lower case, such as <code>srcdir</code>, <code>host_alias</code> and <code>prefix</code>
+</li>
   <li>Commands, libraries and flags which would typically be substituted in a Makefile are
-uppercase, such as <code>CC</code>, <code>LIBS</code> and <code>CFLAGS</code></li>
-  <li><em>Feature</em> tests are boolean values in uppercase, always start with HAVE_ and have the value 0 or 1.
+uppercase, such as <code>CC</code>, <code>LIBS</code> and <code>CFLAGS</code>
+</li>
+  <li>
+<em>Feature</em> tests are boolean values in uppercase, always start with HAVE_ and have the value 0 or 1.
 For example, <code>HAVE_STDLIB_H</code>, <code>HAVE_REGCOMP</code> and <code>HAVE_LONG_LONG</code>. Note that a standard naming
 convention is used such that a test for <code>stdlib.h</code> sets <code>HAVE_STDLIB_H</code>, a test for the function <code>regcomp</code>
-sets <code>HAVE_REGCOMP</code> and a test for the type <code>long long</code> defines <code>HAVE_LONG_LONG</code></li>
+sets <code>HAVE_REGCOMP</code> and a test for the type <code>long long</code> defines <code>HAVE_LONG_LONG</code>
+</li>
 </ol>
 
 <p>In addition, <code>cc-check-sizeof</code> sets a numeric value and uses the SIZEOF_ prefix rather than the HAVE_ prefix.</p>
@@ -295,7 +300,7 @@ set as configuration variables.</p>
 must be created to control the build. <strong>autosetup</strong> provides support
 for two common mechanisms.</p>
 
-<h4 id="template-substitutuion-----make-template">1. Template Substitutuion &mdash; make-template</h4>
+<h4 id="template-substitutuion-----make-template">1. Template Substitutuion — make-template</h4>
 
 <p>The <code>make-template</code> command creates a file from a template by
 applying substitutions based on the <em>configuration variables</em>.  For
@@ -304,7 +309,7 @@ example, any instance of <code>@CC@</code> is replace with the value of <code>CC
 
 <p>This approach is ideal for creating a Makefile from a template, Makefile.in.</p>
 
-<h4 id="header-file-generation-----make-config-header">2. Header File Generation &mdash; make-config-header</h4>
+<h4 id="header-file-generation-----make-config-header">2. Header File Generation — make-config-header</h4>
 
 <p>The <code>make-config-header</code> command creates a C/C++ header file based on the <em>configuration variables</em>.
 By default, every true feature test is defined in the generated header file. It is also possible
@@ -385,7 +390,8 @@ variables in Makefile format.</p>
     </div>
     
 	<div href="#" id="related" onmouseover="show_related(1)" onmouseout="show_related(0)">
-		<h2><img id="star" width="16" height="18" src="../img/star16.png"> Related Topics</h2>
+		<h2>
+<img id="star" width="16" height="18" src="../img/star16.png"> Related Topics</h2>
 		<div id="related_menu" style="display: none">
 		<ul>
 <li><a href="reference/">Command Reference</a></li>

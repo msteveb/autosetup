@@ -1,6 +1,7 @@
 <!DOCTYPE HTML>
 <html lang="en">
   <head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
     <meta charset="utf-8">
     <title>autosetup - Frequently Asked Questions</title>
     <link rel="stylesheet" type="text/css" href="../css/style.css" media="screen">
@@ -43,7 +44,11 @@
         
         <h1 id="frequently-asked-questions">Frequently Asked Questions</h1>
 
-<h2 id="how-fast-is-autosetup">1. How fast is <strong>autosetup</strong>?</h2>
+<ol>
+  <li>
+    <h2 id="how-fast-is-autosetup">How fast is <strong>autosetup</strong>?</h2>
+  </li>
+</ol>
 
 <p><strong>autosetup</strong> is very fast. A typical project involves invocation of
 the C compiler a few dozen times which can be done in a few seconds.
@@ -59,7 +64,11 @@ cygwin          91.5s         9.9s
 <p>Also note that there is <strong>no</strong> separate step needed to generate
 a <code>configure</code> script or header templates.</p>
 
-<h2 id="why-is-it-faster">2. Why is it faster?</h2>
+<ol>
+  <li>
+    <h2 id="why-is-it-faster">Why is it faster?</h2>
+  </li>
+</ol>
 
 <p><code>autoconf</code> attempts to work with a minimal set of native tools
 (<strong>Bourne shell</strong>, <code>awk</code>, <code>sed</code>, <code>tr</code>).  As such it invokes <em>many</em>
@@ -70,21 +79,30 @@ platform-indepdendent manner.</p>
 all string manipulation in a single process. This approach dramatically speeds
 up configuration as the only time of significance is the invocation of the compiler.</p>
 
-<h2 id="what-are-the-prerequisites-for-autosetup">3. What are the prerequisites for <strong>autosetup</strong>?</h2>
+<ol>
+  <li>
+    <h2 id="what-are-the-prerequisites-for-autosetup">What are the prerequisites for <strong>autosetup</strong>?</h2>
+  </li>
+</ol>
 
 <p><strong>autosetup</strong> requires <strong>one</strong> of:</p>
 
 <ul>
   <li>Tcl 8.5 (tclsh8.5)</li>
   <li>Tcl 8.6 (tclsh8.6)</li>
-  <li><a href="http://jim.berlios.de/">jimsh</a> (version &gt;= 0.70)</li>
+  <li>
+<a href="http://jim.tcl.tk/">jimsh</a> (version &gt;= 0.70)</li>
   <li>A C compiler (cc)</li>
 </ul>
 
 <p>In addition, the <code>configure</code> wrapper script requires a Bourne-compatible
 shell and the <code>dirname</code> command.</p>
 
-<h2 id="do-i-need-to-install-autosetup">4. Do I need to install <strong>autosetup</strong>?</h2>
+<ol>
+  <li>
+    <h2 id="do-i-need-to-install-autosetup">Do I need to install <strong>autosetup</strong>?</h2>
+  </li>
+</ol>
 
 <p>No. The <strong>autosetup</strong> distribution is included directly as part of the
 project. This approach means that the project is completely self-contained.

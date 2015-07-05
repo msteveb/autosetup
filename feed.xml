@@ -132,7 +132,7 @@ within &lt;a href="http://www.mingw.org/wiki/MSYS"&gt;MSYS/MinGW&lt;/a&gt; for W
 rather than cygwin or cross compiling MinGW from (e.g.) Linux.&lt;/p&gt;
 
 &lt;p&gt;The main difficulty in supporting this platform is that MinGW
-doesn&amp;rsquo;t support fork/exec (or actually vfork/exec) and thus &lt;code&gt;exec&lt;/code&gt;
+doesn’t support fork/exec (or actually vfork/exec) and thus &lt;code&gt;exec&lt;/code&gt;
 support in the bootstrap jimsh is limited.&lt;/p&gt;
 
 &lt;p&gt;Fortunately, autosetup has few requirements of &lt;code&gt;exec&lt;/code&gt; and these
@@ -211,7 +211,7 @@ with better, more approachable documentation.&lt;/p&gt;
     <published>2010-12-13T14:00:00Z</published>
     <updated>2010-12-13T14:00:00Z</updated>
     <link rel="alternate" href="http://msteveb.github.com/autosetup/articles/2010-12-14/"/>
-    <content type="html">&lt;p&gt;The initial version of &lt;strong&gt;autosetup&lt;/strong&gt; &amp;mdash; a faster, better autoconf &amp;mdash; has been released.
+    <content type="html">&lt;p&gt;The initial version of &lt;strong&gt;autosetup&lt;/strong&gt; — a faster, better autoconf — has been released.
 Find it on github at &lt;a href="https://github.com/msteveb/autosetup/"&gt;https://github.com/msteveb/autosetup/&lt;/a&gt;&lt;/p&gt;
 </content>
   </entry>

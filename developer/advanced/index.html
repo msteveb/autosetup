@@ -1,6 +1,7 @@
 <!DOCTYPE HTML>
 <html lang="en">
   <head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
     <meta charset="utf-8">
     <title>autosetup - Advanced Concepts</title>
     <link rel="stylesheet" type="text/css" href="../../css/style.css" media="screen">
@@ -97,7 +98,7 @@ e.g.</p>
 define TCL_LIBRARY [get-define prefix]/lib/jim
 </pre>
 
-<h2 id="a-standard-makefilein">A &ldquo;standard&rdquo; Makefile.in</h2>
+<h2 id="a-standard-makefilein">A “standard” Makefile.in</h2>
 
 <p>If autosetup is being used to control a make-based build system,
 the use of a <code>Makefile.in</code> with a standard structure will
@@ -108,9 +109,11 @@ following:</p>
 
 <ul>
   <li>Use <code>CC</code>, <code>AR</code>, <code>RANLIB</code> as determined by cross compiler settings or user overrides</li>
-  <li>Install appropriately considers <code>--prefix</code> and <code>$DESTDIR</code></li>
+  <li>Install appropriately considers <code>--prefix</code> and <code>$DESTDIR</code>
+</li>
   <li>Use VPATH to support out-of-tree builds</li>
-  <li>Dummy <strong>automake</strong> targets to allow for use as a subproject with <strong>automake</strong></li>
+  <li>Dummy <strong>automake</strong> targets to allow for use as a subproject with <strong>automake</strong>
+</li>
   <li>Automatically reconfigure if <code>auto.def</code> changes</li>
 </ul>
 
@@ -226,8 +229,9 @@ which follows some conventions.</p>
 
 <ol>
   <li>The module should include a synopsis for documentation purposes.</li>
-  <li><code>module-options</code> should be the first statement</li>
-  <li>Public commands should be documented with &lsquo;# @cmdname &hellip;&rsquo;</li>
+  <li>
+<code>module-options</code> should be the first statement</li>
+  <li>Public commands should be documented with ‘# @cmdname …’</li>
   <li>The module can also include private commands and globals</li>
 </ol>
 
@@ -265,7 +269,8 @@ may require changes to the core <strong>autosetup</strong>.</p>
 
 <ul>
   <li>pkg-config support (although pkg-config has poor support for cross compiling)</li>
-  <li>More fully-featured shared library support (<code>cc-shared</code> module), possibly with support for <code>libtool</code></li>
+  <li>More fully-featured shared library support (<code>cc-shared</code> module), possibly with support for <code>libtool</code>
+</li>
   <li>Support for additional languages</li>
   <li>Subdirectory support. Need to resolve how options are parsed, and how variables interact between subdirectories.</li>
 </ul>

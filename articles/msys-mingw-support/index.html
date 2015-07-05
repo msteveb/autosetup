@@ -1,6 +1,7 @@
 <!DOCTYPE HTML>
 <html lang="en">
   <head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
     <meta charset="utf-8">
     <title>autosetup - MSYS/MinGW support</title>
     <link rel="stylesheet" type="text/css" href="../../css/style.css" media="screen">
@@ -44,15 +45,12 @@
         </div>
         <div class="main" id="main">
         
-            <p class="articledate">Friday, 08 July 2011</p>
-            <h2 class="news">MSYS/MinGW support</h2>
-        
         <p>Apparently there is considerable interest in supporting builds
 within <a href="http://www.mingw.org/wiki/MSYS">MSYS/MinGW</a> for Windows
 rather than cygwin or cross compiling MinGW from (e.g.) Linux.</p>
 
 <p>The main difficulty in supporting this platform is that MinGW
-doesn&rsquo;t support fork/exec (or actually vfork/exec) and thus <code>exec</code>
+doesn’t support fork/exec (or actually vfork/exec) and thus <code>exec</code>
 support in the bootstrap jimsh is limited.</p>
 
 <p>Fortunately, autosetup has few requirements of <code>exec</code> and these

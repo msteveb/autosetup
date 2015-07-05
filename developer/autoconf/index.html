@@ -1,6 +1,7 @@
 <!DOCTYPE HTML>
 <html lang="en">
   <head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
     <meta charset="utf-8">
     <title>autosetup - autoconf Comparison</title>
     <link rel="stylesheet" type="text/css" href="../../css/style.css" media="screen">
@@ -50,7 +51,7 @@
 
 <h2 id="user-level-differences">User-level Differences</h2>
 
-<h3 id="no---target---build-is">No &ndash;target, &ndash;build is</h3>
+<h3 id="no---target---build-is">No –target, –build is</h3>
 
 <p>In <strong>autoconf</strong>, <code>--target</code> identifies the final target of a cross-compilation tool, while
 <code>--build</code> identifies the current build system.</p>
@@ -59,9 +60,15 @@
 which in turn produces executables witch run on architecture <strong>T</strong>, the relationship is:</p>
 
 <ul>
-  <li><code>--build  =&gt;</code> <strong>B</strong></li>
-  <li><code>--host   =&gt;</code> <strong>H</strong></li>
-  <li><code>--target =&gt;</code> <strong>T</strong></li>
+  <li>
+<code>--build  =&gt;</code> <strong>B</strong>
+</li>
+  <li>
+<code>--host   =&gt;</code> <strong>H</strong>
+</li>
+  <li>
+<code>--target =&gt;</code> <strong>T</strong>
+</li>
 </ul>
 
 <p><strong>autosetup</strong> guesses the build architecture by running <code>config.guess</code>, but in any case the build architecture
@@ -169,7 +176,7 @@ double strtod(...) { /* implementation */ }
 #endif
 </pre>
 
-<p>Alternatively, implement each missing function in it&rsquo;s own file.</p>
+<p>Alternatively, implement each missing function in it’s own file.</p>
 
 <pre class="sh_autosetup">
 define EXTRA_OBJS ""
