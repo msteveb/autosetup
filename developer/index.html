@@ -185,7 +185,7 @@ options {
     stringopt2:=value  =&gt; "an option where the argument is optional and defaults to 'value'"
     optalias booltopt3 =&gt; "a boolean with a hidden alias. --optalias is not shown in --help"
     boolopt4 =&gt; {
-        Multiline description for this option
+        Multi-line description for this option
         which is carefully formatted.
     }
 }
@@ -217,7 +217,7 @@ $ ./configure --help
   --stringopt2?=value?  an option where the argument is optional and defaults to 'value'
   --booltopt3           a boolean with a hidden alias. --optalias is not shown in --help
   --boolopt4
-        Multiline description for this option
+        Multi-line description for this option
         which is carefully formatted.
 </pre>
 
@@ -300,7 +300,7 @@ set as configuration variables.</p>
 must be created to control the build. <strong>autosetup</strong> provides support
 for two common mechanisms.</p>
 
-<h4 id="template-substitutuion-----make-template">1. Template Substitutuion — make-template</h4>
+<h4 id="template-substitution-----make-template">1. Template Substitution — make-template</h4>
 
 <p>The <code>make-template</code> command creates a file from a template by
 applying substitutions based on the <em>configuration variables</em>.  For
