@@ -61,8 +61,6 @@ proc autosetup_install {dir} {
 
 	# Now create 'configure' if necessary
 	autosetup_create_configure
-
-	exit 0
 }
 
 proc autosetup_create_configure {} {

@@ -135,14 +135,22 @@ proc main {argv} {
 		autosetup_reference [opt-val {manual ref reference}]
 	}
 
-	if {[opt-val init] ne ""} {
-		use init
-		autosetup_init [opt-val init]
-	}
-
+	# Allow combining --install and --init
+	set earlyexit 0
 	if {[opt-val install] ne ""} {
 		use install
 		autosetup_install [opt-val install]
+		incr earlyexit
+	}
+
+	if {[opt-val init] ne ""} {
+		use init
+		autosetup_init [opt-val init]
+		incr earlyexit
+	}
+
+	if {$earlyexit} {
+		exit 0
 	}
 
 	if {![file exists $autosetup(autodef)]} {

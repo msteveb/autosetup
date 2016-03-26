@@ -18,7 +18,7 @@ proc autosetup_init {type} {
 			# XXX: Use the options-show code to wrap the description
 			puts [format "%-10s %s" $type $desc]
 		}
-		exit 0
+		return
 	}
 	lassign [dict get $::autosetup(inittypes) $type] desc script
 
@@ -28,8 +28,6 @@ proc autosetup_init {type} {
 	cd $::autosetup(srcdir)
 
 	uplevel #0 $script
-
-	exit 0
 }
 
 proc autosetup_add_init_type {type desc script} {
