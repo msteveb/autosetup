@@ -469,6 +469,15 @@ proc define {name {value 1}} {
 	#dputs "$name <= $value"
 }
 
+# @undefine name
+#
+# Undefine the named variable
+#
+proc undefine {name} {
+	unset -nocomplain ::define($name)
+	#dputs "$name <= <undef>"
+}
+
 # @define-append name value ...
 #
 # Appends the given value(s) to the given 'defined' variable.
