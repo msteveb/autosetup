@@ -171,11 +171,13 @@ proc main {argv} {
 
 	autosetup_add_dep $autosetup(autodef)
 
-	set cmd [file-normalize $autosetup(exe)]
+	define CONFIGURE_OPTS ""
 	foreach arg $autosetup(argv) {
-		append cmd " [quote-if-needed $arg]"
+		define-append CONFIGURE_OPTS [quote-if-needed $arg]
 	}
-	define AUTOREMAKE $cmd
+	define AUTOREMAKE [file-normalize $autosetup(exe)]
+	define-append AUTOREMAKE [get-define CONFIGURE_OPTS]
+
 
 	# Log how we were invoked
 	configlog "Invoked as: [getenv WRAPPER $::argv0] [quote-argv $autosetup(argv)]"
