@@ -73,10 +73,13 @@ configure
 autosetup/LICENSE
 autosetup/README.autosetup
 autosetup/autosetup
+autosetup/cc-db.tcl
+autosetup/cc-lib.tcl
 autosetup/cc-shared.tcl
 autosetup/cc.tcl
 autosetup/config.guess
 autosetup/config.sub
+autosetup/default.auto
 autosetup/find-tclsh
 autosetup/jimsh0.c
 autosetup/system.tcl
@@ -304,7 +307,7 @@ for two common mechanisms.</p>
 
 <p>The <code>make-template</code> command creates a file from a template by
 applying substitutions based on the <em>configuration variables</em>.  For
-example, any instance of <code>@CC@</code> is replace with the value of <code>CC</code>
+example, any instance of <code>@CC@</code> is replaced with the value of <code>CC</code>
 (e.g. <code>arm-linux-gcc</code>) in the output file.</p>
 
 <p>This approach is ideal for creating a Makefile from a template, Makefile.in.</p>
