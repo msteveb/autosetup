@@ -548,7 +548,7 @@ proc env-is-set {name} {
 # @readfile filename ?default=""?
 #
 # Return the contents of the file, without the trailing newline.
-# If the doesn't exist or can't be read, returns $default.
+# If the file doesn't exist or can't be read, returns $default.
 #
 proc readfile {filename {default_value ""}} {
 	set result $default_value
