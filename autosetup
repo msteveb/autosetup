@@ -400,7 +400,7 @@ proc options-show {} {
 #
 # If the name:value form is used, the value must be provided with the option (as --name=myvalue).
 # If the name:=value form is used, the value is optional and the given value is used as the default
-# if is not provided.
+# if it is not provided.
 #
 # Undocumented options are also supported by omitting the "=> description.
 # These options are not displayed with --help and can be useful for internal options or as aliases.
