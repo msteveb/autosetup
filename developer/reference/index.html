@@ -88,7 +88,7 @@
 <pre><code>name:[=]value  =&gt; "Description of this option"
 </code></pre>
 
-<p>If the name:value form is used, the value must be provided with the option (as –name=myvalue). If the name:=value form is used, the value is optional and the given value is used as the default if is not provided.</p>
+<p>If the name:value form is used, the value must be provided with the option (as –name=myvalue). If the name:=value form is used, the value is optional and the given value is used as the default if it is not provided.</p>
 
 <p>Undocumented options are also supported by omitting the “=&gt; description. These options are not displayed with –help and can be useful for internal options or as aliases.</p>
 
@@ -195,7 +195,7 @@
 
 <h2 id="module-cc-db">Module: cc-db</h2>
 
-<p>The <strong><code>cc-db</code></strong> module provides a knowledge based of system idiosyncracies In general, this module can always be included</p>
+<p>The <strong><code>cc-db</code></strong> module provides a knowledge based of system idiosyncrasies In general, this module can always be included</p>
 
 <h2 id="module-cc-lib">Module: cc-lib</h2>
 
@@ -415,7 +415,7 @@ LD
 
 <h2 id="module-system">Module: system</h2>
 
-<p>This module supports common system interrogation and options such as –host, –build, –prefix, and setting srcdir, builddir, and EXEXT.</p>
+<p>This module supports common system interrogation and options such as –host, –build, –prefix, and setting srcdir, builddir, and EXEEXT</p>
 
 <p>It also support the <strong><code>feature</code></strong> naming convention, where searching for a feature such as sys/type.h defines HAVE_SYS_TYPES_H</p>
 
@@ -441,7 +441,7 @@ LD
 
 <p>Reads the input file <srcdir>/$template and writes the output file $outfile. If $outfile is blank/omitted, $template should end with ".in" which is removed to create the output file name.</srcdir></p>
 
-<p>Each pattern of the form @define@ is replaced the the corresponding define, if it exists, or left unchanged if not.</p>
+<p>Each pattern of the form @define@ is replaced with the corresponding define, if it exists, or left unchanged if not.</p>
 
 <p>The special value @srcdir@ is substituted with the relative path to the source directory from the directory where the output file is created, while the special value @top_srcdir@ is substituted with the relative path to the top level source directory.</p>
 
