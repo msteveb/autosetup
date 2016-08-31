@@ -6,6 +6,7 @@
 # Parse everything out of the argv list which looks like an option
 # Knows about --enable-thing and --disable-thing as alternatives for --thing=0 or --thing=1
 # Everything which doesn't look like an option, or is after --, is left unchanged
+#
 proc getopt {argvname} {
 	upvar $argvname argv
 	set nargv {}
@@ -70,7 +71,8 @@ proc opt_bool {optarrayname args} {
 
 	foreach o $args {
 		if {[info exists opts($o)]} {
-			if {"1" in $opts($o) || "yes" in $opts($o)} {
+			# For boolean options, the last value wins
+			if {[lindex $opts($o) end] in {"1" "yes"}} {
 				return 1
 			}
 		}

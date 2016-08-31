@@ -204,6 +204,8 @@ proc main {argv} {
 #
 # Check each of the named, boolean options and return 1 if any of them have
 # been set by the user.
+# If the option was specified more than once, the last value wins.
+# e.g. With --enable-foo --disable-foo, [opt-bool foo] will return 0
 #
 proc opt-bool {args} {
 	option-check-names {*}$args
