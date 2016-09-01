@@ -61,7 +61,7 @@ proc main {argv} {
 		set autosetup(srcdir) [pwd]
 	} else {
 		# Invoked via the configure wrapper
-		set autosetup(srcdir) [file dirname $autosetup(exe)]
+		set autosetup(srcdir) [file-normalize [file dirname $autosetup(exe)]]
 	}
 	set autosetup(autodef) [relative-path $autosetup(srcdir)/auto.def]
 
