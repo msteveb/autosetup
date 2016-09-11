@@ -70,7 +70,9 @@ cc-check-function-in-lib percent_m wrap
 cc-check-includes sys/socket.h sys/stat.h
 
 use cc-lib
-cc-check-lfs
+if {[opt-bool lfs largefile]} {
+	cc-check-lfs
+}
 cc-check-endian
 
 # Now try some C++ features

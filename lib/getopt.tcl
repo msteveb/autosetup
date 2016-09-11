@@ -4,12 +4,18 @@
 # Simple getopt module
 
 # Parse everything out of the argv list which looks like an option
-# Knows about --enable-thing and --disable-thing as alternatives for --thing=0 or --thing=1
 # Everything which doesn't look like an option, or is after --, is left unchanged
+# Understands --enable-xxx and --with-xxx as synonyms for --xxx to enable the boolean option xxx.
+# Understands --disable-xxx and --without-xxx to disable the boolean option xxx.
 #
+# The returned value is a dictionary keyed by option name
+# Each value is a list of {type value} ... where type is "bool" or "str".
+# The value for a boolean option is 0 or 1. The value of a string option is the value given.
 proc getopt {argvname} {
 	upvar $argvname argv
 	set nargv {}
+
+	set opts {}
 
 	for {set i 0} {$i < [llength $argv]} {incr i} {
 		set arg [lindex $argv $i]
@@ -24,58 +30,25 @@ proc getopt {argvname} {
 		}
 
 		if {[regexp {^--([^=][^=]+)=(.*)$} $arg -> name value]} {
-			lappend opts($name) $value
-		} elseif {[regexp {^--(enable-|disable-)?([^=]*)$} $arg -> prefix name]} {
-			if {$prefix eq "disable-"} {
-				set value 0
-			} else {
+			# --name=value
+			dict lappend opts $name [list str $value]
+		} elseif {[regexp {^--(enable-|disable-|with-|without-)?([^=]*)$} $arg -> prefix name]} {
+			if {$prefix in {enable- with- ""}} {
 				set value 1
+			} else {
+				set value 0
 			}
-			lappend opts($name) $value
+			dict lappend opts $name [list bool $value]
 		} else {
 			lappend nargv $arg
 		}
 	}
 
 	#puts "getopt: argv=[join $argv] => [join $nargv]"
-	#parray opts
+	#array set getopt $opts
+	#parray getopt
 
 	set argv $nargv
 
-	return [array get opts]
-}
-
-proc opt_val {optarrayname options {default {}}} {
-	upvar $optarrayname opts
-
-	set result {}
-
-	foreach o $options {
-		if {[info exists opts($o)]} {
-			lappend result {*}$opts($o)
-		}
-	}
-	if {[llength $result] == 0} {
-		return $default
-	}
-	return $result
-}
-
-proc opt_bool {optarrayname args} {
-	upvar $optarrayname opts
-
-	# Support the args being passed as a list
-	if {[llength $args] == 1} {
-		set args [lindex $args 0]
-	}
-
-	foreach o $args {
-		if {[info exists opts($o)]} {
-			# For boolean options, the last value wins
-			if {[lindex $opts($o) end] in {"1" "yes"}} {
-				return 1
-			}
-		}
-	}
-	return 0
+	return $opts
 }

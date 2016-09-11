@@ -70,14 +70,21 @@ proc main {argv} {
 
 	set autosetup(argv) $argv
 	set autosetup(cmdline) {}
+	# options is a list of known options
 	set autosetup(options) {}
+	# optset is a dictionary of option values set by the user based on getopt
+	set autosetup(optset) {}
+	# optdefault is a dictionary of default values for options
+	set autosetup(optdefault) {}
 	set autosetup(optionhelp) {}
 	set autosetup(showhelp) 0
 
 	# Parse options
 	use getopt
 
-	array set ::useropts [getopt argv]
+	# At the is point we don't know what is a valid option
+	# We simply parse anything that looks like an option
+	set autosetup(getopt) [getopt argv]
 
 	#"=Core Options:"
 	options-add {
@@ -96,7 +103,6 @@ proc main {argv} {
 		conf:
 	}
 
-	#parray ::useropts
 	if {[opt-bool version]} {
 		puts $autosetup(version)
 		exit 0
@@ -200,16 +206,37 @@ proc main {argv} {
 	exit 0
 }
 
-# @opt-bool option ...
+# @opt-bool ?-nodefault? option ...
 #
-# Check each of the named, boolean options and return 1 if any of them have
-# been set by the user.
+# Check each of the named, boolean options and if any have been explicitly enabled
+# or disabled by the user, return 1 or 0 accordingly.
+#
 # If the option was specified more than once, the last value wins.
 # e.g. With --enable-foo --disable-foo, [opt-bool foo] will return 0
 #
+# If no value was specified by the user, returns the default value for the
+# first option. If -nodefault is given, this behaviour changes and
+# -1 is returned instead.
+#
 proc opt-bool {args} {
+	set nodefault 0
+	if {[lindex $args 0] eq "-nodefault"} {
+		set nodefault 1
+		set args [lrange $args 1 end]
+	}
 	option-check-names {*}$args
-	opt_bool ::useropts {*}$args
+
+	foreach opt $args {
+		if {[dict exists $::autosetup(optset) $opt]} {
+			return [dict get $::autosetup(optset) $opt]
+		}
+	}
+
+	if {$nodefault} {
+		return -1
+	}
+	# Default value is the default for the first option
+	return [dict get $::autosetup(optdefault) [lindex $args 0]]
 }
 
 # @opt-val option-list ?default=""?
@@ -225,7 +252,16 @@ proc opt-bool {args} {
 #
 proc opt-val {names {default ""}} {
 	option-check-names {*}$names
-	join [opt_val ::useropts $names $default]
+
+	foreach opt $names {
+		if {[dict exists $::autosetup(optset) $opt]} {
+			lappend result {*}[dict get $::autosetup(optset) $opt]
+		}
+	}
+	if {[info exists result]} {
+		return $result
+	}
+	return $default
 }
 
 proc option-check-names {args} {
@@ -237,10 +273,10 @@ proc option-check-names {args} {
 }
 
 # Parse the option definition in $opts and update
-# ::useropts() and ::autosetup(optionhelp) appropriately
+# ::autosetup(setoptions) and ::autosetup(optionhelp) appropriately
 #
 proc options-add {opts {header ""}} {
-	global useropts autosetup
+	global autosetup
 
 	# First weed out comment lines
 	set realopts {}
@@ -277,29 +313,65 @@ proc options-add {opts {header ""}} {
 			# Boolean option
 			lappend autosetup(options) $name
 
-			if {![info exists useropts($name)]} {
-				set useropts($name) $value
-			}
 			if {$value eq "1"} {
 				set opthelp "--disable-$name"
 			} else {
 				set opthelp "--$name"
+			}
+
+			# Set the default
+			if {$value eq ""} {
+				set value 0
+			}
+			dict set autosetup(optdefault) $name $value
+
+			if {[dict exists $autosetup(getopt) $name]} {
+				# The option was specified by the user. Look at the last value.
+				lassign [lindex [dict get $autosetup(getopt) $name] end] type setvalue
+				if {$type eq "str"} {
+					# Can we convert the value to a boolean?
+					if {$setvalue in {1 enabled yes}} {
+						set setvalue 1
+					} elseif {$setvalue in {0 disabled no}} {
+						set setvalue 0
+					} else {
+						user-error "Boolean option $name given as --$name=$setvalue"
+					}
+				}
+				dict set autosetup(optset) $name $setvalue
+				#puts "Found boolean option --$name=$setvalue"
 			}
 		} else {
 			# String option.
 			lappend autosetup(options) $name
 
 			if {$equal eq "="} {
-				if {[info exists useropts($name)]} {
-					# If the user specified the option with no value, the value will be "1"
-					# Replace with the default
-					if {$useropts($name) eq "1"} {
-						set useropts($name) $value
-					}
-				}
+				# String option with optional value
 				set opthelp "--$name?=$value?"
 			} else {
+				# String option with required value
 				set opthelp "--$name=$value"
+			}
+			dict set autosetup(optdefault) $name $value
+
+			# Get the values specified by the user
+			if {[dict exists $autosetup(getopt) $name]} {
+				set listvalue {}
+
+				foreach pair [dict get $autosetup(getopt) $name] {
+					lassign $pair type setvalue
+					if {$type eq "bool" && $setvalue} {
+						if {$equal ne "="} {
+							user-error "Option --$name requires a value"
+						}
+						# If given as a boolean, use the default value
+						set setvalue $value
+					}
+					lappend listvalue $setvalue
+				}
+
+				#puts "Found string option --$name=$listvalue"
+				dict set autosetup(optset) $name $listvalue
 			}
 		}
 
@@ -432,7 +504,7 @@ proc options {optlist} {
 
 	# Check for invalid options
 	if {[opt-bool option-checking]} {
-		foreach o [array names ::useropts] {
+		foreach o [dict keys $::autosetup(getopt)] {
 			if {$o ni $::autosetup(options)} {
 				user-error "Unknown option --$o"
 			}
