@@ -60,9 +60,6 @@ proc split-comma-args {str} {
 		append arg $c
 	}
 	if {[info exists arg]} {
-		if {[string match "*\\\n" $arg]} {
-			set arg [string range $arg 0 end-2]
-		}
 		lappend args [clean-arg $arg]
 	}
 	#dputs "===> $args"
@@ -133,7 +130,13 @@ proc parse-autoconf {lines} {
 			lappend prog [add-complete-statement [expr {$n - 1}] $statement]
 			set statement $line
 		} else {
-			append statement \n $line
+			if {[string index $statement end] eq "\\"} {
+				# Got a trailing backslash on the previous line, so combine the lines
+				set statement [string range $statement 0 end-1]
+				append statement " " [string trim $line]
+			} else {
+				append statement \n $line
+			}
 		}
 
 		if {![string match *(* $statement]} {
@@ -179,10 +182,10 @@ proc output-options {prog} {
 				set desc $help
 				regexp {\s+(.*)} $desc -> desc
 			} else {
-				set arg :$arg
+				# Strip off any trailing ] or ,
+				set arg :[string map [list \] "" , ""] $arg]
 			}
-			regsub -all {[()]} $desc "" desc
-			set desc [string map {[ ( ] )} $desc]
+			regsub -all {[()\[\]]} $desc "" desc
 			output [format "\t%-15s  =>  %s" with-$opt$arg [list $desc]]
 			continue
 		}
@@ -198,8 +201,7 @@ proc output-options {prog} {
 			}
 			# Remember the sense of this option
 			set ::boolopts($opt) $def
-			regsub -all {[()]} $desc "" desc
-			set desc [string map {[ ( ] )} $desc]
+			regsub -all {[()\[\]]} $desc "" desc
 			output [format "\t%-15s  =>  %s" $opt=$def [list $desc]]
 		}
 	}
@@ -237,7 +239,7 @@ proc output-auto-def {prog} {
 				puts stderr "Unknown: $cmd"
 			} else {
 				if {[catch {$cmd {*}$args} msg]} {
-					puts stderr "At line $n, could understand $cmd"
+					puts stderr "At line $n, could not understand $cmd"
 					output-unknown [concat $cmd {*}$args]
 				}
 			}
@@ -337,6 +339,12 @@ proc AC_PROG_LIBTOOL {} {
 proc AC_PROG_RANLIB {} {
 	output "cc-check-tools ranlib"
 }
+proc AM_PROG_AR {} {
+	output "cc-check-tools ar"
+}
+proc AC_PROG_CPP {} {
+	output "cc-check-tools cpp"
+}
 proc AC_PROG_YACC {} {
 	output "foreach prog {bison yacc} { if {\[cc-check-progs \$prog\]} { define YACC \$prog; break } }"
 }
@@ -387,6 +395,14 @@ proc AC_TYPE_PID_T {args} {
 
 proc AC_TYPE_SIZE_T {args} {
 	ac_type_xxx size_t
+}
+
+proc AC_TYPE_SSIZE_T {args} {
+	ac_type_xxx ssize_t
+}
+
+proc AC_TYPE_OFF_T {args} {
+	ac_type_xxx off_t
 }
 
 proc AC_CHECK_MEMBERS {typelist {true {}} {false {}} {decl {}}} {
@@ -443,6 +459,10 @@ proc AC_FUNC_MEMCMP {args} {
 
 proc AC_FUNC_FORK {args} {
 	output "cc-check-functions fork"
+}
+
+proc AC_TYPE_SIGNAL {args} {
+	output "cc-signal-return-type"
 }
 
 proc AC_CHECK_LIB {libname funcname {true {}} {false {}} {extralibs {}}} {
@@ -537,8 +557,8 @@ proc AC_CHECK_SIZEOF {type {def ""}} {
 	output "cc-check-sizeof [make-quoted-string $type]"
 }
 
-proc AC_FUNC_ALLOCA {} {
-	output "cc-check-functions alloca"
+proc AC_FUNC_ALLOCA {args} {
+	output "cc-check-alloca"
 }
 proc AC_FUNC_GETPGRP {} {
 	output "cc-check-functions getpgrp"
@@ -574,6 +594,8 @@ proc examine-cc-decl {decl} {
 		if {$line eq ""} {
 			continue
 		}
+		set line [string trimleft $line \[]
+		set line [string trimright $line \]]
 		if {[regexp {#\s*if(def)?\s+HAVE_} $line]} {
 			incr omit_endif
 			continue
@@ -586,6 +608,7 @@ proc examine-cc-decl {decl} {
 			lappend includes $i
 			continue
 		}
+		regsub -all {[\[\]} $line "" line
 		lappend decls [string trim $line]
 	}
 	set result {}
@@ -599,10 +622,16 @@ proc examine-cc-decl {decl} {
 }
 
 proc AC_TRY_LINK {decl code {true {}} {false {}}} {
+	if {[string match *\n* $code]} {
+		set code \n$code\n
+	}
 	do-true-false "cctest -link 1 [examine-cc-decl $decl] -code {$code}" $true $false
 }
 
 proc AC_TRY_COMPILE {decl code {true {}} {false {}}} {
+	if {[string match *\n* $code]} {
+		set code \n$code\n
+	}
 	do-true-false "cctest [examine-cc-decl $decl] -code {$code}" $true $false
 }
 
