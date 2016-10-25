@@ -16,6 +16,9 @@ endif
 reconfig:
 	@AUTOREMAKE@
 
+# Tests specific variables
+# LIBS=@LIBS@
+
 # Test conditional sections
 # define TRUEVAL
 # define FALSEVAL 0

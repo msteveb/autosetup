@@ -64,6 +64,12 @@ cc-with {-includes {sys/socket.h blah/blah.h}} {
 cc-with {-includes sys/stat.h} {
 	cc-check-members "struct stat.st_mtime" "struct stat.st_atime" "struct stat.st_size"
 }
+
+
+# These should prepend to LIBS
+cc-check-function-in-lib yyerror y
+cc-check-function-in-lib sin m
+cc-check-function-in-lib dlopen dl
 cc-check-function-in-lib percent_m wrap
 
 # Checking the same thing twice is automatically cached
