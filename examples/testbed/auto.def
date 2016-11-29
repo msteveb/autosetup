@@ -4,6 +4,8 @@
 # and features.
 #
 
+define defaultprefix /usr
+
 use cc cc-lib cc-db pkg-config
 
 options {

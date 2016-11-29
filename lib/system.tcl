@@ -18,14 +18,17 @@
 ## infodir
 ## mandir
 ## includedir
-#
-module-options {
+
+# Do "define defaultprefix myvalue" to set the default prefix *before* the first "use"
+set defaultprefix [get-define defaultprefix /usr/local]
+
+module-options [subst -noc -nob {
 	host:host-alias =>		{a complete or partial cpu-vendor-opsys for the system where
 							the application will run (defaults to the same value as --build)}
 	build:build-alias =>	{a complete or partial cpu-vendor-opsys for the system
 							where the application will be built (defaults to the
 							result of running config.guess)}
-	prefix:dir =>			{the target directory for the build (defaults to /usr/local)}
+	prefix:dir =>			{the target directory for the build (defaults to '$defaultprefix')}
 
 	# These (hidden) options are supported for autoconf/automake compatibility
 	exec-prefix:
@@ -42,7 +45,7 @@ module-options {
 	localstatedir:
 	maintainer-mode=0
 	dependency-tracking=0
-}
+}]
 
 # Returns 1 if exists, or 0 if  not
 #
@@ -229,8 +232,7 @@ if {$host eq ""} {
 }
 define cross [get-env CROSS $cross]
 
-# Do "define defaultprefix myvalue" to set the default prefix *before* the first "use"
-set prefix [opt-val prefix [get-define defaultprefix /usr/local]]
+set prefix [opt-val prefix $defaultprefix]
 
 # These are for compatibility with autoconf
 define target [get-define host]
