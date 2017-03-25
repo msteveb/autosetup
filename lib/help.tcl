@@ -81,6 +81,12 @@ proc autosetup_reference {{type text}} {
 proc autosetup_output_block {type lines} {
     if {[llength $lines]} {
         switch $type {
+            section {
+                section $lines
+            }
+            subsection {
+                subsection $lines
+            }
             code {
                 codelines $lines
             }
@@ -102,13 +108,21 @@ proc automf_command_reference {} {
     lappend files $::autosetup(prog)
     lappend files {*}[lsort [glob -nocomplain $::autosetup(libdir)/*.tcl]]
 
-    section "Core Commands"
-    set type p
-    set lines {}
-    set cmd {}
+    # We want to process all non-module files before module files
+    # and then modules in alphabetical order.
+    # So examine all files and extract docs into doc($modulename) and doc(_core_)
+    #
+    # Each entry is a list of {type data} where $type is one of: section, subsection, code, list, p
+    # and $data is a string for section, subsection or a list of text lines for other types.
+
+    # XXX: Should commands be in alphabetical order too? Currently they are in file order.
+
+    set doc(_core_) {}
+    lappend doc(_core_) [list section "Core Commands"]
 
     foreach file $files {
         set modulename [file rootname [file tail $file]]
+        set current _core_
         set f [open $file]
         while {![eof $f]} {
             set line [gets $f]
@@ -125,9 +139,10 @@ proc automf_command_reference {} {
 
             # Synopsis or command?
             if {$cmd eq "synopsis:"} {
-                section "Module: $modulename"
+                set current $modulename
+                lappend doc($current) [list section "Module: $modulename"]
             } else {
-                subsection $cmd
+                lappend doc($current) [list subsection $cmd]
             }
 
             set lines {}
@@ -152,7 +167,7 @@ proc automf_command_reference {} {
 
                 if {$t ne $type || $cmd eq ""} {
                     # Finish the current block
-                    autosetup_output_block $type $lines
+                    lappend doc($current) [list $type $lines]
                     set lines {}
                     set type $t
                 }
@@ -161,8 +176,17 @@ proc automf_command_reference {} {
                 }
             }
 
-            autosetup_output_block $type $lines
+            lappend doc($current) [list $type $lines]
         }
         close $f
+    }
+
+    # Now format and output the results
+
+    # _core_ will sort first
+    foreach module [lsort [array names doc]] {
+        foreach item $doc($module) {
+            autosetup_output_block {*}$item
+        }
     }
 }

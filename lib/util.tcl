@@ -5,7 +5,7 @@
 
 # @compare-versions version1 version2
 #
-# Versions are of the form a.b.c (may be any number of numeric components)
+# Versions are of the form 'a.b.c' (may be any number of numeric components)
 #
 # Compares the two versions and returns:
 ## -1 if v1 < v2
@@ -37,7 +37,7 @@ proc compare-versions {v1 v2} {
 
 # @suffix suf list
 #
-# Takes a list and returns a new list with $suf appended
+# Takes a list and returns a new list with '$suf' appended
 # to each element
 #
 ## suffix .c {a b c} => {a.c b.c c.c}
@@ -52,7 +52,7 @@ proc suffix {suf list} {
 
 # @prefix pre list
 #
-# Takes a list and returns a new list with $pre prepended
+# Takes a list and returns a new list with '$pre' prepended
 # to each element
 #
 ## prefix jim- {a.c b.c} => {jim-a.c jim-b.c}

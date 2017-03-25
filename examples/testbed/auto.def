@@ -98,6 +98,7 @@ cc-with {-cflags -std=c89} {
 # Now C++
 cc-with {-lang c++} {
 	cc-check-types bool
+	cc-check-c11
 }
 
 # libs are in reverse (nested) order

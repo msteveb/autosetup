@@ -215,10 +215,10 @@ proc main {argv} {
 # or disabled by the user, return 1 or 0 accordingly.
 #
 # If the option was specified more than once, the last value wins.
-# e.g. With --enable-foo --disable-foo, [opt-bool foo] will return 0
+# e.g. With '--enable-foo --disable-foo', '[opt-bool foo]' will return 0
 #
 # If no value was specified by the user, returns the default value for the
-# first option. If -nodefault is given, this behaviour changes and
+# first option. If '-nodefault' is given, this behaviour changes and
 # -1 is returned instead.
 #
 proc opt-bool {args} {
@@ -242,16 +242,16 @@ proc opt-bool {args} {
 	return [dict get $::autosetup(optdefault) [lindex $args 0]]
 }
 
-# @opt-val option-list ?default=""?
+# @opt-val optionlist ?default=""?
 #
-# Returns a list containing all the values given for the non-boolean options in 'option-list'.
+# Returns a list containing all the values given for the non-boolean options in '$optionlist'.
 # There will be one entry in the list for each option given by the user, including if the
 # same option was used multiple times.
 # If only a single value is required, use something like:
 #
 ## lindex [opt-val $names] end
 #
-# If no options were set, $default is returned (exactly, not as a list).
+# If no options were set, '$default' is returned (exactly, not as a list).
 #
 proc opt-val {names {default ""}} {
 	option-check-names {*}$names
@@ -468,31 +468,32 @@ proc options-show {} {
 	}
 }
 
-# @options options-spec
+# @options optionspec
 #
 # Specifies configuration-time options which may be selected by the user
-# and checked with opt-val and opt-bool. The format of options-spec follows.
+# and checked with 'opt-val' and 'opt-bool'. '$optionspec' contains a series
+# of options specifications separated by newlines, as follows:
 #
 # A boolean option is of the form:
 #
 ## name[=0|1]  => "Description of this boolean option"
 #
-# The default is name=0, meaning that the option is disabled by default.
-# If name=1 is used to make the option enabled by default, the description should reflect
+# The default is 'name=0', meaning that the option is disabled by default.
+# If 'name=1' is used to make the option enabled by default, the description should reflect
 # that with text like "Disable support for ...".
 #
 # An argument option (one which takes a parameter) is of the form:
 #
 ## name:[=]value  => "Description of this option"
 #
-# If the name:value form is used, the value must be provided with the option (as --name=myvalue).
-# If the name:=value form is used, the value is optional and the given value is used as the default
+# If the 'name:value' form is used, the value must be provided with the option (as '--name=myvalue').
+# If the 'name:=value' form is used, the value is optional and the given value is used as the default
 # if it is not provided.
 #
-# Undocumented options are also supported by omitting the "=> description.
-# These options are not displayed with --help and can be useful for internal options or as aliases.
+# Undocumented options are also supported by omitting the '=> description'.
+# These options are not displayed with '--help' and can be useful for internal options or as aliases.
 #
-# For example, --disable-lfs is an alias for --disable=largefile:
+# For example, '--disable-lfs' is an alias for '--disable=largefile':
 #
 ## lfs=1 largefile=1 => "Disable large file support"
 #
@@ -541,7 +542,7 @@ proc config_sub {alias} {
 #
 # Defines the named variable to the given value.
 # These (name, value) pairs represent the results of the configuration check
-# and are available to be checked, modified and substituted.
+# and are available to be subsequently checked, modified and substituted.
 #
 proc define {name {value 1}} {
 	set ::define($name) $value
@@ -550,7 +551,7 @@ proc define {name {value 1}} {
 
 # @undefine name
 #
-# Undefine the named variable
+# Undefine the named variable.
 #
 proc undefine {name} {
 	unset -nocomplain ::define($name)
@@ -559,8 +560,8 @@ proc undefine {name} {
 
 # @define-append name value ...
 #
-# Appends the given value(s) to the given 'defined' variable.
-# If the variable is not defined or empty, it is set to $value.
+# Appends the given value(s) to the given "defined" variable.
+# If the variable is not defined or empty, it is set to '$value'.
 # Otherwise the value is appended, separated by a space.
 # Any extra values are similarly appended.
 # If any value is already contained in the variable (as a substring) it is omitted.
@@ -581,7 +582,7 @@ proc define-append {name args} {
 
 # @get-define name ?default=0?
 #
-# Returns the current value of the 'defined' variable, or $default
+# Returns the current value of the "defined" variable, or '$default'
 # if not set.
 #
 proc get-define {name {default 0}} {
@@ -603,7 +604,7 @@ proc is-defined {name} {
 
 # @all-defines
 #
-# Returns a dictionary (name value list) of all defined variables.
+# Returns a dictionary (name, value list) of all defined variables.
 #
 # This is suitable for use with 'dict', 'array set' or 'foreach'
 # and allows for arbitrary processing of the defined variables.
@@ -615,9 +616,9 @@ proc all-defines {} {
 
 # @get-env name default
 #
-# If $name was specified on the command line, return it.
-# If $name was set in the environment, return it.
-# Otherwise return $default.
+# If '$name' was specified on the command line, return it.
+# Otherwise if '$name' was set in the environment, return it.
+# Otherwise return '$default'.
 #
 proc get-env {name default} {
 	if {[dict exists $::autosetup(cmdline) $name]} {
@@ -628,7 +629,7 @@ proc get-env {name default} {
 
 # @env-is-set name
 #
-# Returns 1 if the $name was specified on the command line or in the environment.
+# Returns 1 if '$name' was specified on the command line or in the environment.
 # Note that an empty environment variable is not considered to be set.
 #
 proc env-is-set {name} {
@@ -644,7 +645,7 @@ proc env-is-set {name} {
 # @readfile filename ?default=""?
 #
 # Return the contents of the file, without the trailing newline.
-# If the file doesn't exist or can't be read, returns $default.
+# If the file doesn't exist or can't be read, returns '$default'.
 #
 proc readfile {filename {default_value ""}} {
 	set result $default_value
@@ -658,7 +659,7 @@ proc readfile {filename {default_value ""}} {
 
 # @writefile filename value
 #
-# Creates the given file containing $value.
+# Creates the given file containing '$value'.
 # Does not add an extra newline.
 #
 proc writefile {filename value} {
@@ -685,7 +686,7 @@ proc quote-argv {argv} {
 # @find-executable name
 #
 # Searches the path for an executable with the given name.
-# Note that the name may include some parameters, e.g. "cc -mbig-endian",
+# Note that the name may include some parameters, e.g. 'cc -mbig-endian',
 # in which case the parameters are ignored.
 # Returns 1 if found, or 0 if not.
 #
@@ -739,7 +740,7 @@ proc find-an-executable {args} {
 
 # @configlog msg
 #
-# Writes the given message to the configuration log, config.log
+# Writes the given message to the configuration log, 'config.log'.
 #
 proc configlog {msg} {
 	if {![info exists ::autosetup(logfh)]} {
@@ -775,8 +776,8 @@ proc msg-result {msg} {
 
 # @msg-quiet command ...
 #
-# msg-quiet evaluates it's arguments as a command with output
-# from msg-checking and msg-result suppressed.
+# 'msg-quiet' evaluates it's arguments as a command with output
+# from 'msg-checking' and 'msg-result' suppressed.
 #
 # This is useful if a check needs to run a subcheck which isn't
 # of interest to the user.
@@ -816,7 +817,7 @@ proc dputs {msg} {
 #
 # Indicate incorrect usage to the user, including if required components
 # or features are not found.
-# autosetup exits with a non-zero return code.
+# 'autosetup' exits with a non-zero return code.
 #
 proc user-error {msg} {
 	show-notices
@@ -863,9 +864,9 @@ proc maybe-show-timestamp {} {
 	}
 }
 
-# @autosetup-require-version <version-needed>
+# @autosetup-require-version required
 #
-# Checks the current version of autosetup against <version-needed>.
+# Checks the current version of 'autosetup' against '$required'.
 # A fatal error is generated if the current version is less than that required.
 #
 proc autosetup-require-version {required} {
