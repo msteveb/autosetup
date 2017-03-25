@@ -75,10 +75,11 @@ proc autosetup_install {dir {shared 0}} {
 				puts $f "\}\n"
 			}
 			if {$shared} {
-				dputs "install: importing lib/[file tail $file]"
-				puts $f "\nset modsource(README.autosetup) \{"
-				puts $f [readfile $::autosetup(libdir)/README.autosetup-lib]
-				puts $f "\}\n"
+				foreach {srcname destname} [list $::autosetup(libdir)/README.autosetup-lib README.autosetup \
+						$::autosetup(srcdir)/LICENSE LICENSE] {
+					dputs "install: importing $srcname as $destname"
+					puts $f "\nset modsource($destname) \\\n[list [readfile $srcname]\n]\n"
+				}
 			}
 		}
 		close $in

@@ -29,6 +29,24 @@ proc autosetup_help {what} {
     exit 0
 }
 
+proc autosetup_show_license {} {
+    global modsource autosetup
+    use_pager
+
+    if {[info exists modsource(LICENSE)]} {
+        puts $modsource(LICENSE)
+        return
+    }
+    foreach dir [list $autosetup(libdir) $autosetup(srcdir)] {
+        set path [file join $dir LICENSE]
+        if {[file exists $path]} {
+            puts [readfile $path]
+            return
+        }
+    }
+    puts "LICENSE not found"
+}
+
 # If not already paged and stdout is a tty, pipe the output through the pager
 # This is done by reinvoking autosetup with --nopager added
 proc use_pager {} {
