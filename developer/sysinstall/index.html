@@ -1,0 +1,208 @@
+<!DOCTYPE HTML>
+<html lang="en">
+  <head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <meta charset="utf-8">
+    <title>autosetup - System-wide Install</title>
+    <link rel="stylesheet" type="text/css" href="../../css/style.css" media="screen">
+    <link rel="stylesheet" type="text/css" href="../../css/sh_style.css" media="screen">
+    
+    <script src="../../javascript/sh_main.min.js" type="text/javascript"></script>
+    <script src="../../javascript/sh_lang.js" type="text/javascript"></script>
+ 	
+ 	<script type="text/javascript">
+ 	  var _gaq = _gaq || [];
+ 	  _gaq.push(['_setAccount', 'UA-23178588-3']);
+ 	  _gaq.push(['_trackPageview']);
+ 
+ 	  (function() {
+ 		var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+ 		ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+ 		var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+ 	  })();
+ 	</script>
+ 	
+    <meta name="generator" content="nanoc 3.1.6">
+  </head>
+  <body>
+    <div id="header">
+      <h1 id="blog-title">autosetup</h1>
+      <p id="description">A build environment "autoconfigurator"</p>
+    </div>
+    <div id="content">
+        <div class="breadcrumbs">
+        
+        
+            <a href="../../">Overview</a> 
+            » 
+        
+            <a href="../">Developing with autosetup</a> 
+            » 
+        
+            <a href="./">System-wide Install</a> 
+             
+        
+        </div>
+        <div class="main" id="main">
+        
+        <h1 id="using-a-system-wide-autosetup">Using a system-wide <strong>autosetup</strong>
+</h1>
+
+<h2 id="introduction">Introduction</h2>
+
+<p>As exaplained in <a href="../">Developing with autosetup</a>, one deployment option for autosetup since version 0.6.7
+is to use a system-wide install.</p>
+
+<p>This guide explains how to install and use such a system-wide installation.</p>
+
+<h2 id="system-install">System Install</h2>
+
+<p>A system-wide install can only be done from a development tree, not a locally installed or previous system-wide installation,
+so first you will need to <a href="../../download/">Download</a> autosetup.</p>
+
+<pre class="sh_unix">
+$ git clone git://github.com/msteveb/autosetup.git
+...
+$ cd autosetup
+</pre>
+
+<p>Now do a system-wide install to a location expected to be in the <code>PATH</code>.</p>
+
+<pre class="sh_unix">
+$ ./autosetup --sysinstall=/usr/local
+Installed system autosetup v0.6.7 to /usr/local/bin/autosetup
+</pre>
+
+<p>Note that autosetup, along with some companion scripts, is installed to the <code>bin</code> directory
+underneath the given target directory. This is the directory that should be in the <code>PATH</code>.</p>
+
+<pre class="sh_unix">
+$ /bin/ls -1 /usr/local/bin/autosetup*
+/usr/local/bin/autosetup
+/usr/local/bin/autosetup-config.guess
+/usr/local/bin/autosetup-config.sub
+/usr/local/bin/autosetup-find-tclsh
+/usr/local/bin/autosetup-test-tclsh
+</pre>
+
+<h2 id="project-install">Project Install</h2>
+
+<p>Once autosetup is installed, a project install may be performed.
+For example, here is the installation to a new project.</p>
+
+<pre class="sh_unix">
+$ mkdir myproject
+$ cd myproject
+$ autosetup --install
+autosetup v0.6.7 creating configure to use system-installed autosetup
+I don't see configure, so I will create it.
+Creating autosetup/README.autosetup
+$ find . -type f
+./autosetup/README.autosetup
+./configure
+</pre>
+
+<p>As we can see, autosetup has created only two files.
+The <code>configure</code> wrapper script simply redirects to <code>autosetup</code>, which must be in the <code>PATH</code></p>
+
+<p>The directory <code>autosetup/</code> contains the file <code>README.autosetup</code>. This directory can be used
+to install local modules, just like a full project install of autosetup.</p>
+
+<h2 id="project-initialisation">Project Initialisation</h2>
+
+<p>Now the project can be configured in the usual way.</p>
+
+<pre class="sh_unix">
+$ ./configure --init=make
+Initialising make: Simple "make" build system
+
+I don't see auto.def, so I will create it.
+Note: I don't see Makefile.in. You will probably need to create one.
+</pre>
+
+<p>See <a href="../">Developing with autosetup</a> for further details.</p>
+
+<h2 id="considerations-for-a-system-wide-install">Considerations for a System-Wide Install?</h2>
+
+<p>Using a system-wide install brings some specific considerations.</p>
+
+<h3 id="preinstalled-jim-or-tcl-required">Preinstalled Jim or Tcl Required</h3>
+
+<p>Either jimsh (Jim Tcl) or tclsh (Tcl 8.5 or 8.6) must be available in the path.
+This is a reasonable requirement in that Jim Tcl and Tcl are easily installable on
+systems supported by autosetup.</p>
+
+<h3 id="compatible-autosetup-version">Compatible autosetup Version</h3>
+
+<p>The biggest potential problem is if multiple projects on the same system require different
+versions of autosetup. As autosetup continues to evolve, this is certainly possible, and
+is a downside of this approeach.</p>
+
+<p>It is <strong>strongly</strong> recommended that the new <code>autosetup-require-version</code> command is used to
+ensure that an older version of autosetup is not used.</p>
+
+<pre class="sh_autosetup">
+# This will given an error if the current autosetup version is &lt; 0.6.7
+autosetup-require-version 0.6.7
+
+use cc
+
+# Add any user options here
+options {
+}
+...
+</pre>
+
+<p>autosetup is not installed by version (e.g. autosetup0.6.7) to avoid a proliferation of
+multiple slightly different versions. However if necessary, autosetup can be renamed
+and the configure wrapper updated accordingly.</p>
+
+<pre class="sh_unix">
+$ cat configure
+#!/bin/sh
+# Explictly use the renamed autosetup0.6.7
+WRAPPER="-"; "autosetup0.6.7" "$@"
+</pre>
+
+        </div>
+    </div>
+    <div id="sidebar">
+      <h2>About autosetup</h2>
+      <ul>
+        
+            
+            <li><a href="../../">Overview</a></li>
+        
+            
+            <li><a href="../../news/">News</a></li>
+        
+            
+            <li><a href="../../download/">Download</a></li>
+        
+            
+            <li><a href="../../user/">Running autosetup</a></li>
+        
+            
+            <li><a href="../">Developing</a></li>
+        
+            
+            <li><a href="../examples/">Examples</a></li>
+        
+            
+            <li><a href="../../license/">License</a></li>
+        
+            
+            <li><a href="../../why/">Motivation</a></li>
+        
+      </ul>
+      <h2>Community</h2>
+      <ul>
+        <li><a href="https://github.com/msteveb/autosetup">autosetup on github</a></li>
+        <li><a href="https://github.com/msteveb/autosetup/commits/master">» commit history</a></li>
+        <li><a href="https://github.com/msteveb/autosetup/issues">» open issues</a></li>
+      </ul>
+    </div>
+    
+    <script language="javascript">sh_highlightDocument();</script>
+  </body>
+</html>

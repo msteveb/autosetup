@@ -101,10 +101,11 @@ cc -g -O2   -o app main.o libtest.a
 
 <pre class="sh_unix">
 $ cd ~/src/myproject
-$ ~/src/autosetup/autosetup --install
-Installed autosetup v0.6.1 to autosetup/
-I don't see configure, so I will create it.
-I don't see auto.def, so I will create a default one.
+$ ~/src/autosetup/autosetup --install --init=make
+Installed local autosetup v0.6.7 to autosetup
+Initialising make: Simple "make" build system
+
+I see auto.def already exists.
 Note: I don't see Makefile.in. You will probably need to create one.
 </pre>
 

@@ -47,7 +47,21 @@
 <h2 id="introduction">Introduction</h2>
 
 <p>This guide explains how to add <strong>autosetup</strong> support to a project. Be sure to read the <a href="../user/">user-level documentation</a>
-first, including the <a href="../download/">download instructions</a>. The <a href="examples">examples</a> can also be very helpful.</p>
+first, including the <a href="../download/">download instructions</a>. The <a href="examples/">examples</a> can also be very helpful.</p>
+
+<h2 id="project-local-or-system-wide-install">Project-Local or System-Wide Install?</h2>
+
+<p>Before version 0.6.7 of autosetup, the only options to install autosetup as part of a project.
+As explained below, this has the advantage of allowing your project to configure without requiring
+any additional tools. It also solves the version problems since your project ships with exactly the
+version of autosetup it requires.</p>
+
+<p>Since version 0.6.7, as autosetup has stabilised, a system-wide installation of autosetup is now supported.
+While this has the advantage of not requiring a copy of autosetup to be shipped with each project, open-source,
+standalone projects are still encouraged to inclue a project-local copy of autosetup.</p>
+
+<p>See <a href="sysinstall/">Using a system-wide install</a> for further details. The remainder of this page
+assumes a project-local install.</p>
 
 <h2 id="the-moving-parts">The Moving Parts</h2>
 
@@ -65,7 +79,7 @@ at the top of the tree.</p>
   <li>The <code>configure</code> wrapper script</li>
 </ol>
 
-<p>These are all created by <code>autosetup --install</code>. Here are the files
+<p>These are all created by <code>autosetup --install --init=make</code>. Here are the files
 in a typical installation.</p>
 
 <pre><code>auto.def
@@ -73,17 +87,20 @@ configure
 autosetup/LICENSE
 autosetup/README.autosetup
 autosetup/autosetup
+autosetup/autosetup-config.guess
+autosetup/autosetup-config.sub
+autosetup/autosetup-find-tclsh
+autosetup/autosetup-test-tclsh
 autosetup/cc-db.tcl
 autosetup/cc-lib.tcl
 autosetup/cc-shared.tcl
 autosetup/cc.tcl
-autosetup/config.guess
-autosetup/config.sub
 autosetup/default.auto
-autosetup/find-tclsh
 autosetup/jimsh0.c
+autosetup/pkg-config.tcl
 autosetup/system.tcl
-autosetup/test-tclsh
+autosetup/tmake.auto
+autosetup/tmake.tcl
 </code></pre>
 
 <h3 id="the-autodef-file">The auto.def file</h3>
@@ -351,6 +368,7 @@ variables in Makefile format.</p>
 <li><a href="examples/">Examples</a></li>
 <li><a href="autoconf/">autoconf Comparison</a></li>
 <li><a href="advanced/">Advanced Concepts</a></li>
+<li><a href="sysinstall/">System-wide Install</a></li>
 </ul>
 
         </div>
@@ -401,6 +419,7 @@ variables in Makefile format.</p>
 <li><a href="examples/">Examples</a></li>
 <li><a href="autoconf/">autoconf Comparison</a></li>
 <li><a href="advanced/">Advanced Concepts</a></li>
+<li><a href="sysinstall/">System-wide Install</a></li>
 </ul>
 
 		</div>

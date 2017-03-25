@@ -148,7 +148,9 @@ if {[opt-bool tcmalloc]} {
 
 cc-check-includes sys/types.h
 msg-checking "Checking for LFS..."
-if {[msg-quiet cc-with {-includes sys/types.h -cflags -D_FILE_OFFSET_BITS=64} {cc-check-sizeof off_t}] == 8} {
+if {[msg-quiet cc-with {-includes sys/types.h -cflags -D_FILE_OFFSET_BITS=64} \
+	{cc-check-sizeof off_t}] == 8} {
+
     define _FILE_OFFSET_BITS 64
     msg-result yes
 } else {
