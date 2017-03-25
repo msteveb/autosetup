@@ -525,7 +525,6 @@ proc options {optlist} {
 
 proc config_guess {} {
 	if {[file-isexec $::autosetup(dir)/autosetup-config.guess]} {
-		exec-with-stderr sh $::autosetup(dir)/autosetup-config.guess
 		if {[catch {exec-with-stderr sh $::autosetup(dir)/autosetup-config.guess} alias]} {
 			user-error $alias
 		}
