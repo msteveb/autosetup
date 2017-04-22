@@ -112,7 +112,7 @@ proc main {argv} {
 
 	# autosetup --conf=alternate-auto.def
 	if {[opt-val conf] ne ""} {
-		set autosetup(autodef) [opt-val conf]
+		set autosetup(autodef) [lindex [opt-val conf] end]
 	}
 
 	# Debugging output (set this early)
@@ -133,7 +133,7 @@ proc main {argv} {
 	if {[opt-val help] ne ""} {
 		incr autosetup(showhelp)
 		use help
-		autosetup_help [opt-val help]
+		autosetup_help [lindex [opt-val help] end]
 	}
 
 	if {[opt-bool licence license]} {
@@ -144,20 +144,20 @@ proc main {argv} {
 
 	if {[opt-val {manual ref reference}] ne ""} {
 		use help
-		autosetup_reference [opt-val {manual ref reference}]
+		autosetup_reference [lindex [opt-val {manual ref reference}] end]
 	}
 
 	# Allow combining --install and --init
 	set earlyexit 0
 	if {[opt-val install] ne ""} {
 		use install
-		autosetup_install [opt-val install]
+		autosetup_install [lindex [opt-val install] end]
 		incr earlyexit
 	}
 
 	if {[opt-val init] ne ""} {
 		use init
-		autosetup_init [opt-val init]
+		autosetup_init [lindex [opt-val init] end]
 		incr earlyexit
 	}
 
@@ -166,7 +166,7 @@ proc main {argv} {
 	}
 	if {[opt-val sysinstall] ne ""} {
 		use install
-		autosetup_install [opt-val sysinstall] 1
+		autosetup_install [lindex [opt-val sysinstall] end] 1
 		exit 0
 	}
 

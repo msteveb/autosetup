@@ -483,7 +483,7 @@ proc AC_SEARCH_LIBS {funcname libnames {true {}} {false {}}} {
 
 proc AC_ARG_WITH {opt help true {false {}}} {
 	output "if {\[opt-val with-$opt\] ne {}} {"
-	output "\tset withval \[opt-val with-$opt\]"
+	output "\tset withval \[lindex \[opt-val with-$opt\] end\]"
 	output-shell-action $true
 	if {$false ne ""} {
 		output "\} else \{"

@@ -50,7 +50,7 @@ proc pkg-config-init {{required 1}} {
 		set found 1
 
 		if {[opt-val sysroot] ne ""} {
-			define SYSROOT [file-normalize [opt-val sysroot]]
+			define SYSROOT [file-normalize [lindex [opt-val sysroot] end]]
 			msg-result "Using specified sysroot [get-define SYSROOT]"
 		} elseif {[get-define build] ne [get-define host]} {
 			if {[catch {exec-with-stderr [get-define CC] -print-sysroot} result errinfo] == 0} {

@@ -228,7 +228,7 @@ proc make-template {template {out {}}} {
 }
 
 # build/host tuples and cross-compilation prefix
-set build [opt-val build]
+set build [lindex [opt-val build] end]
 define build_alias $build
 if {$build eq ""} {
 	define build [config_guess]
@@ -236,7 +236,7 @@ if {$build eq ""} {
 	define build [config_sub $build]
 }
 
-set host [opt-val host]
+set host [lindex [opt-val host] end]
 define host_alias $host
 if {$host eq ""} {
 	define host [get-define build]
@@ -247,7 +247,7 @@ if {$host eq ""} {
 }
 define cross [get-env CROSS $cross]
 
-set prefix [opt-val prefix $defaultprefix]
+set prefix [lindex [opt-val prefix $defaultprefix] end]
 
 # These are for compatibility with autoconf
 define target [get-define host]
@@ -258,7 +258,7 @@ define srcdir $autosetup(srcdir)
 define top_srcdir [get-env top_srcdir [get-define srcdir]]
 
 # autoconf supports all of these
-set exec_prefix [opt-val exec-prefix $prefix]
+set exec_prefix [lindex [opt-val exec-prefix $prefix] end]
 define exec_prefix $exec_prefix
 foreach {name defpath} {
 	bindir /bin
@@ -266,7 +266,7 @@ foreach {name defpath} {
 	libexecdir /libexec
 	libdir /lib
 } {
-	define $name [opt-val $name $exec_prefix$defpath]
+	define $name [lindex [opt-val $name $exec_prefix$defpath] end]
 }
 foreach {name defpath} {
 	datadir /share
@@ -277,7 +277,7 @@ foreach {name defpath} {
 	mandir /share/man
 	includedir /include
 } {
-	define $name [opt-val $name $prefix$defpath]
+	define $name [lindex [opt-val $name $prefix$defpath] end]
 }
 
 define SHELL [get-env SHELL [find-an-executable sh bash ksh]]
