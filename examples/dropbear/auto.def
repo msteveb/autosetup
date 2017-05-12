@@ -4,16 +4,16 @@ use cc cc-lib
 
 options {
 	zlib=1     => "Disable zlib"
-	with-zlib: => "Use zlib in the specified path"
+	with-zlib:path => "Use zlib in the specified path"
 	pam=0      => "Enable pam"
-	with-pam:  => "Use pam in the specified path"
+	with-pam:path  => "Use pam in the specified path"
 	openpty=1  => "Don't use openpty, use alternative method"
 	syslog=1   => "Don't include syslog support"
 	shadow=1   => "Don't use shadow passwords (if available)"
 	bundled-libtom => "Use bundled libtomcrypt/libtommath even if a system version exists"
 
 	lastlog=1     => "Disable use of lastlog even if detected"
-	with-lastlog: => "Location of lastlog"
+	with-lastlog:path => "Location of lastlog"
 
 	loginfunc=1  => "Disable use of login() etc."
 	utmp=1       => "Disable use of utmp even if detected"
