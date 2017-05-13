@@ -33,7 +33,7 @@ proc getopt {argvname} {
 			# --name=value
 			dict lappend opts $name [list str $value]
 		} elseif {[regexp {^--(enable-|disable-)?([^=]*)$} $arg -> prefix name]} {
-			if {$prefix in {enable- with- ""}} {
+			if {$prefix in {enable- ""}} {
 				set value 1
 			} else {
 				set value 0
