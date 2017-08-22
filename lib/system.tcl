@@ -247,6 +247,17 @@ if {$host eq ""} {
 }
 define cross [get-env CROSS $cross]
 
+# build/host _cpu, _vendor and _os
+foreach type {build host} {
+	set v [get-define $type]
+	if {![regexp {^([^-]+)-([^-]+)-(.*)$} $v -> cpu vendor os]} {
+		user-error "Invalid canonical $type: $v"
+	}
+	define ${type}_cpu $cpu
+	define ${type}_vendor $vendor
+	define ${type}_os $os
+}
+
 set prefix [lindex [opt-val prefix $defaultprefix] end]
 
 # These are for compatibility with autoconf
