@@ -250,7 +250,7 @@ define cross [get-env CROSS $cross]
 # build/host _cpu, _vendor and _os
 foreach type {build host} {
 	set v [get-define $type]
-	if {![regexp {^([^-]+)-([^-]+)-([^-]+)$} $v -> cpu vendor os]} {
+	if {![regexp {^([^-]+)-([^-]+)-(.*)$} $v -> cpu vendor os]} {
 		user-error "Invalid canonical $type: $v"
 	}
 	define ${type}_cpu $cpu
