@@ -690,6 +690,18 @@ proc quote-argv {argv} {
 	join $args
 }
 
+# @list-non-empty list
+#
+# Returns a copy of the given list with empty elements removed
+proc list-non-empty {list} {
+	lmap p $list {
+		if {$p eq ""} {
+			continue
+		}
+		set p
+	}
+}
+
 # @find-executable name
 #
 # Searches the path for an executable with the given name.

@@ -328,14 +328,14 @@ proc cc-add-settings {settings} {
 		switch -exact -- $name {
 			-cflags - -includes {
 				# These are given as lists
-				lappend new($name) {*}$value
+				lappend new($name) {*}[list-non-empty $value]
 			}
 			-declare {
 				lappend new($name) $value
 			}
 			-libs {
 				# Note that new libraries are added before previous libraries
-				set new($name) [list {*}$value {*}$new($name)]
+				set new($name) [list {*}[list-non-empty $value] {*}$new($name)]
 			}
 			-link - -lang - -nooutput {
 				set new($name) $value
