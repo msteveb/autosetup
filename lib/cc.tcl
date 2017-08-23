@@ -512,9 +512,6 @@ proc cctest {args} {
 		lappend cmdline {*}[get-define LIBS]
 	}
 
-	# Remove any empty arguments from the command line.
-	set cmdline [lmap x $cmdline { expr {$x eq {} ? [break] : $x}}]
-
 	# At this point we have the complete command line and the
 	# complete source to be compiled. Get the result from cache if
 	# we can
