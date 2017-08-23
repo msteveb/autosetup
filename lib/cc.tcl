@@ -325,6 +325,9 @@ proc cc-add-settings {settings} {
 	array set new $prev
 
 	foreach {name value} $settings {
+		if {$value eq {}} {
+			continue
+		}
 		switch -exact -- $name {
 			-cflags - -includes {
 				# These are given as lists
