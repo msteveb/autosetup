@@ -269,13 +269,16 @@ proc cc-check-tools {args} {
 	foreach tool $args {
 		set TOOL [string toupper $tool]
 		set exe [get-env $TOOL [get-define cross]$tool]
-		if {[find-executable {*}$exe]} {
+		set fullpath {}
+		if {[find-executable {*}$exe fullpath]} {
 			define $TOOL $exe
+			define ${TOOL}_FULLPATH $fullpath
 			continue
 		}
-		if {[find-executable {*}$tool]} {
+		if {[find-executable {*}$tool fullpath]} {
 			msg-result "Warning: Failed to find $exe, falling back to $tool which may be incorrect"
 			define $TOOL $tool
+			define ${TOOL}_FULLPATH $fullpath
 			continue
 		}
 		user-error "Failed to find $exe"
@@ -297,13 +300,15 @@ proc cc-check-progs {args} {
 	foreach prog $args {
 		set PROG [string toupper $prog]
 		msg-checking "Checking for $prog..."
-		if {![find-executable $prog]} {
+		set fullpath {}
+		if {![find-executable $prog fullpath]} {
 			msg-result no
 			define $PROG false
 			incr failed
 		} else {
 			msg-result ok
 			define $PROG $prog
+			define ${PROG}_FULLPATH $fullpath
 		}
 	}
 	expr {!$failed}

@@ -707,9 +707,11 @@ proc list-non-empty {list} {
 # Searches the path for an executable with the given name.
 # Note that the name may include some parameters, e.g. 'cc -mbig-endian',
 # in which case the parameters are ignored.
+# The additional optional argument fullpath is the name of a variable at
+# caller scope that will contain the full path of the executable, if found.
 # Returns 1 if found, or 0 if not.
 #
-proc find-executable {name} {
+proc find-executable {name {fullpath {}}} {
 	# Ignore any parameters
 	set name [lindex $name 0]
 	if {$name eq ""} {
@@ -721,6 +723,9 @@ proc find-executable {name} {
 		set exec [file join $p $name]
 		if {[file-isexec $exec]} {
 			dputs "Found $name -> $exec"
+			if {$fullpath ne {}} {
+				uplevel set $fullpath $exec
+			}
 			return 1
 		}
 	}
