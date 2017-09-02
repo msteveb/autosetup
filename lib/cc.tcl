@@ -309,6 +309,29 @@ proc cc-check-progs {args} {
 	expr {!$failed}
 }
 
+# @cc-path-progs prog ...
+#
+# Like cc-check-progs, but sets the define to the full path rather
+# than just the program name.
+#
+proc cc-path-progs {args} {
+	set failed 0
+	foreach prog $args {
+		set PROG [string toupper $prog]
+		msg-checking "Checking for $prog..."
+		set path [find-executable-path $prog]
+		if {$path eq ""} {
+			msg-result no
+			define $PROG false
+			incr failed
+		} else {
+			msg-result $path
+			define $PROG $path
+		}
+	}
+	expr {!$failed}
+}
+
 # Adds the given settings to $::autosetup(ccsettings) and
 # returns the old settings.
 #

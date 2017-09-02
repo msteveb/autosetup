@@ -57,6 +57,9 @@ cc-check-decls __GNUC__
 
 cc-check-includes netinet/in.h
 
+cc-check-progs grep badcommand
+cc-path-progs ls badcommand2
+
 # autosetup will check for the existence of any include files
 # mentioned in -includes before including them, silently excluding
 # any which don't exist.
