@@ -1,0 +1,151 @@
+# unit tests for all the built-in autosetup commands
+
+# Use tcltest - need to run at the global scope, while
+# auto.def runs at level 1
+
+uplevel #0 {
+
+# Don't allow autosetup arguments to interfer with tcltest
+set argv {}
+set argc 0
+
+source tcltest.tcl
+package require tcltest
+
+test list-non-empty-1.1 {simple} {
+	list-non-empty {a b c}
+} {a b c}
+
+test list-non-empty-1.2 {some empty elements} {
+	list-non-empty {{} a "" b c {}}
+} {a b c}
+
+test list-non-empty-1.3 {empty list} {
+	list-non-empty {}
+} {}
+
+test list-non-empty-1.4 {all empty elements} {
+	list-non-empty {{} {} {}}
+} {}
+
+test define-1.1 {define value} {
+	define abc ABC
+	list [get-define abc] [get-define abc DEFAULT]
+} {ABC ABC}
+
+test define-1.2 {define default value} {
+	define abc
+	list [get-define abc] [get-define abc DEFAULT]
+} {1 1}
+
+test define-1.3 {get-define on undefined var} {
+	undefine abc
+	list [get-define abc] [get-define abc DEFAULT]
+} {0 DEFAULT}
+
+test define-1.4 {get-define on never defined var} {
+	list [get-define def] [get-define def DEFAULT]
+} {0 DEFAULT}
+
+test define-1.5 {is-defined} {
+	define ghi
+	list [is-defined abc] [is-defined def] [is-defined ghi]
+} {0 0 1}
+
+test define-1.6 {define-append} {
+	define a A
+	define b
+	undefine c
+	define d {2 1}
+	define e {2 2}
+
+	# define-append will append with a space, omitting duplicates but not removing
+	define-append a 1 2
+	define-append b 1 2
+	define-append c 1 2
+	define-append d 1 2
+	define-append e 1 2
+	define-append f 1 2
+	list [get-define a] [get-define b] [get-define c] [get-define d] [get-define e]
+} {{A 1 2} {1 2} {1 2} {2 1} {2 2 1}}
+
+test defined-2.1 {define-append with spaces} {
+	undefine a
+	define-append a {-Dx="with spaces"}
+	define-append a {"-I/path with spaces/tmp"}
+	get-define a
+} {-Dx="with spaces" "-I/path with spaces/tmp"}
+
+test max-1.1 {ints} {
+	max 5 10
+} {10}
+
+test max-1.2 {reversed ints} {
+	max 10 5
+} {10}
+
+test max-1.3 {reals} {
+	max 5.5 9.7
+} {9.7}
+
+test max-1.4 {reversed reals} {
+	max 9.7 5.5
+} {9.7}
+
+test max-1.5 {single string} {
+	max abc def
+} {def}
+
+test max-1.6 {multiple strings} {
+	max def abc
+} {def}
+
+test get-env-1.1 {get-env various} {
+	list [get-env ENV1 undef] [get-env ENVCLI undef] [get-env CLI1 undef] [get-env UNDEFINED undef] [get-env ENV0 undef] [get-env CLI0 undef]
+} {abc jkl ghi undef {} {}}
+
+test env-is-set-1.1 {env-is-set various} {
+	list [env-is-set ENV1] [env-is-set ENVCLI] [env-is-set CLI1] [env-is-set UNDEFINED] [env-is-set ENV0] [env-is-set CLI0]
+} {1 1 1 0 0 1}
+
+use util
+
+test compare-versions-1.1 {two elements} {
+	compare-versions 0.2 0.3
+} {-1}
+
+test compare-versions-1.2 {two vs three elements} {
+	compare-versions 0.2.5 0.2
+} {1}
+
+test compare-versions-1.3 {two vs three elements equal} {
+	compare-versions 1.1 1.1.0
+} {0}
+
+test suffix-1.1 {suffix with a single element} {
+	suffix .c a
+} {a.c}
+
+test suffix-1.2 {suffix with a multiple elements} {
+	suffix .c {a b c}
+} {a.c b.c c.c}
+
+test prefix-1.1 {prefix with a single element} {
+	prefix jim- a.c
+} {jim-a.c}
+
+test prefix-1.2 {prefix with a multiple elements} {
+	prefix jim- {a.c b.c c.c}
+} {jim-a.c jim-b.c jim-c.c}
+
+test prefix-1.3 {prefix then suffix} {
+	suffix .c [prefix jim- {a b c}]
+} {jim-a.c jim-b.c jim-c.c}
+
+test prefix-1.3 {suffix then prefix} {
+	prefix jim- [suffix .c {a b c}]
+} {jim-a.c jim-b.c jim-c.c}
+
+testreport
+
+}

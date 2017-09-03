@@ -20,3 +20,6 @@ ref reference:
 
 html:
 	./autosetup --reference=asciidoc | asciidoc -o autosetup-reference.html -
+
+test:
+	make -C testsuite test
