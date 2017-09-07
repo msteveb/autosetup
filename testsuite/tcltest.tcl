@@ -278,9 +278,9 @@ proc testreport {} {
 	if {$::testinfo(verbose)} {
 		puts -nonewline "\n$::argv0"
 	} else {
-		puts -nonewline [format "%16s" $::argv0]
+		puts -nonewline [format "%-15s" ${::argv0}:]
 	}
-	puts [format ": Total %5d   Passed %5d  Skipped %5d  Failed %5d" \
+	puts [format " Total\t%d\tPassed\t%d\tSkipped\t%d\tFailed\t%d" \
 		$::testinfo(numtests) $::testinfo(numpass) $::testinfo(numskip) $::testinfo(numfail)]
 	if {$::testinfo(numfail)} {
 		puts [string repeat - 60]
