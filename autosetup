@@ -694,12 +694,13 @@ proc quote-argv {argv} {
 #
 # Returns a copy of the given list with empty elements removed
 proc list-non-empty {list} {
-	lmap p $list {
-		if {$p eq ""} {
-			continue
+	set result {}
+	foreach p $list {
+		if {$p ne ""} {
+			lappend result $p
 		}
-		set p
 	}
+	return $result
 }
 
 # @find-executable-path name
