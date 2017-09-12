@@ -167,6 +167,30 @@ test prefix-1.3 {suffix then prefix} {
 	prefix jim- [suffix .c {a b c}]
 } {jim-a.c jim-b.c jim-c.c}
 
+test system-1.1 {abs_top_srcdir} {
+	if {$OOT} {
+		set exp [file-normalize ..]
+	} else {
+		set exp [pwd]
+	}
+	set result [get-define abs_top_srcdir]
+	if {$result ne $exp} {
+		error "$result != $exp"
+	}
+} {}
+
+test system-1.2 {abs_top_builddir} {
+	if {$OOT} {
+		set exp [file-normalize ../_build]
+	} else {
+		set exp [pwd]
+	}
+	set result [get-define abs_top_builddir]
+	if {$result ne $exp} {
+		error "$result != $exp"
+	}
+} {}
+
 test template-1.1 {make-template at top level} -body {
 	define abc ABC
 	make-template template.in template.out

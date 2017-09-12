@@ -265,8 +265,9 @@ define target [get-define host]
 define prefix $prefix
 define builddir $autosetup(builddir)
 define srcdir $autosetup(srcdir)
-# Allow this to come from the environment
-define top_srcdir [get-env top_srcdir [get-define srcdir]]
+define top_srcdir $autosetup(srcdir)
+define abs_top_srcdir [file-normalize $autosetup(srcdir)]
+define abs_top_builddir [file-normalize $autosetup(builddir)]
 
 # autoconf supports all of these
 set exec_prefix [lindex [opt-val exec-prefix $prefix] end]
