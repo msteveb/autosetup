@@ -575,9 +575,15 @@ proc undefine {name} {
 #
 proc define-append {name args} {
 	if {[get-define $name ""] ne ""} {
-		# Make a token attempt to avoid duplicates
+		# Avoid duplicates
 		foreach arg $args {
-			if {[string first $arg $::define($name)] == -1} {
+			set found 0
+			foreach str [split $::define($name) " "] {
+				if {$str eq $arg} {
+					incr found
+				}
+			}
+			if {!$found} {
 				append ::define($name) " " $arg
 			}
 		}
