@@ -8,11 +8,16 @@
 # shared=1 means that we are trying to do a sysinstall. This is only possible from the development source.
 
 proc autosetup_install {dir {shared 0}} {
-	if {$shared && $::autosetup(installed)} {
-		user-error "Can only --sysinstall from development sources"
+	global autosetup
+	if {$shared} {
+		if {$autosetup(installed) || $autosetup(sysinstall)} {
+			user-error "Can only --sysinstall from development sources"
+		}
+	} elseif {$autosetup(installed)} {
+		user-error "Can't --install from project install"
 	}
 
-	if {$::autosetup(sysinstall)} {
+	if {$autosetup(sysinstall)} {
 		# This is the sysinstall version, so install just uses references
 		cd $dir
 
@@ -46,7 +51,7 @@ proc autosetup_install {dir {shared 0}} {
 		set publicmodules {}
 
 		# First the main script, but only up until "CUT HERE"
-		set in [open $::autosetup(dir)/autosetup]
+		set in [open $autosetup(dir)/autosetup]
 		while {[gets $in buf] >= 0} {
 			if {$buf ne "##-- CUT HERE --##"} {
 				puts $f $buf
@@ -58,7 +63,7 @@ proc autosetup_install {dir {shared 0}} {
 			# All modules are inserted if $shared is set
 			puts $f "set autosetup(installed) 1"
 			puts $f "set autosetup(sysinstall) $shared"
-			foreach file [lsort [glob $::autosetup(libdir)/*.{tcl,auto}]] {
+			foreach file [lsort [glob $autosetup(libdir)/*.{tcl,auto}]] {
 				set modname [file tail $file]
 				set ext [file ext $modname]
 				set buf [readfile $file]
@@ -75,8 +80,8 @@ proc autosetup_install {dir {shared 0}} {
 				puts $f "\}\n"
 			}
 			if {$shared} {
-				foreach {srcname destname} [list $::autosetup(libdir)/README.autosetup-lib README.autosetup \
-						$::autosetup(srcdir)/LICENSE LICENSE] {
+				foreach {srcname destname} [list $autosetup(libdir)/README.autosetup-lib README.autosetup \
+						$autosetup(srcdir)/LICENSE LICENSE] {
 					dputs "install: importing $srcname as $destname"
 					puts $f "\nset modsource($destname) \\\n[list [readfile $srcname]\n]\n"
 				}
@@ -111,7 +116,7 @@ proc autosetup_install {dir {shared 0}} {
 				lassign $fileinfo source
 				set dest $source
 			}
-			autosetup_install_file $::autosetup(dir)/$source $targetdir/$dest
+			autosetup_install_file $autosetup(dir)/$source $targetdir/$dest
 			exec chmod 755 $targetdir/$dest
 		}
 
