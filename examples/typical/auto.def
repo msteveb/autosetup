@@ -1,11 +1,11 @@
 # vim:se syn=tcl:
 #
 
-use cc cc-shared
+use cc cc-chared cc-lib cc-db pkg-config
 
 options {
-	shared -> "Build a shared library rather than a static library"
-	utf8=1 -> "Disable UTF-8 support"
+	shared => "Build a shared library rather than a static library"
+	utf8=1 lang=1 => "Disable UTF-8 support"
 }
 
 define PACKAGE_NAME "testpackage"
@@ -24,9 +24,7 @@ cc-check-functions syslog opendir readlink sleep usleep pipe inet_ntop getaddrin
 # Find some tools
 cc-check-tools ar ranlib strip
 
-set extra_objs {}
-
-if {[opt-bool utf8]} {
+if {[opt-bool utf8 lang]} {
 	msg-result "Enabling UTF-8"
 	define ENABLE_UTF8
 }
