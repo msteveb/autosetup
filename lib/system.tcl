@@ -130,7 +130,8 @@ proc write-if-changed {file buf {script {}}} {
 
 # @make-template template ?outfile?
 #
-# Reads the input file '<srcdir>/$template' and writes the output file '$outfile'.
+# Reads the input file '<srcdir>/$template' and writes the output file '$outfile'
+# (unless unchanged).
 # If '$outfile' is blank/omitted, '$template' should end with '.in' which
 # is removed to create the output file name.
 #
@@ -222,9 +223,9 @@ proc make-template {template {out {}}} {
 		}
 		lappend result $line
 	}
-	writefile $out [string map $mapping [join $result \n]]\n
-
-	msg-result "Created [relative-path $out] from [relative-path $template]"
+	write-if-changed $out [string map $mapping [join $result \n]]\n {
+		msg-result "Created [relative-path $out] from [relative-path $template]"
+	}
 }
 
 # build/host tuples and cross-compilation prefix
