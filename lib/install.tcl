@@ -89,7 +89,7 @@ proc autosetup_install {dir {shared 0}} {
 		}
 		close $in
 		close $f
-		exec chmod 755 $target
+		catch {exec chmod 755 $target}
 
 		set installfiles {autosetup-config.guess autosetup-config.sub autosetup-test-tclsh}
 		set removefiles {}
@@ -117,7 +117,6 @@ proc autosetup_install {dir {shared 0}} {
 				set dest $source
 			}
 			autosetup_install_file $autosetup(dir)/$source $targetdir/$dest
-			exec chmod 755 $targetdir/$dest
 		}
 
 		# Remove obsolete files
@@ -187,6 +186,10 @@ proc autosetup_install_file {source target} {
 		error "Missing installation file '$source'"
 	}
 	writefile $target [readfile $source]\n
+	# If possible, copy the file mode
+	file stat $source stat
+	set mode [format %o [expr {$stat(mode) & 0x1ff}]]
+	catch {exec chmod $mode $target}
 }
 
 proc autosetup_install_readme {target sysinstall} {
