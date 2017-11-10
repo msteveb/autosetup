@@ -13,7 +13,7 @@ proc autosetup_install {dir {shared 0}} {
 		if {$autosetup(installed) || $autosetup(sysinstall)} {
 			user-error "Can only --sysinstall from development sources"
 		}
-	} elseif {$autosetup(installed)} {
+	} elseif {$autosetup(installed) && !$autosetup(sysinstall)} {
 		user-error "Can't --install from project install"
 	}
 
