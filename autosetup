@@ -486,10 +486,7 @@ proc options-add {opts {header ""}} {
 					lassign $pair type setvalue
 					if {$type eq "bool" && $setvalue} {
 						if {$equal ne "="} {
-							#puts "equal=$equals
-							user-error "Option --$name requires a value (1)"
-						} elseif {![info exists defaultvalue]} {
-							user-error "Option --$name requires a value (2)"
+							user-error "Option --$name requires a value"
 						}
 						# If given as a boolean, use the default value
 						set setvalue $defaultvalue

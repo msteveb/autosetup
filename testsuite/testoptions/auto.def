@@ -20,14 +20,14 @@ options {
 	bool1=1         => "Bool with default=1"
 	str0:           => "Str with empty default"
 	str1:abc        => "Str with text"
-	str2:=abc       => "Str (optional) with text"
+	str2:=abc       => "Str (default: '@default@') with text"
 	str3:abc=def    => "Str with text and default"
-	str4:=abc=def    => "Str (optional) with text and default"
+	str4:=abc=def    => "Str (default: '@default@') with text and default"
 	ostr0:          => "Override str with empty default"
 	ostr1:abc       => "Override str with text"
-	ostr2:=abc      => "Override str (optional) with text"
+	ostr2:=abc      => "Override str (default: '@default@') with text"
 	ostr3:abc=def   => "Override str with text and default"
-	ostr4:=abc=def   => "Override str (optional) with text and default"
+	ostr4:=abc=def   => "Override str (default: '@default@') with text and default"
 }
 
 # if opt-str returns 1, return a list of retcode and retvalue
