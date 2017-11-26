@@ -5,16 +5,25 @@
 #
 autosetup-require-version 0.6.7
 
-define defaultprefix /usr
+# This is deprecated
+#define defaultprefix /usr
+
+# option-defaults can be used to change the defaults for module options
+# set this before 'use'
+# Note that the help text is not updated for boolean options
+options-defaults {
+	silent-rules 1
+	prefix /usr
+}
 
 use cc cc-lib cc-db pkg-config
 
 options {
 	# Comment lines are allowed in options
-	shared    => "Create a shared library"
-	utf8=1    => "Disable utf8 support"
+	shared    => "Shared library"
+	utf8=1    => "utf8 support"
 	# --lfs is a synonym for --largefile
-	lfs=1 largefile=1 => "Disable large file support"
+	lfs=1 largefile=1 => "Large File Support"
 	opt1:value => "Options with a value"
 	opt2:=value => "Option with optional value"
 }

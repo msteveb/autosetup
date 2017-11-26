@@ -13,7 +13,7 @@ set exeext [get-define EXEEXT]
 #		${TCL_BIN_DIR}/../bin
 #		${PATH}
 set path {}
-lappend path [opt-val prefix /usr/local]/bin
+lappend path [get-define prefix]/bin
 if {[info exists ::env(TCL_BIN_DIR)]} {
 	lappend path [env TCL_BIN_DIR] [env TCL_BIN_DIR]/../bin
 }

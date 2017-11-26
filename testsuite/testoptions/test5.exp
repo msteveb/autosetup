@@ -1,0 +1,25 @@
+argv=--str1=a --str1=b --ostr1=c --ostr1=d
+bool=0
+bool0=0
+bool1=1
+str0=0
+str1=1 b
+str2=0
+str3=0
+str4=0
+ostr0=1 X
+ostr1=1 d
+ostr2=1 X2
+ostr3=1 X3
+ostr4=1 X4
+str0(def)=Z
+str1(def)=b
+str2(def)=Z
+str3(def)=Z
+str4(def)=Z
+ostr0(def)=X
+ostr1(def)=d
+ostr2(def)=X2
+ostr3(def)=X3
+ostr4(def)=X4
+str1,ostr1=d

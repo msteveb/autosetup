@@ -94,8 +94,7 @@ cc-check-function-in-lib crypt crypt
 define CRYPTLIB [get-define lib_crypt ""]
 
 foreach lib {zlib pam} {
-	set dir [opt-val with-$lib]
-	if {$dir ne ""} {
+	if {[opt-str with-$lib dir]} {
 		if {[file isdir $dir/lib]} {
 			define-append LDFLAGS -L$dir/lib
 		} else {
@@ -263,11 +262,8 @@ if {![get-define DISABLE_LOGINFUNC 0]} {
 if {![opt-bool lastlog]} {
 	define DISABLE_LASTLOG
 } else {
-	if {[opt-val with-lastlog] ne ""} {
-		set conf_lastlog_location [opt-val with-lastlog]
-	}
 	msg-checking "For the location of lastlog..."
-	if {[info exists conf_lastlog_location]} {
+	if {[opt-str with-lastlog conf_lastlog_location]} {
 		# specified directly. Need to quote it
 		set ll \"$conf_lastlog_location\"
 	} else {
@@ -290,9 +286,8 @@ if {![opt-bool lastlog]} {
 set enable 0
 if {[opt-bool utmp]} {
 	# utmp detection
-	set ll [opt-val with-utmp]
 	msg-checking "For the location of utmp..."
-	if {$ll eq ""} {
+	if {![opt-str with-utmp ll]} {
 		cc-with {-includes {utmp.h lastlog.h paths.h}} {
 			if {[cctest -code {const char *lastlog = UTMP_FILE;}]} {
 				set ll UTMP_FILE
@@ -318,9 +313,8 @@ if {!$enable} {
 set enable 0
 if {[opt-bool wtmp]} {
 	# wtmp detection
-	set ll [opt-val with-wtmp]
 	msg-checking "For the location of wtmp..."
-	if {$ll eq ""} {
+	if {![opt-str with-wtmp ll]} {
 		cc-with {-includes {utmp.h lastlog.h paths.h}} {
 			if {[cctest -code {const char *lastlog = WTMP_FILE;}]} {
 				set ll WTMP_FILE

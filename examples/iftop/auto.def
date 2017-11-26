@@ -64,7 +64,7 @@ if {![have-feature c99-ints]} {
 }
 
 # Find lipbcap
-set pcapdirs [opt-val {libpcap with-libpcap} "/usr /usr/local /opt /software"]
+opt-str {libpcap with-libpcap} pcapdirs "/usr /usr/local /opt /software"
 
 msg-checking "Checking for pcap.h..."
 foreach dir $pcapdirs {
@@ -157,7 +157,7 @@ if {[opt-bool default-promiscuous] || [string match *-solaris* [get-define host]
 # If we've been asked to guess, remember that fact in specified_resolver.
 # From this point on, resolver is our preferred resolver given the
 # experiments we've done so far, or "guess" if we have no idea.
-set resolver [opt-val {with-resolver resolver} guess]
+opt-str {with-resolver resolver} resolver guess
 set specified_resolver $resolver
 if {$resolver eq "guess"} {
     # Best possibility is getnameinfo.

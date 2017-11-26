@@ -1,0 +1,79 @@
+# vim:se syn=tcl:
+#
+# This auto.def is intended to test all the combinations of string
+# and boolean options with opt-bool and opt-str
+
+# Set some options-defaults
+options-defaults {
+	silent-rules 1
+	prefix /usr
+	ostr0 X
+	ostr1 X1
+	ostr2 X2
+	ostr3 X3
+	ostr4 X4
+}
+
+options {
+	bool            => "Bool with no default"
+	bool0=0         => "Bool with default=0"
+	bool1=1         => "Bool with default=1"
+	str0:           => "Str with empty default"
+	str1:abc        => "Str with text"
+	str2:=abc       => "Str (optional) with text"
+	str3:abc=def    => "Str with text and default"
+	str4:=abc=def    => "Str (optional) with text and default"
+	ostr0:          => "Override str with empty default"
+	ostr1:abc       => "Override str with text"
+	ostr2:=abc      => "Override str (optional) with text"
+	ostr3:abc=def   => "Override str with text and default"
+	ostr4:=abc=def   => "Override str (optional) with text and default"
+}
+
+# if opt-str returns 1, return a list of retcode and retvalue
+# otherwise just retcode
+proc check-opt-str {name} {
+	set ret [opt-str $name o]
+	if {$ret} {
+		list $ret $o
+	} else {
+		list $ret
+	}
+}
+
+proc check-opt-str-def {name} {
+	# if opt-str returns 1, return a list of retcode and retvalue
+	# otherwise just retcode
+	opt-str-set ret [opt-str $name o]
+	if {$ret} {
+		list $ret $o
+	} else {
+		list $ret
+	}
+}
+
+puts argv=$autosetup(argv)
+puts bool=[opt-bool bool]
+puts bool0=[opt-bool bool0]
+puts bool1=[opt-bool bool1]
+puts str0=[check-opt-str str0]
+puts str1=[check-opt-str str1]
+puts str2=[check-opt-str str2]
+puts str3=[check-opt-str str3]
+puts str4=[check-opt-str str4]
+puts ostr0=[check-opt-str ostr0]
+puts ostr1=[check-opt-str ostr1]
+puts ostr2=[check-opt-str ostr2]
+puts ostr3=[check-opt-str ostr3]
+puts ostr4=[check-opt-str ostr4]
+puts str0(def)=[opt-str str0 o Z]
+puts str1(def)=[opt-str str1 o Z]
+puts str2(def)=[opt-str str2 o Z]
+puts str3(def)=[opt-str str3 o Z]
+puts str4(def)=[opt-str str4 o Z]
+puts ostr0(def)=[opt-str ostr0 o Z]
+puts ostr1(def)=[opt-str ostr1 o Z]
+puts ostr2(def)=[opt-str ostr2 o Z]
+puts ostr3(def)=[opt-str ostr3 o Z]
+puts ostr4(def)=[opt-str ostr4 o Z]
+puts str1,ostr1=[opt-str {str1 ostr1} o Z]

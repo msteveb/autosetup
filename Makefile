@@ -26,3 +26,4 @@ test:
 	@make -C testsuite test subdirtest
 	@make -C testsuite autosetup_tclsh=tclsh8.6 test subdirtest
 	@make -C testsuite autosetup_tclsh=tclsh8.5 test subdirtest
+	@make -C testsuite/testoptions
