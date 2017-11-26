@@ -224,7 +224,7 @@ proc make-template {template {out {}}} {
 		}
 		lappend result $line
 	}
-	write-if-changed $out [string map $mapping [join $result \n]]\n {
+	write-if-changed $out [string map $mapping [join $result \n]] {
 		msg-result "Created [relative-path $out] from [relative-path $template]"
 	}
 }
