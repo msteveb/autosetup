@@ -47,6 +47,7 @@ module-options [subst -noc -nob {
 	localstatedir:
 	maintainer-mode=0
 	dependency-tracking=0
+	silent-rules=0
 }]
 
 # @check-feature name { script }
@@ -298,6 +299,11 @@ if {$prefix ne {/usr}} {
 define localstatedir [lindex [opt-val localstatedir /var] end]
 
 define SHELL [get-env SHELL [find-an-executable sh bash ksh]]
+
+# These could be used to generate Makefiles following some automake conventions
+define AM_SILENT_RULES [opt-bool silent-rules]
+define AM_MAINTAINER_MODE [opt-bool maintainer-mode]
+define AM_DEPENDENCY_TRACKING [opt-bool dependency-tracking]
 
 # Windows vs. non-Windows
 switch -glob -- [get-define host] {
