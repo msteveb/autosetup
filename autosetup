@@ -79,6 +79,7 @@ proc main {argv} {
 	# options-defaults is a dictionary of overrides for default values for options
 	set autosetup(options-defaults) {}
 	set autosetup(optionhelp) {}
+	set autosetup(opthelpline) {}
 	set autosetup(showhelp) 0
 
 	# Parse options
@@ -512,6 +513,7 @@ proc options-add {opts {header ""}} {
 			}
 			# A multi-line description
 			lappend autosetup(optionhelp) $opthelp $desc
+			dict set autosetup(opthelpline) $name $desc
 			incr i 2
 		}
 	}
