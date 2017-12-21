@@ -159,8 +159,7 @@ proc autosetup_create_configure {shared} {
 	if {$shared} {
 		writefile configure \
 {#!/bin/sh
-# Note that WRAPPER is set here purely to detect an autosetup-created script
-WRAPPER="-"; "autosetup" "$@"
+WRAPPER="$0"; export WRAPPER; "autosetup" "$@"
 }
 	} else {
 		writefile configure \
