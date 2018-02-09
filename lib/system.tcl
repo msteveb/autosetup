@@ -212,7 +212,7 @@ proc make-template {template {out {}}} {
 			}
 			continue
 		}
-		if {[regexp {^@if\s+(\w+)(.*)} $line -> name expression]} {
+		if {[regexp {^@(if(?:not)?)\s+(\w+)(.*)} $line -> check name expression]} {
 			lassign $expression equal value
 			set varval [get-define $name ""]
 			if {$equal eq ""} {
@@ -222,6 +222,9 @@ proc make-template {template {out {}}} {
 				if {$equal ne "=="} {
 					set cond [expr {!$cond}]
 				}
+			}
+			if {$check eq {ifnot}} {
+				set cond [expr {!$cond}]
 			}
 			continue
 		}

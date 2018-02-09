@@ -56,3 +56,6 @@ reconfig:
 @else
 # + UNDEFVAL
 @endif
+@ifnot UNDEFVAL
+# + NOT UNDEFVAL
+@endif
