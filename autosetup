@@ -745,6 +745,18 @@ proc is-defined {name} {
 	info exists ::define($name)
 }
 
+# @is-define-set name
+#
+# Returns 1 if the given variable is defined and is set
+# to a value other than "" or 0
+#
+proc is-define-set {name} {
+	if {[get-define $name] in {0 ""}} {
+		return 0
+	}
+	return 1
+}
+
 # @all-defines
 #
 # Returns a dictionary (name, value list) of all defined variables.

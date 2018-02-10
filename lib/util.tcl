@@ -64,3 +64,13 @@ proc prefix {pre list} {
 	}
 	return $result
 }
+
+# @lpop list
+#
+# Removes the last entry from the given list and returns it.
+proc lpop {listname} {
+	upvar $listname list
+	set val [lindex $list end]
+	set list [lrange $list 0 end-1]
+	return $val
+}

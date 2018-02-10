@@ -46,13 +46,45 @@ reconfig:
 @else
 # + if EMPTYVAL
 @endif
-@if STRVAL != test
-# + STRVAL != test
+@if STRVAL ne "test"
+# + STRVAL ne "test"
 @else
-# - STRVAL != test
+# - STRVAL ne "test"
 @endif
 @if UNDEFVAL
 # - UNDEFVAL
 @else
 # + UNDEFVAL
+@endif
+
+# autosetup now supports !varname
+@if !TRUEVAL
+# - if !TRUEVAL
+@else
+# + if !TRUEVAL
+@endif
+@if !FALSEVAL
+# + if !FALSEVAL
+@else
+# - if !FALSEVAL
+@endif
+
+# And nested levels
+@if TRUEVAL
+@if FALSEVAL
+# - if TRUEVAL && FALSEVAL
+@else
+# + if TRUEVAL && !FALSEVAL
+@endif
+@else
+@if FALSEVAL
+# - if !TRUEVAL && FALSEVAL
+@else
+# - if !TRUEVAL && !FALSEVAL
+@endif
+@endif
+
+# And complex expressions
+@if STRVAL in {strval abc def}
+# + STRVAL in {strval abc def}
 @endif
