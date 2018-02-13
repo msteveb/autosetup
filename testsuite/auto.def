@@ -129,8 +129,6 @@ test env-is-set-1.1 {env-is-set various} {
 	list [env-is-set ENV1] [env-is-set ENVCLI] [env-is-set CLI1] [env-is-set UNDEFINED] [env-is-set ENV0] [env-is-set CLI0]
 } {1 1 1 0 0 1}
 
-use util
-
 test compare-versions-1.1 {two elements} {
 	compare-versions 0.2 0.3
 } {-1}
