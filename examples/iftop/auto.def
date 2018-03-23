@@ -181,7 +181,7 @@ if {$resolver eq "netdb"} {
     # Figure out whether we have
     # glibc-style or Solaris-style gethostbyaddr_r (or neither...).
     # Separate determining how to call gethostbyaddr_r from testing
-    # whether it works so we can support cross-compilation.            
+    # whether it works so we can support cross-compilation.
 
     if {[have-feature gethostbyaddr_r]} {
         msg-checking "Checking how to call gethostbyaddr_r..."

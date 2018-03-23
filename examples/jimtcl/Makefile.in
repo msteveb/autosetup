@@ -30,7 +30,7 @@ else
 	LIBJIM := libjim.so
 	SH_LIBJIM := $(LIBJIM)
 	CPPFLAGS += $(SH_CFLAGS)
-	DEF_LD_PATH := @LD_LIBRARY_PATH@=`pwd` 
+	DEF_LD_PATH := @LD_LIBRARY_PATH@=`pwd`
 endif
 
 .EXPORT_ALL_VARIABLES:

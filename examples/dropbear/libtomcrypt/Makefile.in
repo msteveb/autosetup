@@ -24,7 +24,7 @@ CFLAGS += -c -I$(srcdir)/src/headers/ -I$(srcdir)/../
 # additional warnings (newer GCC 3.4 and higher)
 ifdef GCC_34
 CFLAGS += -Wsystem-headers -Wdeclaration-after-statement -Wbad-function-cast -Wcast-align -Wstrict-prototypes -Wmissing-prototypes \
-		  -Wmissing-declarations -Wpointer-arith 
+		  -Wmissing-declarations -Wpointer-arith
 endif
 
 ifndef IGNORE_SPEED
@@ -157,7 +157,7 @@ src/modes/lrw/lrw_decrypt.o src/modes/lrw/lrw_done.o src/modes/lrw/lrw_encrypt.o
 src/modes/lrw/lrw_getiv.o src/modes/lrw/lrw_process.o src/modes/lrw/lrw_setiv.o \
 src/modes/lrw/lrw_start.o src/modes/lrw/lrw_test.o src/modes/ofb/ofb_decrypt.o src/modes/ofb/ofb_done.o \
 src/modes/ofb/ofb_encrypt.o src/modes/ofb/ofb_getiv.o src/modes/ofb/ofb_setiv.o \
-src/modes/ofb/ofb_start.o 
+src/modes/ofb/ofb_start.o
 
 HEADERS=src/headers/tomcrypt_cfg.h src/headers/tomcrypt_mac.h src/headers/tomcrypt_macros.h \
 src/headers/tomcrypt_custom.h src/headers/tomcrypt_argchk.h src/headers/tomcrypt_cipher.h \
@@ -185,7 +185,7 @@ COMPRESSED=crypt-$(VERSION).tar.bz2 crypt-$(VERSION).zip
 #The default rule for make builds the libtomcrypt library.
 default:library
 
-#ciphers come in two flavours... enc+dec and enc 
+#ciphers come in two flavours... enc+dec and enc
 src/ciphers/aes/aes_enc.o: src/ciphers/aes/aes.c src/ciphers/aes/aes_tab.c
 	$(CC) $(CFLAGS) -DENCRYPT_ONLY -c $< -o src/ciphers/aes/aes_enc.o
 
@@ -199,11 +199,11 @@ src/hashes/sha2/sha256.o: src/hashes/sha2/sha256.c src/hashes/sha2/sha224.c
 #This rule makes the libtomcrypt library.
 library: $(LIBNAME)
 
-testprof/$(LIBTEST): 
-	cd testprof ; CFLAGS="$(CFLAGS)" LIBTEST_S=$(LIBTEST_S) $(MAKE) 
+testprof/$(LIBTEST):
+	cd testprof ; CFLAGS="$(CFLAGS)" LIBTEST_S=$(LIBTEST_S) $(MAKE)
 
 $(LIBNAME): $(OBJECTS)
-	$(AR) $(ARFLAGS) $@ $(OBJECTS) 
+	$(AR) $(ARFLAGS) $@ $(OBJECTS)
 	$(RANLIB) $@
 
 #This rule makes the hash program included with libtomcrypt
@@ -217,7 +217,7 @@ crypt: library $(CRYPTOBJECTS)
 #makes the small program
 small: library $(SMALLOBJECTS)
 	$(CC) $(SMALLOBJECTS) $(LIBNAME) $(EXTRALIBS) -o $(SMALL) $(WARN)
-	
+
 tv_gen: library $(TVS)
 	$(CC) $(LDFLAGS) $(TVS) $(LIBNAME) $(EXTRALIBS) -o $(TV)
 
@@ -270,7 +270,7 @@ doxy:
 	doxygen
 	cd doc/doxygen/latex ; ${MAKE} ; mv -f refman.pdf ../../.
 	echo The huge doxygen PDF should be available as doc/refman.pdf
-	
+
 #This builds the crypt.pdf file. Note that the rm -f *.pdf has been removed
 #from the clean command! This is because most people would like to keep the
 #nice pre-compiled crypt.pdf that comes with libtomcrypt! We only need to
@@ -298,7 +298,7 @@ docdvi: crypt.tex
 
 #zipup the project (take that!)
 no_oops: clean
-	cd .. ; cvs commit 
+	cd .. ; cvs commit
 	echo Scanning for scratch/dirty files
 	find . -type f | grep -v CVS | xargs -n 1 bash mess.sh
 
@@ -312,6 +312,6 @@ zipup: no_oops docs
 	mv -fv crypt* ~ ; rm -rf libtomcrypt-$(VERSION)
 
 
-# $Source: /cvs/libtom/libtomcrypt/makefile,v $ 
-# $Revision: 1.145 $ 
-# $Date: 2006/12/02 19:23:21 $ 
+# $Source: /cvs/libtom/libtomcrypt/makefile,v $
+# $Revision: 1.145 $
+# $Date: 2006/12/02 19:23:21 $

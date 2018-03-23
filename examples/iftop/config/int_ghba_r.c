@@ -20,7 +20,7 @@ int main(void) {
     char *buf;
     int res, herr;
     size_t buflen = 1024;
-    
+
     localhost.s_addr = htonl(INADDR_LOOPBACK);
     buf = malloc(buflen);
     while ((res = gethostbyaddr_r((char*)&localhost, sizeof localhost, AF_INET,

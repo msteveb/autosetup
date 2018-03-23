@@ -18,7 +18,7 @@ LTM=libtommath/libtommath.a
 
 ifeq (@BUNDLED_LIBTOM@, 1)
 LIBTOM_DEPS=$(LTC) $(LTM)
-CFLAGS+=-I$(srcdir)/libtomcrypt/src/headers/ 
+CFLAGS+=-I$(srcdir)/libtomcrypt/src/headers/
 LIBS+=$(LTC) $(LTM)
 endif
 
@@ -26,7 +26,7 @@ COMMONOBJS=dbutil.o buffer.o \
 		dss.o bignum.o \
 		signkey.o rsa.o random.o \
 		queue.o \
-		atomicio.o compat.o  fake-rfc2553.o 
+		atomicio.o compat.o  fake-rfc2553.o
 
 SVROBJS=@CRYPTLIB@ svr-kex.o svr-algo.o svr-auth.o sshpty.o \
 		svr-authpasswd.o svr-authpubkey.o svr-authpubkeyoptions.o svr-session.o svr-service.o \
@@ -56,7 +56,7 @@ HEADERS=options.h dbutil.h session.h packet.h algo.h ssh.h buffer.h kex.h \
 		loginrec.h atomicio.h x11fwd.h agentfwd.h tcpfwd.h compat.h \
 		listener.h fake-rfc2553.h
 
-dropbearobjs=$(COMMONOBJS) $(CLISVROBJS) $(SVROBJS) 
+dropbearobjs=$(COMMONOBJS) $(CLISVROBJS) $(SVROBJS)
 dbclientobjs=$(COMMONOBJS) $(CLISVROBJS) $(CLIOBJS)
 dropbearkeyobjs=$(COMMONOBJS) $(KEYOBJS)
 dropbearconvertobjs=$(COMMONOBJS) $(CONVERTOBJS)
@@ -120,7 +120,7 @@ strip: $(TARGETS)
 
 install: $(addprefix inst_, $(TARGETS))
 
-installdropbearmulti: insdbmulti $(addprefix insmulti, $(PROGRAMS)) 
+installdropbearmulti: insdbmulti $(addprefix insmulti, $(PROGRAMS))
 
 insdbmulti: dropbearmulti
 	$(INSTALL) -d -m 755 $(DESTDIR)$(bindir)
@@ -130,11 +130,11 @@ insdbmulti: dropbearmulti
 
 insmultidropbear: dropbearmulti
 	-rm -f $(DESTDIR)$(sbindir)/dropbear$(EXEEXT)
-	-ln -s $(DESTDIR)$(bindir)/dropbearmulti$(EXEEXT) $(DESTDIR)$(sbindir)/dropbear$(EXEEXT) 
+	-ln -s $(DESTDIR)$(bindir)/dropbearmulti$(EXEEXT) $(DESTDIR)$(sbindir)/dropbear$(EXEEXT)
 
 insmulti%: dropbearmulti
-	-rm -f $(DESTDIR)$(bindir)/$*$(EXEEXT) 
-	-ln -s $(DESTDIR)$(bindir)/dropbearmulti$(EXEEXT) $(DESTDIR)$(bindir)/$*$(EXEEXT) 
+	-rm -f $(DESTDIR)$(bindir)/$*$(EXEEXT)
+	-ln -s $(DESTDIR)$(bindir)/dropbearmulti$(EXEEXT) $(DESTDIR)$(bindir)/$*$(EXEEXT)
 
 # dropbear should go in sbin, so it needs a seperate rule
 inst_dropbear: dropbear
@@ -171,7 +171,7 @@ ifeq ($(MULTI),1)
 	CFLAGS+=$(addprefix -DDBMULTI_, $(PROGRAMS)) -DDROPBEAR_MULTI
 endif
 
-dropbearmulti: multilink 
+dropbearmulti: multilink
 
 multibinary: $(HEADERS) $(MULTIOBJS) $(LIBTOM_DEPS) Makefile
 	$(CC) $(LDFLAGS) -o dropbearmulti$(EXEEXT) $(MULTIOBJS) $(LIBS)
@@ -203,7 +203,7 @@ clean: ltc-clean ltm-clean thisclean
 
 thisclean:
 	-rm -f dropbear dbclient dropbearkey dropbearconvert scp scp-progress \
-			dropbearmulti *.o *.da *.bb *.bbg *.prof 
+			dropbearmulti *.o *.da *.bb *.bbg *.prof
 
 distclean: clean tidy
 	-rm -f config.h
