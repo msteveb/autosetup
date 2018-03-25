@@ -20430,8 +20430,8 @@ Jim_Obj *Jim_FormatString(Jim_Interp *interp, Jim_Obj *fmtObjPtr, int objc, Jim_
 #define	WORDA	16
 #define	WORDZ	17
 
-#define	OPENNC 	1000
-#define	OPEN   	1001
+#define	OPENNC	1000
+#define	OPEN	1001
 
 
 

@@ -178,7 +178,7 @@ proc ppackages {args} {
 
     set   pp [array get p]
     unset p
-    return $pp 
+    return $pp
 }
 
 proc xNULL    {args} {}
@@ -234,7 +234,7 @@ proc gendoc {fmt ext args} {
 	    if {!$null} {
                 set target [file join doc $fmt \
                                 [file rootname [file tail $f]].$ext]
-                if {[file exists $target] 
+                if {[file exists $target]
                     && [file mtime $target] > [file mtime $f]} {
                     continue
                 }
@@ -572,7 +572,7 @@ description: |
    for bug reports and feature requests, the CVS repository (browsable
    on the web, or read-only accessible via CVS ), and more.
 
-categories: 
+categories:
   - Library/Utility
   - Library/Mail
   - Library/Cryptography
@@ -1276,7 +1276,7 @@ proc critcl_module {pkg} {
     set target [file join $distribution modules]
     catch {
         puts "$critcl -force -libdir [list $target] -pkg [list $pkg] $files"
-        eval exec $critcl -force -libdir [list $target] -pkg [list $pkg] $files 
+        eval exec $critcl -force -libdir [list $target] -pkg [list $pkg] $files
     } r
     puts $r
     return
@@ -1500,7 +1500,7 @@ proc __release {} {
 
 	*
 	* Released and tagged Tcllib $tcllib_version ========================
-	* 
+	*
 
 "
 
@@ -1572,7 +1572,7 @@ proc __ps   {} {
 proc __list  {} {
     global argv ; if {![checkmod]} return
     eval gendoc list l $argv
-    
+
     set FILES [glob -nocomplain doc/list/*.l]
     set LIST [open [file join doc list manpages.tcl] w]
 

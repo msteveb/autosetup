@@ -49,7 +49,7 @@ int main(void) {
     do
         deadline.tv_sec = 2 + time(NULL);
     while ((res = pthread_cond_timedwait(&cond, &mtx, &deadline)) == EINTR);
-    
+
     if (res != 0) {
         fprintf(stderr, "%s\n", strerror(res));
         return -1;
@@ -60,6 +60,6 @@ int main(void) {
         fprintf(stderr, "%s\n", strerror(res));
         return -1;
     }
-    
+
     return return_value;
 }
