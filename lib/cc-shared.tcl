@@ -23,9 +23,9 @@
 module-options {}
 
 # Defaults: gcc on unix
-define SHOBJ_CFLAGS -fpic
+define SHOBJ_CFLAGS -fPIC
 define SHOBJ_LDFLAGS -shared
-define SH_CFLAGS -fpic
+define SH_CFLAGS -fPIC
 define SH_LDFLAGS -shared
 define SH_LINKFLAGS -rdynamic
 define SH_LINKRPATH "-Wl,-rpath -Wl,%s"
@@ -75,10 +75,6 @@ switch -glob -- [get-define host] {
 			define SH_CFLAGS -KPIC
 			define SH_LINKFLAGS -Wl,-export-dynamic
 			define SH_SOPREFIX -Wl,-h,
-		} else {
-			# sparc has a very small GOT table limit, so use -fPIC
-			define SH_CFLAGS -fPIC
-			define SHOBJ_CFLAGS -fPIC
 		}
 	}
 	*-*-solaris* {
@@ -109,11 +105,6 @@ switch -glob -- [get-define host] {
 		define SH_LINKFLAGS ""
 		define SH_SOPREFIX ""
 		define LD_LIBRARY_PATH LIBRARY_PATH
-	}
-	microblaze* {
-		# Microblaze generally needs -fPIC rather than -fpic
-		define SHOBJ_CFLAGS -fPIC
-		define SH_CFLAGS -fPIC
 	}
 }
 
