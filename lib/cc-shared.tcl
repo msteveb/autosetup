@@ -9,6 +9,7 @@
 ## SH_CFLAGS         Flags to use compiling sources destined for a shared library
 ## SH_LDFLAGS        Flags to use linking (creating) a shared library
 ## SH_SOPREFIX       Prefix to use to set the soname when creating a shared library
+## SH_SOFULLPATH     Set to 1 if the shared library soname should include the full install path
 ## SH_SOEXT          Extension for shared libs
 ## SH_SOEXTVER       Format for versioned shared libs - %s = version
 ## SHOBJ_CFLAGS      Flags to use compiling sources destined for a shared object
@@ -48,6 +49,7 @@ switch -glob -- [get-define host] {
 		define SH_SOEXT .dylib
 		define SH_SOEXTVER .%s.dylib
 		define SH_SOPREFIX -Wl,-install_name,
+		define SH_SOFULLPATH
 		define LD_LIBRARY_PATH DYLD_LIBRARY_PATH
 		define STRIPLIBFLAGS -x
 	}
