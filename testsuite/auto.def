@@ -81,8 +81,11 @@ test define-1.6 {define-append} {
 	define e {2 2}
 
 	# define-append will append with a space, omitting duplicates but not removing
-	define-append a 1 2
-	define-append b 1 2
+	# and will ignore empty values
+	define-append a 1 "" 2
+	define-append a ""
+	define-append a
+	define-append b "" 1 2
 	define-append c 1 2
 	define-append d 1 2
 	define-append e 1 2
