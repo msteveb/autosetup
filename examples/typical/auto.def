@@ -1,7 +1,7 @@
 # vim:se syn=tcl:
 #
 
-use cc cc-chared cc-lib cc-db pkg-config
+use cc cc-shared cc-lib cc-db pkg-config
 
 options {
 	shared => "Build a shared library rather than a static library"
