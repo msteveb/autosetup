@@ -7,3 +7,15 @@ srcdir = @srcdir@
 
 # And this will be relative to the top level source directory
 top_srcdir = @top_srcdir@
+
+# It is probably simplest to not to support reconfigure from subdirectories
+# but if you do, need to rerun autosetup from the top level source directory
+
+# Reconfigure if needed
+ifeq ($(findstring clean,$(MAKECMDGOALS)),)
+Makefile: @AUTODEPS@ @srcdir@/Makefile.in
+	@cd @top_srcdir@ && @AUTOREMAKE@
+endif
+
+reconfig:
+	cd @top_srcdir@ && @AUTOREMAKE@
