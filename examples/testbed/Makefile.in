@@ -17,6 +17,7 @@ reconfig:
 	@AUTOREMAKE@
 
 # Tests specific variables
+# CFLAGS=@CFLAGS@
 # LIBS=@LIBS@
 
 # Test conditional sections

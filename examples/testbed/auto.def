@@ -59,6 +59,16 @@ check-feature -std=c99 {
 if {[have-feature -std=c99]} {
 	define-append EXTRA_CFLAGS -std=c99 -fpedantic {-Dversion="my version"}
 }
+
+# or use cc-check-flags if you want working flags added to CFLAGS automatically
+cc-check-flags -bogus
+cc-check-flags -time
+
+# But use -Werror if you are testing a warning flag
+cc-with {-cflags -Werror} {
+	cc-check-flags -Wimplicit-fallthrough=5
+}
+
 define version1 "with spaces"
 
 # Many apps want to know if they are building with gcc (or at least a compatible compiler)
@@ -90,7 +100,6 @@ cc-check-function-in-lib percent_m wrap
 # Checking the same thing twice is automatically cached
 cc-check-includes sys/socket.h sys/stat.h
 
-use cc-lib
 if {[opt-bool lfs largefile]} {
 	cc-check-lfs
 }
