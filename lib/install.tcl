@@ -4,7 +4,7 @@
 # Module which can install autosetup
 
 # autosetup(installed)=1 means that autosetup is not running from source
-# autosetup(sysinstall)=1 means that autosetup is running from a sysinstall verion
+# autosetup(sysinstall)=1 means that autosetup is running from a sysinstall version
 # shared=1 means that we are trying to do a sysinstall. This is only possible from the development source.
 
 proc autosetup_install {dir {shared 0}} {
