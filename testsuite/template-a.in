@@ -1,3 +1,4 @@
 abc=@abc@
+@define def DEF
 @include @srcdir@/template-a.inc
 def=@def@

@@ -208,6 +208,9 @@ proc include-file {infile mapping} {
 				user-error "$infile:$linenum: Include file $incfile is missing"
 			}
 			continue
+		} elseif {[regexp {^@define\s+(\w+)\s+(.*)} $line -> var val]} {
+			define $var $val
+			continue
 		}
 		# Only output this line if the stack contains all "true"
 		if {"0" in $condstack} {
@@ -281,13 +284,23 @@ proc make-template {template {out {}}} {
 	define srcdir [relative-path [file join $::autosetup(srcdir) $outdir] $outdir]
 	define top_srcdir [relative-path $::autosetup(srcdir) $outdir]
 
-	set mapping {}
-	foreach {n v} [array get ::define] {
-		lappend mapping @$n@ $v
+	# Build map from global defines to their values so they can be
+	# substituted into @include file names.
+	proc build-define-mapping {} {
+		set mapping {}
+		foreach {n v} [array get ::define] {
+			lappend mapping @$n@ $v
+		}
+		return $mapping
 	}
+	set mapping [build-define-mapping]
 
 	set result [include-file $infile $mapping]
 
+	# Rebuild the define mapping in case we ran across @define
+	# directives in the template or a file it @included, then
+	# apply that mapping to the expanded template.
+	set mapping [build-define-mapping]
 	write-if-changed $out [string map $mapping [join $result \n]] {
 		msg-result "Created [relative-path $out] from [relative-path $template]"
 	}
