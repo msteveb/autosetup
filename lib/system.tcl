@@ -133,6 +133,93 @@ proc write-if-changed {file buf {script {}}} {
 	}
 }
 
+
+# @include-file infile mapping
+#
+# The core of make-template, called recursively for each @include
+# directive found within that template so that this proc's result
+# is the fully-expanded template.
+#
+# The mapping parameter is how we expand @varname@ within the template.
+# We do that inline within this step only for @include directives which
+# can have variables in the filename arg.  A separate substitution pass
+# happens when this recursive function returns, expanding the rest of
+# the variables.
+# 
+proc include-file {infile mapping} {
+	# A stack of true/false conditions, one for each nested conditional
+	# starting with "true"
+	set condstack {1}
+	set result {}
+	set linenum 0
+	foreach line [split [readfile $infile] \n] {
+		incr linenum
+		if {[regexp {^@(if|else|endif)\s*(.*)} $line -> condtype condargs]} {
+			if {$condtype eq "if"} {
+				if {[llength $condargs] == 1} {
+					# ABC => [get-define ABC] ni {0 ""}
+					# !ABC => [get-define ABC] in {0 ""}
+					lassign $condargs condvar
+					if {[regexp {^!(.*)} $condvar -> condvar]} {
+						set op in
+					} else {
+						set op ni
+					}
+					set condexpr "\[[list get-define $condvar]\] $op {0 {}}"
+				} else {
+					# Translate alphanumeric ABC into [get-define ABC] and leave the
+					# rest of the expression untouched
+					regsub -all {([A-Z][[:alnum:]_]*)} $condargs {[get-define \1]} condexpr
+				}
+				if {[catch [list expr $condexpr] condval]} {
+					dputs $condval
+					autosetup-error "$infile:$linenum: Invalid expression: $line"
+				}
+				dputs "@$condtype: $condexpr => $condval"
+			}
+			if {$condtype ne "if" && [llength $condstack] <= 1} {
+				autosetup-error "$infile:$linenum: Error: @$condtype missing @if"
+			}
+			switch -exact $condtype {
+				if {
+					# push condval
+					lappend condstack $condval
+				}
+				else {
+					# Toggle the last entry
+					set condval [lpop condstack]
+					set condval [expr {!$condval}]
+					lappend condstack $condval
+				}
+				endif {
+					if {[llength $condstack] == 0} {
+						user-notice "$infile:$linenum: Error: @endif missing @if"
+					}
+					lpop condstack
+				}
+			}
+			continue
+		} elseif {[regexp {^@include\s+(.*)} $line -> filearg]} {
+            set incfile [string map $mapping $filearg]
+            if {[file exists $incfile]} {
+                lappend ::autosetup(deps) [file-normalize $incfile]
+                set inclines [include-file $incfile $mapping]
+                set result [concat $result $inclines]
+            } else {
+                user-error "$infile:$linenum: Include file $incfile is missing"
+            }
+            continue
+        }
+		# Only output this line if the stack contains all "true"
+		if {"0" in $condstack} {
+			continue
+		}
+		lappend result $line
+	}
+    return $result
+}
+
+
 # @make-template template ?outfile?
 #
 # Reads the input file '<srcdir>/$template' and writes the output file '$outfile'
@@ -200,65 +287,8 @@ proc make-template {template {out {}}} {
 		lappend mapping @$n@ $v
 	}
 
-	# A stack of true/false conditions, one for each nested conditional
-	# starting with "true"
-	set condstack {1}
-	set result {}
-	set linenum 0
-	foreach line [split [readfile $infile] \n] {
-		incr linenum
-		if {[regexp {^@(if|else|endif)\s*(.*)} $line -> condtype condargs]} {
-			if {$condtype eq "if"} {
-				if {[llength $condargs] == 1} {
-					# ABC => [get-define ABC] ni {0 ""}
-					# !ABC => [get-define ABC] in {0 ""}
-					lassign $condargs condvar
-					if {[regexp {^!(.*)} $condvar -> condvar]} {
-						set op in
-					} else {
-						set op ni
-					}
-					set condexpr "\[[list get-define $condvar]\] $op {0 {}}"
-				} else {
-					# Translate alphanumeric ABC into [get-define ABC] and leave the
-					# rest of the expression untouched
-					regsub -all {([A-Z][[:alnum:]_]*)} $condargs {[get-define \1]} condexpr
-				}
-				if {[catch [list expr $condexpr] condval]} {
-					dputs $condval
-					autosetup-error "$infile:$linenum: Invalid expression: $line"
-				}
-				dputs "@$condtype: $condexpr => $condval"
-			}
-			if {$condtype ne "if" && [llength $condstack] <= 1} {
-				autosetup-error "$infile:$linenum: Error: @$condtype missing @if"
-			}
-			switch -exact $condtype {
-				if {
-					# push condval
-					lappend condstack $condval
-				}
-				else {
-					# Toggle the last entry
-					set condval [lpop condstack]
-					set condval [expr {!$condval}]
-					lappend condstack $condval
-				}
-				endif {
-					if {[llength $condstack] == 0} {
-						user-notice "$infile:$linenum: Error: @endif missing @if"
-					}
-					lpop condstack
-				}
-			}
-			continue
-		}
-		# Only output this line if the stack contains all "true"
-		if {"0" in $condstack} {
-			continue
-		}
-		lappend result $line
-	}
+    set result [include-file $infile $mapping]
+
 	write-if-changed $out [string map $mapping [join $result \n]] {
 		msg-result "Created [relative-path $out] from [relative-path $template]"
 	}
