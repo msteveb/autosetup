@@ -1,0 +1,3 @@
+abc=@abc@
+@include @srcdir@/template-a.inc
+def=@def@
