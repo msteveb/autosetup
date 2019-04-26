@@ -154,8 +154,11 @@ proc include-file {infile mapping} {
 	set linenum 0
 	foreach line [split [readfile $infile] \n] {
 		incr linenum
-		if {[regexp {^@(if|else|endif)\s*(.*)} $line -> condtype condargs]} {
+		if {[regexp {^@(if|else|endif)(\s*)(.*)} $line -> condtype condspace condargs]} {
 			if {$condtype eq "if"} {
+				if {[string length $condspace] == 0} {
+					autosetup-error "$infile:$linenum: Invalid expression: $line"
+				}
 				if {[llength $condargs] == 1} {
 					# ABC => [get-define ABC] ni {0 ""}
 					# !ABC => [get-define ABC] in {0 ""}
@@ -177,8 +180,12 @@ proc include-file {infile mapping} {
 				}
 				dputs "@$condtype: $condexpr => $condval"
 			}
-			if {$condtype ne "if" && [llength $condstack] <= 1} {
-				autosetup-error "$infile:$linenum: Error: @$condtype missing @if"
+			if {$condtype ne "if"} {
+				if {[llength $condstack] <= 1} {
+					autosetup-error "$infile:$linenum: Error: @$condtype missing @if"
+				} elseif {[string length $condargs]} {
+					autosetup-error "$infile:$linenum: Error: Extra arguments after @$condtype"
+				}
 			}
 			switch -exact $condtype {
 				if {
