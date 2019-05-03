@@ -183,7 +183,7 @@ proc include-file {infile mapping} {
 			if {$condtype ne "if"} {
 				if {[llength $condstack] <= 1} {
 					autosetup-error "$infile:$linenum: Error: @$condtype missing @if"
-				} elseif {[string length $condargs]} {
+				} elseif {[string length $condargs] && [string index $condargs 0] ne "#"} {
 					autosetup-error "$infile:$linenum: Error: Extra arguments after @$condtype"
 				}
 			}
