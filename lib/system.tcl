@@ -145,7 +145,7 @@ proc write-if-changed {file buf {script {}}} {
 # can have variables in the filename arg.  A separate substitution pass
 # happens when this recursive function returns, expanding the rest of
 # the variables.
-# 
+#
 proc include-file {infile mapping} {
 	# A stack of true/false conditions, one for each nested conditional
 	# starting with "true"
