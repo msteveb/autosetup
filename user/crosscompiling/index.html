@@ -1,7 +1,4 @@
-<!DOCTYPE HTML>
-<html lang="en">
-  <head>
-<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<!DOCTYPE html><html lang="en"><head>
     <meta charset="utf-8">
     <title>autosetup - Cross Compiling</title>
     <link rel="stylesheet" type="text/css" href="../../css/style.css" media="screen">
@@ -22,7 +19,7 @@
  	  })();
  	</script>
  	
-    <meta name="generator" content="nanoc 3.1.6">
+    <meta name="generator" content="Nanoc 4.11.5">
   </head>
   <body>
     <div id="header">
@@ -33,14 +30,14 @@
         <div class="breadcrumbs">
         
         
-            <a href="../../">Overview</a> 
+            <a href="../../">Overview</a>
             » 
         
-            <a href="../">Running autosetup</a> 
+            <a href="../">Running autosetup</a>
             » 
         
-            <a href="./">Cross Compiling</a> 
-             
+            <a href="./">Cross Compiling</a>
+            
         
         </div>
         <div class="main" id="main">
@@ -54,15 +51,13 @@ convention, cross compiling should <em>“just work”</em>.</p>
 <p>For example, if you have <code>arm-linux-cc</code>, <code>arm-linux-ar</code>, etc.
 then building with this toolchain is as simple as:</p>
 
-<pre class="sh_unix">
-$ ./configure --host=arm-linux
+<pre class="sh_unix">$ ./configure --host=arm-linux
 </pre>
 
 <p>If specific options need to be passed to the compiler, they
 can be set by overriding <code>CC</code>. e.g.</p>
 
-<pre class="sh_unix">
-$ ./configure --host=arm-linux CC="arm-linux-gcc -mbig-endian"
+<pre class="sh_unix">$ ./configure --host=arm-linux CC="arm-linux-gcc -mbig-endian"
 </pre>
 
 <p>Note that this approach is preferred rather than setting <code>CFLAGS</code>
@@ -74,8 +69,7 @@ as it allows the user to override <code>CFLAGS</code> at build time.</p>
 However it may be desirable to override the toolchain prefix. This is
 possible with the <code>CROSS</code> environment variable. For example:</p>
 
-<pre class="sh_unix">
-$ ./configure --host=arm-linux CROSS=my-
+<pre class="sh_unix">$ ./configure --host=arm-linux CROSS=my-
 </pre>
 
 <p>This will use the C compiler, <code>my-cc</code> or <code>my-gcc</code>, the archive tool, <code>my-ar</code>, etc.</p>
@@ -94,26 +88,36 @@ $ ./configure --host=arm-linux CROSS=my-
       <ul>
         
             
+            
+              
+            
             <li><a href="../../">Overview</a></li>
         
+            
             
             <li><a href="../../news/">News</a></li>
         
             
+            
             <li><a href="../../download/">Download</a></li>
         
+            
             
             <li><a href="../">Running autosetup</a></li>
         
             
+            
             <li><a href="../../developer/">Developing</a></li>
         
+            
             
             <li><a href="../../developer/examples/">Examples</a></li>
         
             
+            
             <li><a href="../../license/">License</a></li>
         
+            
             
             <li><a href="../../why/">Motivation</a></li>
         
@@ -127,5 +131,6 @@ $ ./configure --host=arm-linux CROSS=my-
     </div>
     
     <script language="javascript">sh_highlightDocument();</script>
-  </body>
-</html>
+  
+
+</body></html>

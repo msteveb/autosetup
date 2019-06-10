@@ -1,7 +1,4 @@
-<!DOCTYPE HTML>
-<html lang="en">
-  <head>
-<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<!DOCTYPE html><html lang="en"><head>
     <meta charset="utf-8">
     <title>autosetup - News</title>
     <link rel="stylesheet" type="text/css" href="../css/style.css" media="screen">
@@ -24,7 +21,7 @@
  	  })();
  	</script>
  	
-    <meta name="generator" content="nanoc 3.1.6">
+    <meta name="generator" content="Nanoc 4.11.5">
   </head>
   <body>
     <div id="header">
@@ -37,11 +34,11 @@
         <a id="rss" title="News RSS Feed" href="../feed.xml"><img src="../img/rssicon.png"></a>
         
         
-            <a href="../">Overview</a> 
+            <a href="../">Overview</a>
             » 
         
-            <a href="./">News</a> 
-             
+            <a href="./">News</a>
+            
         
         </div>
         <div class="main" id="news">
@@ -63,8 +60,7 @@ file to an auto.def file.</p>
 
 <p>Consider the following migration of <a href="http://tinytcl.sourceforge.net/">tinytcl</a>:</p>
 
-<pre class="sh_unix">
-$ cd tinytcl
+<pre class="sh_unix">$ cd tinytcl
 $ ~/src/autosetup.git/migrate-autoconf
 Migrating configure.ac to auto.def
 Created auto.def. Now edit to resolve items marked XXX
@@ -78,8 +74,7 @@ I will overwrite the existing configure because you used --force.
 
 <p>Now the migrated auto.def can be edited. Before editing it looks something like this:</p>
 
-<pre class="sh_autosetup">
-# Created by migrate-autoconf - fix items marked XXX
+<pre class="sh_autosetup"># Created by migrate-autoconf - fix items marked XXX
 
 use cc cc-lib
 
@@ -116,8 +111,7 @@ if {[opt-bool shared]} {
 
 <p>After editing, <em>auto.def</em> looks more like:</p>
 
-<pre class="sh_autosetup">
-...
+<pre class="sh_autosetup">...
 define TARGET_PLATFORM [get-define host]
 
 define TINYTCL_IS_STATIC 1
@@ -182,8 +176,7 @@ such as the use of backlashes in paths.</p>
 
 <p><strong>autosetup running under the MSYS bash shell</strong></p>
 
-<pre class="sh_unix">
-$ cd examples/typical
+<pre class="sh_unix">$ cd examples/typical
 $ ./configure
 No installed jimsh or tclsh, building local bootstrap jimsh0
 Host System...i686-pc-mingw32
@@ -267,6 +260,7 @@ Find it on github at <a href="https://github.com/msteveb/autosetup/">https://git
 
 <p><a href="../articles/">See All News Articles »</a></p>
 
+
         </div>
     </div>
     <div id="sidebar">
@@ -274,26 +268,36 @@ Find it on github at <a href="https://github.com/msteveb/autosetup/">https://git
       <ul>
         
             
+            
+              
+            
             <li><a href="../">Overview</a></li>
         
             
-            <li><span class="active" title="You're here.">News</span></li>
+            
+            <li><span class="active">News</span></li>
         
+            
             
             <li><a href="../download/">Download</a></li>
         
             
+            
             <li><a href="../user/">Running autosetup</a></li>
         
+            
             
             <li><a href="../developer/">Developing</a></li>
         
             
+            
             <li><a href="../developer/examples/">Examples</a></li>
         
             
+            
             <li><a href="../license/">License</a></li>
         
+            
             
             <li><a href="../why/">Motivation</a></li>
         
@@ -307,5 +311,6 @@ Find it on github at <a href="https://github.com/msteveb/autosetup/">https://git
     </div>
     
     <script language="javascript">sh_highlightDocument();</script>
-  </body>
-</html>
+  
+
+</body></html>

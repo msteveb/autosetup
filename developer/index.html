@@ -1,7 +1,4 @@
-<!DOCTYPE HTML>
-<html lang="en">
-  <head>
-<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<!DOCTYPE html><html lang="en"><head>
     <meta charset="utf-8">
     <title>autosetup - Developing with autosetup</title>
     <link rel="stylesheet" type="text/css" href="../css/style.css" media="screen">
@@ -22,7 +19,7 @@
  	  })();
  	</script>
  	
-    <meta name="generator" content="nanoc 3.1.6">
+    <meta name="generator" content="Nanoc 4.11.5">
   </head>
   <body>
     <div id="header">
@@ -33,11 +30,11 @@
         <div class="breadcrumbs">
         
         
-            <a href="../">Overview</a> 
+            <a href="../">Overview</a>
             » 
         
-            <a href="./">Developing with autosetup</a> 
-             
+            <a href="./">Developing with autosetup</a>
+            
         
         </div>
         <div class="main" id="main">
@@ -138,8 +135,7 @@ This file consists of the following sections.</p>
 
 <p>A typical, simple auto.def file is:</p>
 
-<pre class="sh_autosetup">
-use cc
+<pre class="sh_autosetup">use cc
 
 options {
     shared =&gt; "build a shared library"
@@ -175,8 +171,7 @@ modules can be created.</p>
 
 <p>A typical <code>use</code> declaration is:</p>
 
-<pre class="sh_autosetup">
-# The C/C++ compiler will be used and shared libraries may be needed
+<pre class="sh_autosetup"># The C/C++ compiler will be used and shared libraries may be needed
 use cc cc-shared
 </pre>
 
@@ -197,8 +192,7 @@ ensures that <code>configure --help</code> behaves correctly.</p>
 
 <p>Options are declared as follows.</p>
 
-<pre class="sh_autosetup">
-options {
+<pre class="sh_autosetup">options {
     boolopt            =&gt; "a boolean option which defaults to disabled"
     boolopt2=1         =&gt; "a boolean option which defaults to enabled"
     stringopt:         =&gt; "an option which takes an argument, e.g. --stringopt=value"
@@ -227,8 +221,7 @@ specified.</p>
 <p><code>configure --help</code> automatically displays appropriately formatted help for the declared options.
 The example above gives.</p>
 
-<pre class="sh_unix">
-$ ./configure --help
+<pre class="sh_unix">$ ./configure --help
 ...standard help...
   Local Options:
   --boolopt             a boolean option which defaults to disabled
@@ -260,17 +253,13 @@ SIZEOF_LONG_LONG=8
 <p>These <strong>defines</strong>, or <em>configuration variables</em> fall into three broad categories:</p>
 
 <ol>
-  <li>Standard system <strong>defines</strong> are lower case, such as <code>srcdir</code>, <code>host_alias</code> and <code>prefix</code>
-</li>
+  <li>Standard system <strong>defines</strong> are lower case, such as <code>srcdir</code>, <code>host_alias</code> and <code>prefix</code></li>
   <li>Commands, libraries and flags which would typically be substituted in a Makefile are
-uppercase, such as <code>CC</code>, <code>LIBS</code> and <code>CFLAGS</code>
-</li>
-  <li>
-<em>Feature</em> tests are boolean values in uppercase, always start with HAVE_ and have the value 0 or 1.
+uppercase, such as <code>CC</code>, <code>LIBS</code> and <code>CFLAGS</code></li>
+  <li><em>Feature</em> tests are boolean values in uppercase, always start with HAVE_ and have the value 0 or 1.
 For example, <code>HAVE_STDLIB_H</code>, <code>HAVE_REGCOMP</code> and <code>HAVE_LONG_LONG</code>. Note that a standard naming
 convention is used such that a test for <code>stdlib.h</code> sets <code>HAVE_STDLIB_H</code>, a test for the function <code>regcomp</code>
-sets <code>HAVE_REGCOMP</code> and a test for the type <code>long long</code> defines <code>HAVE_LONG_LONG</code>
-</li>
+sets <code>HAVE_REGCOMP</code> and a test for the type <code>long long</code> defines <code>HAVE_LONG_LONG</code></li>
 </ol>
 
 <p>In addition, <code>cc-check-sizeof</code> sets a numeric value and uses the SIZEOF_ prefix rather than the HAVE_ prefix.</p>
@@ -284,8 +273,7 @@ for setting <strong>defines</strong> (see the command reference for full details
 <p>The <code>define</code> and <code>define-feature</code> commands directly define a value. Note that <code>define-feature</code>
 automatically applies the <em>feature</em> naming convention.</p>
 
-<pre class="sh_autosetup">
-define VERSION 1.1.3
+<pre class="sh_autosetup">define VERSION 1.1.3
 if {[opt-bool utf8]} {
     define USE_UTF8
 }
@@ -299,8 +287,7 @@ be checked with <code>opt-bool</code> and <code>opt-val</code>.</p>
 
 <p>The <code>cc-xxx</code> commands run the C or C++ compiler and define <em>features</em> based on the results.</p>
 
-<pre class="sh_autosetup">
-cc-check-types "long long"
+<pre class="sh_autosetup">cc-check-types "long long"
 cc-check-includes sys/un.h dlfcn.h
 cc-check-functions ualarm sysinfo lstat fork vfork
 cc-check-tools ar ranlib strip
@@ -371,6 +358,7 @@ variables in Makefile format.</p>
 <li><a href="sysinstall/">System-wide Install</a></li>
 </ul>
 
+
         </div>
     </div>
     <div id="sidebar">
@@ -378,26 +366,36 @@ variables in Makefile format.</p>
       <ul>
         
             
+            
+              
+            
             <li><a href="../">Overview</a></li>
         
+            
             
             <li><a href="../news/">News</a></li>
         
             
+            
             <li><a href="../download/">Download</a></li>
         
+            
             
             <li><a href="../user/">Running autosetup</a></li>
         
             
-            <li><span class="active" title="You're here.">Developing</span></li>
+            
+            <li><span class="active">Developing</span></li>
         
+            
             
             <li><a href="examples/">Examples</a></li>
         
             
+            
             <li><a href="../license/">License</a></li>
         
+            
             
             <li><a href="../why/">Motivation</a></li>
         
@@ -411,8 +409,7 @@ variables in Makefile format.</p>
     </div>
     
 	<div href="#" id="related" onmouseover="show_related(1)" onmouseout="show_related(0)">
-		<h2>
-<img id="star" width="16" height="18" src="../img/star16.png"> Related Topics</h2>
+		<h2><img id="star" width="16" height="18" src="../img/star16.png"> Related Topics</h2>
 		<div id="related_menu" style="display: none">
 		<ul>
 <li><a href="reference/">Command Reference</a></li>
@@ -432,5 +429,6 @@ variables in Makefile format.</p>
 	</script>
     
     <script language="javascript">sh_highlightDocument();</script>
-  </body>
-</html>
+  
+
+</body></html>

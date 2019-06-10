@@ -1,7 +1,4 @@
-<!DOCTYPE HTML>
-<html lang="en">
-  <head>
-<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<!DOCTYPE html><html lang="en"><head>
     <meta charset="utf-8">
     <title>autosetup - Installing</title>
     <link rel="stylesheet" type="text/css" href="../../css/style.css" media="screen">
@@ -22,7 +19,7 @@
  	  })();
  	</script>
  	
-    <meta name="generator" content="nanoc 3.1.6">
+    <meta name="generator" content="Nanoc 4.11.5">
   </head>
   <body>
     <div id="header">
@@ -33,14 +30,14 @@
         <div class="breadcrumbs">
         
         
-            <a href="../../">Overview</a> 
+            <a href="../../">Overview</a>
             » 
         
-            <a href="../">Running autosetup</a> 
+            <a href="../">Running autosetup</a>
             » 
         
-            <a href="./">Installing</a> 
-             
+            <a href="./">Installing</a>
+            
         
         </div>
         <div class="main" id="main">
@@ -51,8 +48,7 @@
 If the project follows the <strong>autoconf</strong> conventions, two settings may be used
 to control where the build results are installed, <code>--prefix</code> and <code>$DESTDIR</code>.</p>
 
-<h2 id="using---prefix">Using <code>--prefix</code>
-</h2>
+<h2 id="using---prefix">Using <code>--prefix</code></h2>
 
 <p>By default, the install prefix is set to <code>/usr/local</code>. This means that binaries
 are installed to <code>/usr/local/bin</code>, manual pages to <code>/usr/local/man</code>, etc.</p>
@@ -69,8 +65,7 @@ so it should match the actual target destination.</p>
 under which the build results are installed. This is an <strong>install time</strong> environment variable, not
 a <strong>configure time</strong> environment variable. Consider:</p>
 
-<pre class="sh_unix">
-$ ./configure --prefix=/usr
+<pre class="sh_unix">$ ./configure --prefix=/usr
 $ make DESTDIR=/tmp/staging install
 </pre>
 
@@ -102,26 +97,36 @@ options, and their use is discouraged.</p>
       <ul>
         
             
+            
+              
+            
             <li><a href="../../">Overview</a></li>
         
+            
             
             <li><a href="../../news/">News</a></li>
         
             
+            
             <li><a href="../../download/">Download</a></li>
         
+            
             
             <li><a href="../">Running autosetup</a></li>
         
             
+            
             <li><a href="../../developer/">Developing</a></li>
         
+            
             
             <li><a href="../../developer/examples/">Examples</a></li>
         
             
+            
             <li><a href="../../license/">License</a></li>
         
+            
             
             <li><a href="../../why/">Motivation</a></li>
         
@@ -135,5 +140,6 @@ options, and their use is discouraged.</p>
     </div>
     
     <script language="javascript">sh_highlightDocument();</script>
-  </body>
-</html>
+  
+
+</body></html>

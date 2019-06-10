@@ -1,7 +1,4 @@
-<!DOCTYPE HTML>
-<html lang="en">
-  <head>
-<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<!DOCTYPE html><html lang="en"><head>
     <meta charset="utf-8">
     <title>autosetup - Examples</title>
     <link rel="stylesheet" type="text/css" href="../../css/style.css" media="screen">
@@ -22,7 +19,7 @@
  	  })();
  	</script>
  	
-    <meta name="generator" content="nanoc 3.1.6">
+    <meta name="generator" content="Nanoc 4.11.5">
   </head>
   <body>
     <div id="header">
@@ -33,14 +30,14 @@
         <div class="breadcrumbs">
         
         
-            <a href="../../">Overview</a> 
+            <a href="../../">Overview</a>
             » 
         
-            <a href="../">Developing with autosetup</a> 
+            <a href="../">Developing with autosetup</a>
             » 
         
-            <a href="./">Examples</a> 
-             
+            <a href="./">Examples</a>
+            
         
         </div>
         <div class="main" id="main">
@@ -51,8 +48,7 @@
 
 <p>This is a typical example of an <code>auto.def</code> file.</p>
 
-<pre class="sh_autosetup">
-use cc cc-shared
+<pre class="sh_autosetup">use cc cc-shared
 
 options {
     shared -&gt; "Build a shared library rather than a static library"
@@ -94,10 +90,10 @@ make-template Makefile.in
 </pre>
 
 <h2 id="redis">redis</h2>
+
 <p>The following example is from <a href="http://redis.io/">redis</a></p>
 
-<pre class="sh_autosetup">
-use cc
+<pre class="sh_autosetup">use cc
 
 # Add any user options here
 options {
@@ -176,8 +172,7 @@ simpler to implement in Tcl rather than shell script.</p>
 <p>Also note that two header files are generated, one for internal use and one
 for external use.</p>
 
-<pre class="sh_autosetup">
-# Note: modules which support options *must* be included before 'options'
+<pre class="sh_autosetup"># Note: modules which support options *must* be included before 'options'
 use cc cc-shared
 
 options {
@@ -523,26 +518,36 @@ make-template Makefile.in
       <ul>
         
             
+            
+              
+            
             <li><a href="../../">Overview</a></li>
         
+            
             
             <li><a href="../../news/">News</a></li>
         
             
+            
             <li><a href="../../download/">Download</a></li>
         
+            
             
             <li><a href="../../user/">Running autosetup</a></li>
         
             
+            
             <li><a href="../">Developing</a></li>
         
             
-            <li><span class="active" title="You're here.">Examples</span></li>
+            
+            <li><span class="active">Examples</span></li>
         
+            
             
             <li><a href="../../license/">License</a></li>
         
+            
             
             <li><a href="../../why/">Motivation</a></li>
         
@@ -556,5 +561,6 @@ make-template Makefile.in
     </div>
     
     <script language="javascript">sh_highlightDocument();</script>
-  </body>
-</html>
+  
+
+</body></html>

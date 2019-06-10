@@ -1,7 +1,4 @@
-<!DOCTYPE HTML>
-<html lang="en">
-  <head>
-<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<!DOCTYPE html><html lang="en"><head>
     <meta charset="utf-8">
     <title>autosetup - Build Out-of-Tree</title>
     <link rel="stylesheet" type="text/css" href="../../css/style.css" media="screen">
@@ -22,7 +19,7 @@
  	  })();
  	</script>
  	
-    <meta name="generator" content="nanoc 3.1.6">
+    <meta name="generator" content="Nanoc 4.11.5">
   </head>
   <body>
     <div id="header">
@@ -33,14 +30,14 @@
         <div class="breadcrumbs">
         
         
-            <a href="../../">Overview</a> 
+            <a href="../../">Overview</a>
             » 
         
-            <a href="../">Running autosetup</a> 
+            <a href="../">Running autosetup</a>
             » 
         
-            <a href="./">Build Out-of-Tree</a> 
-             
+            <a href="./">Build Out-of-Tree</a>
+            
         
         </div>
         <div class="main" id="main">
@@ -58,8 +55,7 @@ an empty directory other than the top of the source tree.</p>
 
 <p>For example, to create a debug build in the <code>build-debug</code> directory:</p>
 
-<pre class="sh_unix">
-$ mkdir build-debug
+<pre class="sh_unix">$ mkdir build-debug
 $ cd build-debug
 $ ../configure CFLAGS="-g -O0"
 $ make
@@ -68,8 +64,7 @@ $ cd ..
 
 <p>And to create a release build in the <code>build-release</code> directory:</p>
 
-<pre class="sh_unix">
-$ mkdir build-release
+<pre class="sh_unix">$ mkdir build-release
 $ cd build-release
 $ ../configure CFLAGS="-O2"
 $ make
@@ -80,11 +75,9 @@ $ cd ..
 
 <ul>
   <li>The project must be enabled for out-of-tree builds, typically with the
-user of <code>VPATH</code> if using <code>make</code>
-</li>
+user of <code>VPATH</code> if using <code>make</code></li>
   <li>The source tree should be clean (i.e. no build should be done in the
-original source directory), otherwise it will confuse <code>make</code>
-</li>
+original source directory), otherwise it will confuse <code>make</code></li>
 </ul>
 
         </div>
@@ -94,26 +87,36 @@ original source directory), otherwise it will confuse <code>make</code>
       <ul>
         
             
+            
+              
+            
             <li><a href="../../">Overview</a></li>
         
+            
             
             <li><a href="../../news/">News</a></li>
         
             
+            
             <li><a href="../../download/">Download</a></li>
         
+            
             
             <li><a href="../">Running autosetup</a></li>
         
             
+            
             <li><a href="../../developer/">Developing</a></li>
         
+            
             
             <li><a href="../../developer/examples/">Examples</a></li>
         
             
+            
             <li><a href="../../license/">License</a></li>
         
+            
             
             <li><a href="../../why/">Motivation</a></li>
         
@@ -127,5 +130,6 @@ original source directory), otherwise it will confuse <code>make</code>
     </div>
     
     <script language="javascript">sh_highlightDocument();</script>
-  </body>
-</html>
+  
+
+</body></html>

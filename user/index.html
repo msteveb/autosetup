@@ -1,7 +1,4 @@
-<!DOCTYPE HTML>
-<html lang="en">
-  <head>
-<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<!DOCTYPE html><html lang="en"><head>
     <meta charset="utf-8">
     <title>autosetup - Running autosetup</title>
     <link rel="stylesheet" type="text/css" href="../css/style.css" media="screen">
@@ -22,7 +19,7 @@
  	  })();
  	</script>
  	
-    <meta name="generator" content="nanoc 3.1.6">
+    <meta name="generator" content="Nanoc 4.11.5">
   </head>
   <body>
     <div id="header">
@@ -33,11 +30,11 @@
         <div class="breadcrumbs">
         
         
-            <a href="../">Overview</a> 
+            <a href="../">Overview</a>
             » 
         
-            <a href="./">Running autosetup</a> 
-             
+            <a href="./">Running autosetup</a>
+            
         
         </div>
         <div class="main" id="main">
@@ -57,14 +54,12 @@ an <strong>autoconf</strong>-enabled project except it is faster and simpler.</p
 an <strong>autosetup</strong> control file, <code>auto.def</code> at the top level. <strong>autosetup</strong> is invoked
 via the <code>configure</code> script.</p>
 
-<pre class="sh_unix">
-$ ./configure
+<pre class="sh_unix">$ ./configure
 </pre>
 
 <p>A more complex example might be:</p>
 
-<pre class="sh_unix">
-$ ./configure --host=arm-linux --utf8 --with-ext="regexp tree" --prefix=/usr CFLAGS="-g -Os"
+<pre class="sh_unix">$ ./configure --host=arm-linux --utf8 --with-ext="regexp tree" --prefix=/usr CFLAGS="-g -Os"
 </pre>
 
 <h2 id="configuring">Configuring</h2>
@@ -105,8 +100,7 @@ standard <strong>autosetup</strong> options and project-specific options.</p>
 options. Once the configuration process is complete, <code>make</code> is typically used to build
 the project. Thus the typical configuration and build process is:</p>
 
-<pre class="sh_unix">
-$ ./configure
+<pre class="sh_unix">$ ./configure
 ...output...
 $ make
 ...output...
@@ -168,8 +162,7 @@ variable settings after any options.</p>
 
 <p>From example, consider the following:</p>
 
-<pre class="sh_unix">
-$ ./configure --utf8 CFLAGS="-Os"
+<pre class="sh_unix">$ ./configure --utf8 CFLAGS="-Os"
 </pre>
 
 <p>In this case, the setting for CFLAGS overrides the default (-g -O2).</p>
@@ -214,6 +207,7 @@ LD
 <li><a href="installing/">Installing</a></li>
 </ul>
 
+
         </div>
     </div>
     <div id="sidebar">
@@ -221,26 +215,36 @@ LD
       <ul>
         
             
+            
+              
+            
             <li><a href="../">Overview</a></li>
         
+            
             
             <li><a href="../news/">News</a></li>
         
             
+            
             <li><a href="../download/">Download</a></li>
         
             
-            <li><span class="active" title="You're here.">Running autosetup</span></li>
+            
+            <li><span class="active">Running autosetup</span></li>
         
+            
             
             <li><a href="../developer/">Developing</a></li>
         
             
+            
             <li><a href="../developer/examples/">Examples</a></li>
         
             
+            
             <li><a href="../license/">License</a></li>
         
+            
             
             <li><a href="../why/">Motivation</a></li>
         
@@ -254,8 +258,7 @@ LD
     </div>
     
 	<div href="#" id="related" onmouseover="show_related(1)" onmouseout="show_related(0)">
-		<h2>
-<img id="star" width="16" height="18" src="../img/star16.png"> Related Topics</h2>
+		<h2><img id="star" width="16" height="18" src="../img/star16.png"> Related Topics</h2>
 		<div id="related_menu" style="display: none">
 		<ul>
 <li><a href="outoftree/">Build Out-of-Tree</a></li>
@@ -273,5 +276,6 @@ LD
 	</script>
     
     <script language="javascript">sh_highlightDocument();</script>
-  </body>
-</html>
+  
+
+</body></html>

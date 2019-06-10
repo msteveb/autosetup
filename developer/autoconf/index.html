@@ -1,7 +1,4 @@
-<!DOCTYPE HTML>
-<html lang="en">
-  <head>
-<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<!DOCTYPE html><html lang="en"><head>
     <meta charset="utf-8">
     <title>autosetup - autoconf Comparison</title>
     <link rel="stylesheet" type="text/css" href="../../css/style.css" media="screen">
@@ -22,7 +19,7 @@
  	  })();
  	</script>
  	
-    <meta name="generator" content="nanoc 3.1.6">
+    <meta name="generator" content="Nanoc 4.11.5">
   </head>
   <body>
     <div id="header">
@@ -33,14 +30,14 @@
         <div class="breadcrumbs">
         
         
-            <a href="../../">Overview</a> 
+            <a href="../../">Overview</a>
             » 
         
-            <a href="../">Developing with autosetup</a> 
+            <a href="../">Developing with autosetup</a>
             » 
         
-            <a href="./">autoconf Comparison</a> 
-             
+            <a href="./">autoconf Comparison</a>
+            
         
         </div>
         <div class="main" id="main">
@@ -60,15 +57,9 @@
 which in turn produces executables witch run on architecture <strong>T</strong>, the relationship is:</p>
 
 <ul>
-  <li>
-<code>--build  =&gt;</code> <strong>B</strong>
-</li>
-  <li>
-<code>--host   =&gt;</code> <strong>H</strong>
-</li>
-  <li>
-<code>--target =&gt;</code> <strong>T</strong>
-</li>
+  <li><code>--build  =&gt;</code> <strong>B</strong></li>
+  <li><code>--host   =&gt;</code> <strong>H</strong></li>
+  <li><code>--target =&gt;</code> <strong>T</strong></li>
 </ul>
 
 <p><strong>autosetup</strong> guesses the build architecture by running <code>config.guess</code>, but in any case the build architecture
@@ -84,15 +75,13 @@ is almost never necessary.</p>
 <p><strong>autoconf</strong> allows individual tests to be overridded by setting the corresponding environment
 variable directly. e.g.</p>
 
-<pre class="sh_unix">
-$ ac_cv_func_malloc_0_nonnull=yes ./configure
+<pre class="sh_unix">$ ac_cv_func_malloc_0_nonnull=yes ./configure
 </pre>
 
 <p><strong>autosetup</strong> does not allow tests to be overridden. If settings cannot be detected reliably, developers
 should provide explicit options to specify the result. e.g.</p>
 
-<pre class="sh_unix">
-$ ./configure --malloc-zero-nonnull
+<pre class="sh_unix">$ ./configure --malloc-zero-nonnull
 </pre>
 
 <h2 id="developer-level-differences">Developer-level Differences</h2>
@@ -144,8 +133,7 @@ and mingw on Windows.</p>
 
 <p>The equalivalent of AC_PROG_xxxx is the flexible <code>cc-check-progs</code></p>
 
-<pre class="sh_autosetup">
-if {![cc-check-progs grep]} {
+<pre class="sh_autosetup">if {![cc-check-progs grep]} {
     user-error "You don't have grep, but we need it"
 }
 foreach prog {gawk mawk nawk awk false} {
@@ -165,8 +153,7 @@ foreach prog {gawk mawk nawk awk false} {
 
 <p>Instead consider something like the following.</p>
 
-<pre class="sh_autosetup">
-# auto.def: Check all functions
+<pre class="sh_autosetup"># auto.def: Check all functions
 cc-check-functions strtod backtrace
 
 /* replacements.c */
@@ -178,8 +165,7 @@ double strtod(...) { /* implementation */ }
 
 <p>Alternatively, implement each missing function in it’s own file.</p>
 
-<pre class="sh_autosetup">
-define EXTRA_OBJS ""
+<pre class="sh_autosetup">define EXTRA_OBJS ""
 foreach f {strtod backtrace} {
     if {![cc-check-functions $f]} {
         define-append EXTRA_OBJS $f.o
@@ -195,8 +181,7 @@ standard includes conflict with the code being tested. For this
 reason, autosetup compile tests use no standard includes. If includes
 are required, they should be added explicitly.</p>
 
-<pre class="sh_autosetup">
-cc-check-includes sys/socket.h sys/stat.h
+<pre class="sh_autosetup">cc-check-includes sys/socket.h sys/stat.h
 cc-with {-includes sys/socket.h} {
     cc-check-members "struct msghdr.msg_control"
 }
@@ -211,14 +196,12 @@ cc-with {-includes sys/stat.h} {
 any include files which have been checked and do not exist. If any
 includes have been specified but not checked, a warning is given.</p>
 
-<pre class="sh_autosetup">
-cc-with {-includes sys/socket.h} {
+<pre class="sh_autosetup">cc-with {-includes sys/socket.h} {
     cc-check-members "struct msghdr.msg_control"
 }
 </pre>
 
-<pre class="sh_unix">
-$ ./configure
+<pre class="sh_unix">$ ./configure
 Warning: using #include &lt;sys/socket.h&gt; which has not been checked -- ignoring
 </pre>
 
@@ -229,26 +212,36 @@ Warning: using #include &lt;sys/socket.h&gt; which has not been checked -- ignor
       <ul>
         
             
+            
+              
+            
             <li><a href="../../">Overview</a></li>
         
+            
             
             <li><a href="../../news/">News</a></li>
         
             
+            
             <li><a href="../../download/">Download</a></li>
         
+            
             
             <li><a href="../../user/">Running autosetup</a></li>
         
             
+            
             <li><a href="../">Developing</a></li>
         
+            
             
             <li><a href="../examples/">Examples</a></li>
         
             
+            
             <li><a href="../../license/">License</a></li>
         
+            
             
             <li><a href="../../why/">Motivation</a></li>
         
@@ -262,5 +255,6 @@ Warning: using #include &lt;sys/socket.h&gt; which has not been checked -- ignor
     </div>
     
     <script language="javascript">sh_highlightDocument();</script>
-  </body>
-</html>
+  
+
+</body></html>
