@@ -42,7 +42,7 @@
         </div>
         <div class="main" id="main">
         
-        <h1 id="autosetup-v067----command-reference">autosetup v0.6.7 – Command Reference</h1>
+        <h1 id="autosetup-v069----command-reference">autosetup v0.6.9 – Command Reference</h1>
 
 <h2 id="introduction">Introduction</h2>
 
@@ -62,12 +62,37 @@
 
 <h3 id="opt-val-optionlist-default"><code>opt-val optionlist ?default=""?</code></h3>
 
-<p>Returns a list containing all the values given for the non-boolean options in <strong><code>$optionlist</code></strong>. There will be one entry in the list for each option given by the user, including if the same option was used multiple times. If only a single value is required, use something like:</p>
-
-<pre><code>lindex [opt-val $names] end
-</code></pre>
+<p>Returns a list containing all the values given for the non-boolean options in <strong><code>$optionlist</code></strong>. There will be one entry in the list for each option given by the user, including if the same option was used multiple times.</p>
 
 <p>If no options were set, <strong><code>$default</code></strong> is returned (exactly, not as a list).</p>
+
+<p>Note: For most use cases, <strong><code>opt-str</code></strong> should be preferred.</p>
+
+<h3 id="opt-str-optionlist-varname-default"><code>opt-str optionlist varname ?default?</code></h3>
+
+<p>Sets <strong><code>$varname</code></strong> in the callers scope to the value for one of the given options.</p>
+
+<p>For the list of options given in <strong><code>$optionlist</code></strong>, if any value is set for any option, the option value is taken to be the <em>last</em> value of the last option (in the order given).</p>
+
+<p>If no option was given, and a default was specified with <strong><code>options-defaults</code></strong>, that value is used.</p>
+
+<p>If no <strong><code>options-defaults</code></strong> value was given and <strong><code>$default</code></strong> was given, it is used.</p>
+
+<p>If none of the above provided a value, no value is set.</p>
+
+<p>The return value depends on whether <strong><code>$default</code></strong> was specified. If it was, the option value is returned. If it was not, 1 is returns if a value was set, or 0 if not.</p>
+
+<p>Typical usage is as follows:</p>
+
+<pre><code>if {[opt-str {myopt altname} o]} {
+    do something with $o
+}
+</code></pre>
+
+<p>Or:</p>
+
+<pre><code>define myname [opt-str {myopt altname} o "/usr/local"]
+</code></pre>
 
 <h3 id="module-options-optionlist"><code>module-options optionlist</code></h3>
 
@@ -75,7 +100,7 @@
 
 <h3 id="options-optionspec"><code>options optionspec</code></h3>
 
-<p>Specifies configuration-time options which may be selected by the user and checked with <strong><code>opt-val</code></strong> and <strong><code>opt-bool</code></strong>. <strong><code>$optionspec</code></strong> contains a series of options specifications separated by newlines, as follows:</p>
+<p>Specifies configuration-time options which may be selected by the user and checked with <strong><code>opt-str</code></strong> and <strong><code>opt-bool</code></strong>. <strong><code>$optionspec</code></strong> contains a series of options specifications separated by newlines, as follows:</p>
 
 <p>A boolean option is of the form:</p>
 
@@ -91,12 +116,18 @@
 
 <p>If the <strong><code>name:value</code></strong> form is used, the value must be provided with the option (as <strong><code>--name=myvalue</code></strong>). If the <strong><code>name:=value</code></strong> form is used, the value is optional and the given value is used as the default if it is not provided.</p>
 
+<p>The description may contain <strong><code>@default@</code></strong>, in which case it will be replaced with the default value for the option (taking into account defaults specified with <strong><code>options-defaults</code></strong>.</p>
+
 <p>Undocumented options are also supported by omitting the <strong><code>=&gt; description</code></strong>. These options are not displayed with <strong><code>--help</code></strong> and can be useful for internal options or as aliases.</p>
 
 <p>For example, <strong><code>--disable-lfs</code></strong> is an alias for <strong><code>--disable=largefile</code></strong>:</p>
 
 <pre><code>lfs=1 largefile=1 =&gt; "Disable large file support"
 </code></pre>
+
+<h3 id="options-defaults-dictionary"><code>options-defaults dictionary</code></h3>
+
+<p>Specifies a dictionary of options and a new default value for each of those options. Use before any <strong><code>use</code></strong> statements in <strong><code>auto.def</code></strong> to change the defaults for subsequently included modules.</p>
 
 <h3 id="define-name-value1"><code>define name ?value=1?</code></h3>
 
@@ -117,6 +148,10 @@
 <h3 id="is-defined-name"><code>is-defined name</code></h3>
 
 <p>Returns 1 if the given variable is defined.</p>
+
+<h3 id="is-define-set-name"><code>is-define-set name</code></h3>
+
+<p>Returns 1 if the given variable is defined and is set to a value other than “” or 0</p>
 
 <h3 id="all-defines"><code>all-defines</code></h3>
 
@@ -139,6 +174,14 @@
 <h3 id="writefile-filename-value"><code>writefile filename value</code></h3>
 
 <p>Creates the given file containing <strong><code>$value</code></strong>. Does not add an extra newline.</p>
+
+<h3 id="list-non-empty-list"><code>list-non-empty list</code></h3>
+
+<p>Returns a copy of the given list with empty elements removed</p>
+
+<h3 id="find-executable-path-name"><code>find-executable-path name</code></h3>
+
+<p>Searches the path for an executable with the given name. Note that the name may include some parameters, e.g. <strong><code>cc -mbig-endian</code></strong>, in which case the parameters are ignored. The full path to the executable if found, or “” if not found. Returns 1 if found, or 0 if not.</p>
 
 <h3 id="find-executable-name"><code>find-executable name</code></h3>
 
@@ -220,6 +263,10 @@
 <pre><code>prefix jim- {a.c b.c} =&gt; {jim-a.c jim-b.c}
 </code></pre>
 
+<h3 id="lpop-list"><code>lpop list</code></h3>
+
+<p>Removes the last entry from the given list and returns it.</p>
+
 <h2 id="module-cc">Module: cc</h2>
 
 <p>The <strong><code>cc</code></strong> module supports checking various <strong><code>features</code></strong> of the C or C++ compiler/linker environment. Common commands are <strong><code>cc-check-includes</code></strong>, <strong><code>cc-check-types</code></strong>, <strong><code>cc-check-functions</code></strong>, <strong><code>cc-with</code></strong>, <strong><code>make-config-header</code></strong> and <strong><code>make-template</code></strong>.</p>
@@ -228,6 +275,7 @@
 
 <pre><code>CC       - C compiler
 CXX      - C++ compiler
+CPP      - C preprocessor
 CCACHE   - Set to "none" to disable automatic use of ccache
 CFLAGS   - Additional C compiler flags
 CXXFLAGS - Additional C++ compiler flags
@@ -262,7 +310,7 @@ LD
 
 <h3 id="cc-check-defines-define-"><code>cc-check-defines define ...</code></h3>
 
-<p>Checks that the given preprocessor symbol is defined.</p>
+<p>Checks that the given preprocessor symbols are defined.</p>
 
 <h3 id="cc-check-decls-name-"><code>cc-check-decls name ...</code></h3>
 
@@ -303,6 +351,10 @@ LD
 <p>For example, when checking for <strong><code>grep</code></strong>, the path is searched for the executable, <strong><code>grep</code></strong>, and if found <strong><code>GREP</code></strong> is defined as <strong><code>grep</code></strong>.</p>
 
 <p>If the executable is not found, the variable is defined as <strong><code>false</code></strong>. Returns 1 if all programs were found, or 0 otherwise.</p>
+
+<h3 id="cc-path-progs-prog-"><code>cc-path-progs prog ...</code></h3>
+
+<p>Like cc-check-progs, but sets the define to the full path rather than just the program name.</p>
 
 <h3 id="cc-with-settings--script-"><code>cc-with settings ?{ script }?</code></h3>
 
@@ -443,11 +495,13 @@ LD
 <pre><code>SH_CFLAGS         Flags to use compiling sources destined for a shared library
 SH_LDFLAGS        Flags to use linking (creating) a shared library
 SH_SOPREFIX       Prefix to use to set the soname when creating a shared library
+SH_SOFULLPATH     Set to 1 if the shared library soname should include the full install path
 SH_SOEXT          Extension for shared libs
 SH_SOEXTVER       Format for versioned shared libs - %s = version
 SHOBJ_CFLAGS      Flags to use compiling sources destined for a shared object
 SHOBJ_LDFLAGS     Flags to use linking a shared object, undefined symbols allowed
 SHOBJ_LDFLAGS_R   - as above, but all symbols must be resolved
+SH_LINKRPATH      Format for setting the rpath when linking an executable, %s = path
 SH_LINKFLAGS      Flags to use linking an executable which will load shared objects
 LD_LIBRARY_PATH   Environment variable which specifies path to shared libraries
 STRIPLIBFLAGS     Arguments to strip a dynamic library
@@ -550,9 +604,15 @@ includedir
 
 <p>Otherwise a “file is unchanged” message is displayed.</p>
 
+<h3 id="include-file-infile-mapping"><code>include-file infile mapping</code></h3>
+
+<p>The core of make-template, called recursively for each @include directive found within that template so that this proc’s result is the fully-expanded template.</p>
+
+<p>The mapping parameter is how we expand @varname@ within the template. We do that inline within this step only for @include directives which can have variables in the filename arg. A separate substitution pass happens when this recursive function returns, expanding the rest of the variables.</p>
+
 <h3 id="make-template-template-outfile"><code>make-template template ?outfile?</code></h3>
 
-<p>Reads the input file <strong><code>&lt;srcdir&gt;/$template</code></strong> and writes the output file <strong><code>$outfile</code></strong>. If <strong><code>$outfile</code></strong> is blank/omitted, <strong><code>$template</code></strong> should end with <strong><code>.in</code></strong> which is removed to create the output file name.</p>
+<p>Reads the input file <strong><code>&lt;srcdir&gt;/$template</code></strong> and writes the output file <strong><code>$outfile</code></strong> (unless unchanged). If <strong><code>$outfile</code></strong> is blank/omitted, <strong><code>$template</code></strong> should end with <strong><code>.in</code></strong> which is removed to create the output file name.</p>
 
 <p>Each pattern of the form <strong><code>@define@</code></strong> is replaced with the corresponding “define”, if it exists, or left unchanged if not.</p>
 
@@ -560,24 +620,25 @@ includedir
 
 <p>Conditional sections may be specified as follows:</p>
 
-<pre><code>@if name == value
+<pre><code>@if NAME eq "value"
 lines
 @else
 lines
 @endif
 </code></pre>
 
-<p>Where <strong><code>name</code></strong> is a defined variable name and <strong><code>@else</code></strong> is optional. If the expression does not match, all lines through <strong><code>@endif</code></strong> are ignored.</p>
+<p>Where <strong><code>NAME</code></strong> is a defined variable name and <strong><code>@else</code></strong> is optional. Note that variables names <em>must</em> start with an uppercase letter. If the expression does not match, all lines through <strong><code>@endif</code></strong> are ignored.</p>
 
 <p>The alternative forms may also be used:</p>
 
-<pre><code>@if name
-@if name != value
+<pre><code>@if NAME  (true if the variable is defined, but not empty and not "0")
+@if !NAME  (opposite of the form above)
+@if &lt;general-tcl-expression&gt;
 </code></pre>
 
-<p>Where the first form is true if the variable is defined, but not empty nor 0.</p>
+<p>In the general Tcl expression, any words beginning with an uppercase letter are translated into [get-define NAME]</p>
 
-<p>Currently these expressions can’t be nested.</p>
+<p>Expressions may be nested</p>
 
 <h2 id="module-tmake">Module: tmake</h2>
 
