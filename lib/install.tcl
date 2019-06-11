@@ -165,7 +165,9 @@ WRAPPER="$0"; export WRAPPER; "autosetup" "$@"
 		writefile configure \
 {#!/bin/sh
 dir="`dirname "$0"`/autosetup"
-WRAPPER="$0"; export WRAPPER; exec "`"$dir/autosetup-find-tclsh"`" "$dir/autosetup" "$@"
+tclsh=`"$dir/autosetup-find-tclsh"`
+echo "Tclsh: $tclsh"
+WRAPPER="$0"; export WRAPPER; exec "$tclsh" "$dir/autosetup" "$@"
 }
 	}
 	catch {exec chmod 755 configure}
