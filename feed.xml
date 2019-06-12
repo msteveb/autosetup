@@ -107,7 +107,7 @@ significantly speed up migration from autoconf.&lt;/p&gt;
     <updated>2011-07-14T00:00:00Z</updated>
     <link rel="alternate" href="http://msteveb.github.com/autosetup/articles/fossil-adopts-autosetup/" type="text/html">
     <content type="html">&lt;p&gt;Recently the &lt;a href="http://fossil-scm.org/"&gt;Fossil SCM&lt;/a&gt; has been adopted
-by &lt;a href="http://wiki.tcl.tk/"&gt;Tcl/Tk&lt;/a&gt; as a replacement for cvs.  Now the
+by &lt;a href="http://wiki.tcl.tk/"&gt;Tcl/Tk&lt;/a&gt; as a replacement for CVS.  Now the
 Tcl-based &lt;a href="http://msteveb.github.com/autosetup/"&gt;autosetup&lt;/a&gt; has
 been adopted as the development configuration system for
 &lt;a href="http://www.fossil-scm.org/"&gt;Fossil&lt;/a&gt;.&lt;/p&gt;

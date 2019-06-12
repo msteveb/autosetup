@@ -72,7 +72,7 @@ is almost never necessary.</p>
 
 <h3 id="no-override-of-tests">No override of tests</h3>
 
-<p><strong>autoconf</strong> allows individual tests to be overridded by setting the corresponding environment
+<p><strong>autoconf</strong> allows individual tests to be overridden by setting the corresponding environment
 variable directly. e.g.</p>
 
 <pre class="sh_unix">$ ac_cv_func_malloc_0_nonnull=yes ./configure
@@ -131,7 +131,7 @@ and mingw on Windows.</p>
 
 <h3 id="checking-for-programs">Checking for programs</h3>
 
-<p>The equalivalent of AC_PROG_xxxx is the flexible <code>cc-check-progs</code></p>
+<p>The equivalent of AC_PROG_xxxx is the flexible <code>cc-check-progs</code></p>
 
 <pre class="sh_autosetup">if {![cc-check-progs grep]} {
     user-error "You don't have grep, but we need it"
