@@ -144,6 +144,14 @@ test compare-versions-1.3 {two vs three elements equal} {
 	compare-versions 1.1 1.1.0
 } {0}
 
+test compare-versions-1.4 {trailing plus} {
+	compare-versions 1.1.2 1.1.2+
+} {-1}
+
+test compare-versions-1.5 {trailing plus} {
+	compare-versions 1.1.3 1.1.2+
+} {1}
+
 test suffix-1.1 {suffix with a single element} {
 	suffix .c a
 } {a.c}
