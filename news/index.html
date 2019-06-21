@@ -45,6 +45,64 @@
         
         
 <div class="main" id="main">
+<p class="articledate">Friday, 21 June 2019</p>
+<h2 class="news"><a href="../articles/autosetup-069/">autosetup 0.6.9</a></h2>
+
+
+<p><strong>autosetup</strong> v0.6.9 has been released.</p>
+
+<p>As there has been no release notes for a while, here are the changes since v0.6.2</p>
+
+<p>Major improvements:</p>
+
+<ul>
+  <li>make-template: Support nesting, better conditionals, @define and @include</li>
+  <li>Make it possible to use a system-installed autosetup.  e.g. autosetup –sysinstall=/usr/local</li>
+  <li>Add initial pkg-config support</li>
+  <li>Add an extensible init system with autosetup –init=&lt;type&gt;</li>
+</ul>
+
+<p>Minor changes and bug fixes:</p>
+
+<ul>
+  <li>define-append now ignores empty values</li>
+  <li>define-append: improved check for duplicates</li>
+  <li>cc-shared: always use -fPIC</li>
+  <li>cc-shared: Add support for RPATH</li>
+  <li>cc-shared: Add $STRIPLIBFLAGS</li>
+  <li>system: add support for –runstatedir</li>
+  <li>system: add abs_top_srcdir and abs_top_builddir</li>
+  <li>options-defaults provides a way to change the default options from auto.def</li>
+  <li>Never honor prefix for /var, honor only if != /usr for /etc</li>
+  <li>make-template: Don’t write file if unchanged</li>
+  <li>Allow $autosetup_tclsh to select the preferred tclsh</li>
+  <li>Add cc-path-progs</li>
+  <li>cc: drop empty -cflags, -includes, -libs</li>
+  <li>cc: tests should use LIBS and LDFLAGS</li>
+  <li>opt-bool: allow boolean options multiple times</li>
+  <li>opt-bool: accepts -nodefault option</li>
+  <li>cc-lib: add cc-check-alloca and cc-signal-return-type</li>
+  <li>Fix cc-check-members for members of structs</li>
+  <li>Set srcdir to a fully qualified path</li>
+  <li>Add support for undefine</li>
+  <li>Allow –init and –install to be combined</li>
+  <li>Update config.{sub,guess} from automake-1.15</li>
+  <li>Add ‘cctest -nooutput 1’ to consider any compiler output as an error</li>
+</ul>
+
+<p>Incompatibilities introduced:</p>
+
+<ul>
+  <li>Syntax of @if statements has changed in make-template</li>
+  <li>Remove –with-xxx and –without-xxx synonyms</li>
+  <li>opt-val now returns a list</li>
+</ul>
+
+
+
+</div>
+
+<div class="main" id="main">
 <p class="articledate">Tuesday, 19 July 2011</p>
 <h2 class="news"><a href="../articles/autoconf-migration/">Automatic autoconf migration tool</a></h2>
 
@@ -246,18 +304,6 @@ with better, more approachable documentation.</p>
 
 </div>
 
-<div class="main" id="main">
-<p class="articledate">Tuesday, 14 December 2010</p>
-<h2 class="news"><a href="../articles/2010-12-14/">Initial release of autosetup</a></h2>
-
-
-<p>The initial version of <strong>autosetup</strong> — a faster, better autoconf — has been released.
-Find it on github at <a href="https://github.com/msteveb/autosetup/">https://github.com/msteveb/autosetup/</a></p>
-
-
-
-</div>
-
 <p><a href="../articles/">See All News Articles »</a></p>
 
 
@@ -268,36 +314,26 @@ Find it on github at <a href="https://github.com/msteveb/autosetup/">https://git
       <ul>
         
             
-            
-              
-            
             <li><a href="../">Overview</a></li>
         
-            
             
             <li><span class="active">News</span></li>
         
             
-            
             <li><a href="../download/">Download</a></li>
         
-            
             
             <li><a href="../user/">Running autosetup</a></li>
         
             
-            
             <li><a href="../developer/">Developing</a></li>
         
-            
             
             <li><a href="../developer/examples/">Examples</a></li>
         
             
-            
             <li><a href="../license/">License</a></li>
         
-            
             
             <li><a href="../why/">Motivation</a></li>
         

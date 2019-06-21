@@ -2,13 +2,69 @@
 <feed xmlns="http://www.w3.org/2005/Atom" xml:base="http://msteveb.github.com/autosetup/">
   <id>http://msteveb.github.com/autosetup/</id>
   <title>autosetup News</title>
-  <updated>2011-07-19T00:00:00Z</updated>
+  <updated>2019-06-21T00:00:00Z</updated>
   <link rel="alternate" href="http://msteveb.github.com/autosetup/" type="text/html">
   <link rel="self" href="http://msteveb.github.com/autosetup/feed.xml" type="application/atom+xml">
   <author>
     <name>steveb@workware.net.au</name>
     <uri>mailto:steveb@workware.net.au</uri>
   </author>
+  <entry>
+    <id>tag:msteveb.github.com,2019-06-21:/autosetup/articles/autosetup-069/</id>
+    <title type="html">autosetup 0.6.9</title>
+    <published>2019-06-21T00:00:00Z</published>
+    <updated>2019-06-21T00:00:00Z</updated>
+    <link rel="alternate" href="http://msteveb.github.com/autosetup/articles/autosetup-069/" type="text/html">
+    <content type="html">&lt;p&gt;&lt;strong&gt;autosetup&lt;/strong&gt; v0.6.9 has been released.&lt;/p&gt;
+
+&lt;p&gt;As there has been no release notes for a while, here are the changes since v0.6.2&lt;/p&gt;
+
+&lt;p&gt;Major improvements:&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;make-template: Support nesting, better conditionals, @define and @include&lt;/li&gt;
+  &lt;li&gt;Make it possible to use a system-installed autosetup.  e.g. autosetup –sysinstall=/usr/local&lt;/li&gt;
+  &lt;li&gt;Add initial pkg-config support&lt;/li&gt;
+  &lt;li&gt;Add an extensible init system with autosetup –init=&amp;lt;type&amp;gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;Minor changes and bug fixes:&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;define-append now ignores empty values&lt;/li&gt;
+  &lt;li&gt;define-append: improved check for duplicates&lt;/li&gt;
+  &lt;li&gt;cc-shared: always use -fPIC&lt;/li&gt;
+  &lt;li&gt;cc-shared: Add support for RPATH&lt;/li&gt;
+  &lt;li&gt;cc-shared: Add $STRIPLIBFLAGS&lt;/li&gt;
+  &lt;li&gt;system: add support for –runstatedir&lt;/li&gt;
+  &lt;li&gt;system: add abs_top_srcdir and abs_top_builddir&lt;/li&gt;
+  &lt;li&gt;options-defaults provides a way to change the default options from auto.def&lt;/li&gt;
+  &lt;li&gt;Never honor prefix for /var, honor only if != /usr for /etc&lt;/li&gt;
+  &lt;li&gt;make-template: Don’t write file if unchanged&lt;/li&gt;
+  &lt;li&gt;Allow $autosetup_tclsh to select the preferred tclsh&lt;/li&gt;
+  &lt;li&gt;Add cc-path-progs&lt;/li&gt;
+  &lt;li&gt;cc: drop empty -cflags, -includes, -libs&lt;/li&gt;
+  &lt;li&gt;cc: tests should use LIBS and LDFLAGS&lt;/li&gt;
+  &lt;li&gt;opt-bool: allow boolean options multiple times&lt;/li&gt;
+  &lt;li&gt;opt-bool: accepts -nodefault option&lt;/li&gt;
+  &lt;li&gt;cc-lib: add cc-check-alloca and cc-signal-return-type&lt;/li&gt;
+  &lt;li&gt;Fix cc-check-members for members of structs&lt;/li&gt;
+  &lt;li&gt;Set srcdir to a fully qualified path&lt;/li&gt;
+  &lt;li&gt;Add support for undefine&lt;/li&gt;
+  &lt;li&gt;Allow –init and –install to be combined&lt;/li&gt;
+  &lt;li&gt;Update config.{sub,guess} from automake-1.15&lt;/li&gt;
+  &lt;li&gt;Add ‘cctest -nooutput 1’ to consider any compiler output as an error&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;Incompatibilities introduced:&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;Syntax of @if statements has changed in make-template&lt;/li&gt;
+  &lt;li&gt;Remove –with-xxx and –without-xxx synonyms&lt;/li&gt;
+  &lt;li&gt;opt-val now returns a list&lt;/li&gt;
+&lt;/ul&gt;
+</content>
+  </entry>
   <entry>
     <id>tag:msteveb.github.com,2011-07-19:/autosetup/articles/autoconf-migration/</id>
     <title type="html">Automatic autoconf migration tool</title>

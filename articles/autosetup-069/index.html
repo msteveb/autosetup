@@ -1,6 +1,6 @@
 <!DOCTYPE html><html lang="en"><head>
     <meta charset="utf-8">
-    <title>autosetup - autosetup Modules</title>
+    <title>autosetup - autosetup 0.6.9</title>
     <link rel="stylesheet" type="text/css" href="../../css/style.css" media="screen">
     <link rel="stylesheet" type="text/css" href="../../css/sh_style.css" media="screen">
     
@@ -33,33 +33,63 @@
             <a href="../../">Overview</a>
             » 
         
-            <a href="../">Developing with autosetup</a>
+            <a href="../">All News Articles</a>
             » 
         
-            <a href="./">autosetup Modules</a>
+            <a href="./">autosetup 0.6.9</a>
             
         
         </div>
         <div class="main" id="main">
         
-        <h1 id="creating-autosetup-modules">Creating autosetup modules</h1>
+        <p><strong>autosetup</strong> v0.6.9 has been released.</p>
 
-<h2 id="introduction">Introduction</h2>
+<p>As there has been no release notes for a while, here are the changes since v0.6.2</p>
 
-<p><strong>Note:</strong> This page is still be completed.</p>
+<p>Major improvements:</p>
 
-<p>In the meantime, here is the information from the developer reference manual:</p>
+<ul>
+  <li>make-template: Support nesting, better conditionals, @define and @include</li>
+  <li>Make it possible to use a system-installed autosetup.  e.g. autosetup –sysinstall=/usr/local</li>
+  <li>Add initial pkg-config support</li>
+  <li>Add an extensible init system with autosetup –init=&lt;type&gt;</li>
+</ul>
 
-<hr>
+<p>Minor changes and bug fixes:</p>
 
-<p>Note that module X is implemented in either autosetup/X.tcl or
-autosetup/X/init.tcl</p>
+<ul>
+  <li>define-append now ignores empty values</li>
+  <li>define-append: improved check for duplicates</li>
+  <li>cc-shared: always use -fPIC</li>
+  <li>cc-shared: Add support for RPATH</li>
+  <li>cc-shared: Add $STRIPLIBFLAGS</li>
+  <li>system: add support for –runstatedir</li>
+  <li>system: add abs_top_srcdir and abs_top_builddir</li>
+  <li>options-defaults provides a way to change the default options from auto.def</li>
+  <li>Never honor prefix for /var, honor only if != /usr for /etc</li>
+  <li>make-template: Don’t write file if unchanged</li>
+  <li>Allow $autosetup_tclsh to select the preferred tclsh</li>
+  <li>Add cc-path-progs</li>
+  <li>cc: drop empty -cflags, -includes, -libs</li>
+  <li>cc: tests should use LIBS and LDFLAGS</li>
+  <li>opt-bool: allow boolean options multiple times</li>
+  <li>opt-bool: accepts -nodefault option</li>
+  <li>cc-lib: add cc-check-alloca and cc-signal-return-type</li>
+  <li>Fix cc-check-members for members of structs</li>
+  <li>Set srcdir to a fully qualified path</li>
+  <li>Add support for undefine</li>
+  <li>Allow –init and –install to be combined</li>
+  <li>Update config.{sub,guess} from automake-1.15</li>
+  <li>Add ‘cctest -nooutput 1’ to consider any compiler output as an error</li>
+</ul>
 
-<p>The latter form is useful for a complex module which requires additional
-support file. In this form, $::usedir is set to the module directory when it
-is loaded.</p>
+<p>Incompatibilities introduced:</p>
 
-<hr>
+<ul>
+  <li>Syntax of @if statements has changed in make-template</li>
+  <li>Remove –with-xxx and –without-xxx synonyms</li>
+  <li>opt-val now returns a list</li>
+</ul>
 
         </div>
     </div>
@@ -80,10 +110,10 @@ is loaded.</p>
             <li><a href="../../user/">Running autosetup</a></li>
         
             
-            <li><a href="../">Developing</a></li>
+            <li><a href="../../developer/">Developing</a></li>
         
             
-            <li><a href="../examples/">Examples</a></li>
+            <li><a href="../../developer/examples/">Examples</a></li>
         
             
             <li><a href="../../license/">License</a></li>
