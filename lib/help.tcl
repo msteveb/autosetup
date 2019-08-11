@@ -10,22 +10,22 @@ proc autosetup_help {what} {
     puts "This is [autosetup_version], a build environment \"autoconfigurator\""
     puts "See the documentation online at http://msteveb.github.com/autosetup/\n"
 
-    if {$what eq "local"} {
+    if {$what in {all local}} {
+        # Need to load auto.def now
         if {[file exists $::autosetup(autodef)]} {
-            # This relies on auto.def having a call to 'options'
-            # which will display options and quit
-            source $::autosetup(autodef)
+            # Load auto.def as module "auto.def"
+            autosetup_load_module auto.def source $::autosetup(autodef)
+        }
+        if {$what eq "all"} {
+            set what *
         } else {
-            options-show
+            set what auto.def
         }
     } else {
-        incr ::autosetup(showhelp)
-        if {[catch {use $what}]} {
-            user-error "Unknown module: $what"
-        } else {
-            options-show
-        }
+        use $what
+        puts "Options for module $what:"
     }
+    options-show $what
     exit 0
 }
 
