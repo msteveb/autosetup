@@ -204,10 +204,16 @@ proc main {argv} {
 
 	autosetup_add_dep $autosetup(autodef)
 
-	define CONFIGURE_OPTS ""
+	# Add $argv to CONFIGURE_OPTS, but ignore duplicates and quote if needed
+	set configure_opts {}
 	foreach arg $autosetup(argv) {
-		define-append CONFIGURE_OPTS [quote-if-needed $arg]
+		set quoted [quote-if-needed $arg]
+		# O(n^2), but n will be small
+		if {$quoted ni $configure_opts} {
+			lappend configure_opts $quoted
+		}
 	}
+	define CONFIGURE_OPTS [join $configure_opts]
 	define AUTOREMAKE [file-normalize $autosetup(exe)]
 	define-append AUTOREMAKE [get-define CONFIGURE_OPTS]
 
