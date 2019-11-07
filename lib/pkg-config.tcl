@@ -73,6 +73,9 @@ proc pkg-config-init {{required 1}} {
 			# XXX: It's possible that these should be set only when invoking pkg-config
 			global env
 			set env(PKG_CONFIG_DIR) ""
+			# Supposedly setting PKG_CONFIG_LIBDIR means that PKG_CONFIG_PATH is ignored,
+			# but it doesn't seem to work that way in practice
+			set env(PKG_CONFIG_PATH) ""
 			# Do we need to try /usr/local as well or instead?
 			set env(PKG_CONFIG_LIBDIR) $sysroot/usr/lib/pkgconfig:$sysroot/usr/share/pkgconfig
 			set env(PKG_CONFIG_SYSROOT_DIR) $sysroot
