@@ -111,18 +111,30 @@ proc pkg-config {module args} {
 		return 0
 	}
 
-	if {[catch {exec [get-define PKG_CONFIG] --modversion "$module $args"} version]} {
+	set pkgconfig [get-define PKG_CONFIG]
+
+	set ret [catch {exec $pkgconfig --modversion "$module $args"} version]
+	configlog "$pkgconfig --modversion $module $args: $version"
+	if {$ret} {
 		msg-result "not found"
-		configlog "pkg-config --modversion $module $args: $version"
+		return 0
+	}
+	# Sometimes --modversion succeeds but because of dependencies it isn't usable
+	# This seems to show up with --cflags
+	set ret [catch {exec $pkgconfig --cflags $module} cflags]
+	if {$ret} {
+		msg-result "unusable ($version - see config.log)"
+		configlog "$pkgconfig --cflags $module"
+		configlog $cflags
 		return 0
 	}
 	msg-result $version
 	set prefix [feature-define-name $module PKG_]
 	define HAVE_${prefix}
 	define ${prefix}_VERSION $version
-	define ${prefix}_LIBS [exec pkg-config --libs-only-l $module]
-	define ${prefix}_LDFLAGS [exec pkg-config --libs-only-L $module]
-	define ${prefix}_CFLAGS [exec pkg-config --cflags $module]
+	define ${prefix}_CFLAGS $cflags
+	define ${prefix}_LIBS [exec $pkgconfig --libs-only-l $module]
+	define ${prefix}_LDFLAGS [exec $pkgconfig --libs-only-L $module]
 	return 1
 }
 
