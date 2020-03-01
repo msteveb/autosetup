@@ -1,4 +1,4 @@
-argv=--str0=a --str1=b --str2=c --str3=d --str4=e
+argv=--str0=a --str1=b --str2=c --str3=d
 bool=0
 bool0=0
 bool1=1
@@ -6,20 +6,16 @@ str0=1 a
 str1=1 b
 str2=1 c
 str3=1 d
-str4=1 e
 ostr0=1 X
 ostr1=1 X1
 ostr2=1 X2
 ostr3=1 X3
-ostr4=1 X4
 str0(def)=a
 str1(def)=b
 str2(def)=c
 str3(def)=d
-str4(def)=e
 ostr0(def)=X
 ostr1(def)=X1
 ostr2(def)=X2
 ostr3(def)=X3
-ostr4(def)=X4
 str1,ostr1=b

@@ -21,13 +21,11 @@ options {
 	str0:           => "Str with empty default"
 	str1:abc        => "Str with text"
 	str2:=abc       => "Str (default: '@default@') with text"
-	str3:abc=def    => "Str with text and default"
-	str4:=abc=def    => "Str (default: '@default@') with text and default"
+	str3:abc=def    => "Str with text and default (default: '@default@')"
 	ostr0:          => "Override str with empty default"
 	ostr1:abc       => "Override str with text"
 	ostr2:=abc      => "Override str (default: '@default@') with text"
-	ostr3:abc=def   => "Override str with text and default"
-	ostr4:=abc=def   => "Override str (default: '@default@') with text and default"
+	ostr3:abc=def   => "Override str with text and default (default: '@default@')"
 }
 
 # if opt-str returns 1, return a list of retcode and retvalue
@@ -60,20 +58,16 @@ puts str0=[check-opt-str str0]
 puts str1=[check-opt-str str1]
 puts str2=[check-opt-str str2]
 puts str3=[check-opt-str str3]
-puts str4=[check-opt-str str4]
 puts ostr0=[check-opt-str ostr0]
 puts ostr1=[check-opt-str ostr1]
 puts ostr2=[check-opt-str ostr2]
 puts ostr3=[check-opt-str ostr3]
-puts ostr4=[check-opt-str ostr4]
 puts str0(def)=[opt-str str0 o Z]
 puts str1(def)=[opt-str str1 o Z]
 puts str2(def)=[opt-str str2 o Z]
 puts str3(def)=[opt-str str3 o Z]
-puts str4(def)=[opt-str str4 o Z]
 puts ostr0(def)=[opt-str ostr0 o Z]
 puts ostr1(def)=[opt-str ostr1 o Z]
 puts ostr2(def)=[opt-str ostr2 o Z]
 puts ostr3(def)=[opt-str ostr3 o Z]
-puts ostr4(def)=[opt-str ostr4 o Z]
 puts str1,ostr1=[opt-str {str1 ostr1} o Z]

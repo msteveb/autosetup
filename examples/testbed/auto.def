@@ -24,8 +24,16 @@ options {
 	utf8=1    => "utf8 support"
 	# --lfs is a synonym for --largefile
 	lfs=1 largefile=1 => "Large File Support"
-	opt1:value => "Options with a value"
-	opt2:=value => "Option with optional value"
+	opt1:value => "Option with a value (default=@default@)"
+	opt2:path=/usr => "Option with a default value (default=@default@)"
+	opt3:=value => "Option with an optional value (default=@default@)"
+}
+
+# Argument handling. If opt2 isn't specified, it will have the default value of /usr
+foreach opt {opt1 opt2 opt3} {
+	if {[opt-str $opt o]} {
+		puts "Option $opt has value $o"
+	}
 }
 
 # In general, the cc-check-* commands return true
