@@ -85,6 +85,27 @@ proc pkg-config-init {{required 1}} {
 	return $found
 }
 
+proc _pkg-config-get-module-version {pkgconfig module args} {
+	set ok [pkg-config-init]
+
+	msg-checking [format "Checking for %s%s..." $module \
+		[expr {$args eq "" ? "" : " $args"}]]
+
+	if {!$ok} {
+		msg-result "no pkg-config"
+		error
+	}
+
+	set ret [catch {exec $pkgconfig --modversion "$module $args"} version]
+	configlog "$pkgconfig --modversion $module $args: $version"
+	if {$ret} {
+		msg-result "not found"
+		error
+	}
+
+	return $version
+}
+
 # @pkg-config module ?requirements?
 #
 # Use 'pkg-config' to find the given module meeting the given requirements.
@@ -102,23 +123,11 @@ proc pkg-config-init {{required 1}} {
 # If not found, returns 0.
 #
 proc pkg-config {module args} {
-	set ok [pkg-config-init]
-
-	msg-checking "Checking for $module $args..."
-
-	if {!$ok} {
-		msg-result "no pkg-config"
-		return 0
-	}
-
 	set pkgconfig [get-define PKG_CONFIG]
-
-	set ret [catch {exec $pkgconfig --modversion "$module $args"} version]
-	configlog "$pkgconfig --modversion $module $args: $version"
-	if {$ret} {
-		msg-result "not found"
+	if {[catch {_pkg-config-get-module-version $pkgconfig $module {*}$args} version]} {
 		return 0
 	}
+
 	# Sometimes --modversion succeeds but because of dependencies it isn't usable
 	# This seems to show up with --cflags
 	set ret [catch {exec $pkgconfig --cflags $module} cflags]
@@ -147,4 +156,34 @@ proc pkg-config {module args} {
 proc pkg-config-get {module name} {
 	set prefix [feature-define-name $module PKG_]
 	get-define ${prefix}_${name} ""
+}
+
+# @pkg-config-get-var module variable ?requirements?
+#
+# Use 'pkg-config' to find the module meeting the given requirements
+# and extract the variable 'variable'.
+# e.g.
+#
+## pkg-config-get-var bash-completion completionsdir >= 2.8
+#
+# If found, returns the requested variable.
+#
+# If not found, returns "".
+#
+proc pkg-config-get-var {module var args} {
+	set pkgconfig [get-define PKG_CONFIG]
+	if {[catch {_pkg-config-get-module-version $pkgconfig $module {*}$args} version]} {
+		return ""
+	}
+
+	msg-result $version
+	msg-checking "Checking for $var in pkg-config module $module..."
+
+	if {[catch {exec $pkgconfig $module --variable $var} value]} {
+		msg-result "not found"
+		return ""
+	}
+
+	msg-result ok
+	return $value
 }
