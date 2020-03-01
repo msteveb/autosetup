@@ -191,8 +191,12 @@ cc-with {-lang c++}
 
 # Test pkg-config, where pkg-config support is optional
 if {[pkg-config-init 0]} {
-	pkg-config pango >= 1.37.0
-	pkg-config zlib
+	if {[pkg-config pango >= 1.37.0]} {
+		msg-result "Checking for pango libdir ...[pkg-config-get-var pango libdir]"
+	}
+	if {[pkg-config zlib]} {
+		msg-result "Checking for zlib libdir ...[pkg-config-get-var zlib libdir]"
+	}
 	pkg-config nonexistent
 }
 

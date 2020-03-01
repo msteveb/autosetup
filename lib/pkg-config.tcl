@@ -148,3 +148,20 @@ proc pkg-config-get {module name} {
 	set prefix [feature-define-name $module PKG_]
 	get-define ${prefix}_${name} ""
 }
+
+# @pkg-config-get-var module variable
+#
+# Return the value of the given variable from the given pkg-config module.
+# The module must already have been successfully detected with pkg-config.
+# e.g.
+#
+## if {[pkg-config harfbuzz >= 2.5]} {
+##   define harfbuzz_libdir [pkg-config-get-var harfbuzz libdir]
+## }
+#
+# Returns the empty string if the variable isn't defined.
+proc pkg-config-get-var {module variable} {
+	set pkgconfig [get-define PKG_CONFIG]
+	set prefix [feature-define-name $module HAVE_PKG_]
+	exec $pkgconfig $module --variable $variable
+}
