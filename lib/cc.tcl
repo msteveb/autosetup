@@ -344,7 +344,7 @@ proc cc-add-settings {settings} {
 
 	foreach {name value} $settings {
 		switch -exact -- $name {
-			-cflags - -includes {
+			-cflags - -includes - -preproc {
 				# These are given as lists
 				lappend new($name) {*}[list-non-empty $value]
 			}
@@ -442,6 +442,7 @@ proc cc-with {settings args} {
 # Supported settings are:
 #
 ## -cflags cflags      A list of flags to pass to the compiler
+## -preproc list       A list of preprocessor lines, e.g. {{#define _POSIX_SOURCE}}
 ## -includes list      A list of includes, e.g. {stdlib.h stdio.h}
 ## -declare code       Code to declare before main()
 ## -link 1             Don't just compile, link too
@@ -454,6 +455,7 @@ proc cc-with {settings args} {
 #
 # Unless '-source' or '-sourcefile' is specified, the C program looks like:
 #
+## preproc-lines             /* any code in -prepropc, one item per line */
 ## #include <firstinclude>   /* same for remaining includes in the list */
 ##
 ## declare-code              /* any code in -declare, verbatim */
@@ -479,6 +481,9 @@ proc cctest {args} {
 	if {[info exists opts(-source)]} {
 		set lines $opts(-source)
 	} else {
+		foreach p $opts(-preproc) {
+			lappend source $p
+		}
 		foreach i $opts(-includes) {
 			if {$opts(-code) ne "" && ![feature-checked $i]} {
 				# Compiling real code with an unchecked header file
@@ -709,7 +714,7 @@ foreach i {CC CXX CCACHE CPP CFLAGS CXXFLAGS CXXFLAGS LDFLAGS LIBS CROSS CPPFLAG
 }
 
 # Initial cctest settings
-cc-store-settings {-cflags {} -includes {} -declare {} -link 0 -lang c -libs {} -code {} -nooutput 0}
+cc-store-settings {-cflags {} -preproc {} -includes {} -declare {} -link 0 -lang c -libs {} -code {} -nooutput 0}
 set autosetup(cc-include-deps) {}
 
 msg-result "C compiler...[get-define CCACHE] [get-define CC] [get-define CFLAGS]"
