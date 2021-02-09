@@ -570,7 +570,7 @@ proc options-show {what} {
 		}
 		set max [max $max [string length $opt]]
 	}
-	set indent [string repeat " " [expr $max+4]]
+	set indent [string repeat " " [expr {$max+4}]]
 	set cols [getenv COLUMNS 80]
 	catch {
 		lassign [exec stty size] rows cols
@@ -596,7 +596,7 @@ proc options-show {what} {
 			# Output a pre-formatted help description as-is
 			puts $desc
 		} else {
-			options-wrap-desc [string trim $desc] $cols "  " $indent [expr $max + 2]
+			options-wrap-desc [string trim $desc] $cols "  " $indent [expr {$max+2}]
 		}
 	}
 }
