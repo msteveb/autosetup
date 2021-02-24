@@ -33,7 +33,7 @@ Try: ./autosetup --help or ./autosetup --reference
 
 Or view the manual on github at:
 
-  <http://msteveb.github.com/autosetup/>
+  <http://msteveb.github.io/autosetup/>
 
 Quick Start
 -----------

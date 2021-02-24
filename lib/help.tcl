@@ -8,7 +8,7 @@ proc autosetup_help {what} {
 
     puts "Usage: [file tail $::autosetup(exe)] \[options\] \[settings\]\n"
     puts "This is [autosetup_version], a build environment \"autoconfigurator\""
-    puts "See the documentation online at http://msteveb.github.com/autosetup/\n"
+    puts "See the documentation online at http://msteveb.github.io/autosetup/\n"
 
     if {$what in {all local}} {
         # Need to load auto.def now
