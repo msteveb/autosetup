@@ -1,6 +1,6 @@
 <!DOCTYPE html><html lang="en"><head>
     <meta charset="utf-8">
-    <title>autosetup - autosetup Modules</title>
+    <title>autosetup - autosetup 0.7.0</title>
     <link rel="stylesheet" type="text/css" href="../../css/style.css" media="screen">
     <link rel="stylesheet" type="text/css" href="../../css/sh_style.css" media="screen">
     
@@ -33,33 +33,33 @@
             <a href="../../">Overview</a>
             » 
         
-            <a href="../">Developing with autosetup</a>
+            <a href="../">All News Articles</a>
             » 
         
-            <a href="./">autosetup Modules</a>
+            <a href="./">autosetup 0.7.0</a>
             
         
         </div>
         <div class="main" id="main">
         
-        <h1 id="creating-autosetup-modules">Creating autosetup modules</h1>
+        <p><strong>autosetup</strong> v0.7.0 has been released.</p>
 
-<h2 id="introduction">Introduction</h2>
+<p>Changes since v0.6.9</p>
 
-<p><strong>Note:</strong> This page is still be completed.</p>
+<p>Major improvements:</p>
 
-<p>In the meantime, here is the information from the developer reference manual:</p>
+<ul>
+  <li>options: improved option handling, consistency and documentation</li>
+</ul>
 
-<hr>
+<p>Minor changes and bug fixes:</p>
 
-<p>Note that module X is implemented in either autosetup/X.tcl or
-autosetup/X/init.tcl</p>
-
-<p>The latter form is useful for a complex module which requires additional
-support file. In this form, $::usedir is set to the module directory when it
-is loaded.</p>
-
-<hr>
+<ul>
+  <li>Avoid adding duplicates to $CONFIGURE_OPTS and $AUTO_REMAKE</li>
+  <li>pkg-config: Improve cross compiling support, identify dependency issues, pkg-config-get-var</li>
+  <li>cc: $CXX is set to the empty string if not found rather than false</li>
+  <li>Add support for Tcl 8.7</li>
+</ul>
 
         </div>
     </div>
@@ -80,10 +80,10 @@ is loaded.</p>
             <li><a href="../../user/">Running autosetup</a></li>
         
             
-            <li><a href="../">Developing</a></li>
+            <li><a href="../../developer/">Developing</a></li>
         
             
-            <li><a href="../examples/">Examples</a></li>
+            <li><a href="../../developer/examples/">Examples</a></li>
         
             
             <li><a href="../../license/">License</a></li>

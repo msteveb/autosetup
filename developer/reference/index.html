@@ -19,7 +19,7 @@
  	  })();
  	</script>
  	
-    <meta name="generator" content="Nanoc 4.11.5">
+    <meta name="generator" content="Nanoc 4.11.19">
   </head>
   <body>
     <div id="header">
@@ -42,7 +42,7 @@
         </div>
         <div class="main" id="main">
         
-        <h1 id="autosetup-v069----command-reference">autosetup v0.6.9 – Command Reference</h1>
+        <h1 id="autosetup-v070----command-reference">autosetup v0.7.0 – Command Reference</h1>
 
 <h2 id="introduction">Introduction</h2>
 
@@ -96,7 +96,7 @@
 
 <h3 id="module-options-optionlist"><code>module-options optionlist</code></h3>
 
-<p>Like <strong><code>options</code></strong>, but used within a module.</p>
+<p>Deprecated. Simply use <strong><code>options</code></strong> from within a module.</p>
 
 <h3 id="options-optionspec"><code>options optionspec</code></h3>
 
@@ -109,12 +109,14 @@
 
 <p>The default is <strong><code>name=0</code></strong>, meaning that the option is disabled by default. If <strong><code>name=1</code></strong> is used to make the option enabled by default, the description should reflect that with text like “Disable support for …”.</p>
 
-<p>An argument option (one which takes a parameter) is of the form:</p>
+<p>An argument option (one which takes a parameter) is of one of the following forms:</p>
 
-<pre><code>name:[=]value  =&gt; "Description of this option"
+<pre><code>name:value         =&gt; "Description of this option"
+name:value=default =&gt; "Description of this option with a default value"
+name:=value        =&gt; "Description of this option with an optional value"
 </code></pre>
 
-<p>If the <strong><code>name:value</code></strong> form is used, the value must be provided with the option (as <strong><code>--name=myvalue</code></strong>). If the <strong><code>name:=value</code></strong> form is used, the value is optional and the given value is used as the default if it is not provided.</p>
+<p>If the <strong><code>name:value</code></strong> form is used, the value must be provided with the option (as <strong><code>--name=myvalue</code></strong>). If the <strong><code>name:value=default</code></strong> form is used, the option has the given default value even if not specified by the user. If the <strong><code>name:=value</code></strong> form is used, the value is optional and the given value is used if it is not provided.</p>
 
 <p>The description may contain <strong><code>@default@</code></strong>, in which case it will be replaced with the default value for the option (taking into account defaults specified with <strong><code>options-defaults</code></strong>.</p>
 
@@ -545,6 +547,17 @@ PKG_PANGO_CFLAGS  to the required compiler flags (--cflags)
 <p>Convenience access to the results of <strong><code>pkg-config</code></strong>.</p>
 
 <p>For example, <strong><code>[pkg-config-get pango CFLAGS]</code></strong> returns the value of <strong><code>PKG_PANGO_CFLAGS</code></strong>, or <strong><code>""</code></strong> if not defined.</p>
+
+<h3 id="pkg-config-get-var-module-variable"><code>pkg-config-get-var module variable</code></h3>
+
+<p>Return the value of the given variable from the given pkg-config module. The module must already have been successfully detected with pkg-config. e.g.</p>
+
+<pre><code>if {[pkg-config harfbuzz &gt;= 2.5]} {
+  define harfbuzz_libdir [pkg-config-get-var harfbuzz libdir]
+}
+</code></pre>
+
+<p>Returns the empty string if the variable isn’t defined.</p>
 
 <h2 id="module-system">Module: system</h2>
 
