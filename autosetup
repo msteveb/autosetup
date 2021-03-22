@@ -214,7 +214,7 @@ proc main {argv} {
 		}
 	}
 	define CONFIGURE_OPTS [join $configure_opts]
-	define AUTOREMAKE [file-normalize $autosetup(exe)]
+	define AUTOREMAKE [quote-if-needed $autosetup(exe)]
 	define-append AUTOREMAKE [get-define CONFIGURE_OPTS]
 
 
