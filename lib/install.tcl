@@ -165,6 +165,7 @@ WRAPPER="$0"; export WRAPPER; "autosetup" "$@"
 		writefile configure \
 {#!/bin/sh
 dir="`dirname "$0"`/autosetup"
+#@@INITCHECK@@#
 WRAPPER="$0"; export WRAPPER; exec "`"$dir/autosetup-find-tclsh"`" "$dir/autosetup" "$@"
 }
 	}
