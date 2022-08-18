@@ -702,6 +702,29 @@ proc define {name {value 1}} {
 	#dputs "$name <= $value"
 }
 
+# @define-push {name ...} script
+#
+# Save the values of the given defines, evaluation the script, then restore.
+# For example, to avoid updating AS_FLAGS and AS_CXXFLAGS:
+## define-push {AS_CFLAGS AS_CXXFLAGS} {
+##   cc-check-flags -Wno-error
+## }
+proc define-push {names script} {
+	array set unset {}
+	foreach name $names {
+		if {[is-defined $name]} {
+			set save($name) [get-define $name]
+		} else {
+			set unset($name) 1
+		}
+	}
+	uplevel 1 $script
+	array set ::define [array get save]
+	foreach name [array names unset] {
+		unset -nocomplain ::define($name)
+	}
+}
+
 # @undefine name
 #
 # Undefine the named variable.
