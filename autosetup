@@ -240,6 +240,8 @@ proc main {argv} {
 	exit 0
 }
 
+# @section Option Handling
+
 # @opt-bool ?-nodefault? option ...
 #
 # Check each of the named, boolean options and if any have been explicitly enabled
@@ -691,6 +693,8 @@ proc config_sub {alias} {
 	return $alias
 }
 
+# @section Variable Definitions (defines)
+
 # @define name ?value=1?
 #
 # Defines the named variable to the given value.
@@ -810,6 +814,7 @@ proc all-defines {} {
 	array get ::define
 }
 
+# @section Environment/Helpers
 
 # @get-env name default
 #
@@ -893,6 +898,8 @@ proc list-non-empty {list} {
 	return $result
 }
 
+# @section Paths, Searching
+
 # @find-executable-path name
 #
 # Searches the path for an executable with the given name.
@@ -961,6 +968,8 @@ proc find-an-executable {args} {
 	}
 	return ""
 }
+
+# @section Logging, Messages and Errors
 
 # @configlog msg
 #
@@ -1178,6 +1187,8 @@ proc relative-path {path {pwd {}}} {
 proc autosetup_add_dep {filename} {
 	lappend ::autosetup(deps) [file-normalize $filename]
 }
+
+# @section Modules Support
 
 ##################################################################
 #

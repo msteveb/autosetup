@@ -81,7 +81,8 @@ proc autosetup_reference {{type text}} {
     section {Introduction}
 
     p {
-        See http://msteveb.github.com/autosetup/ for the online documentation for 'autosetup'
+        See http://msteveb.github.com/autosetup/ for the online documentation for 'autosetup'.
+		This documentation can also be accessed locally with `autosetup --ref`.
     }
 
     p {
@@ -145,6 +146,11 @@ proc automf_command_reference {} {
         while {![eof $f]} {
             set line [gets $f]
 
+            if {[regexp {^#.*@section (.*)$} $line -> section]} {
+                lappend doc($current) [list section $section]
+				continue
+			}
+
             # Find embedded module names
             if {[regexp {^#.*@module ([^ ]*)} $line -> modulename]} {
                 continue
@@ -159,7 +165,7 @@ proc automf_command_reference {} {
             if {$cmd eq "synopsis:"} {
                 set current $modulename
                 lappend doc($current) [list section "Module: $modulename"]
-            } else {
+			} else {
                 lappend doc($current) [list subsection $cmd]
             }
 

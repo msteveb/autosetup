@@ -3,6 +3,8 @@
 
 # Module which contains miscellaneous utility functions
 
+# @section Utilities
+
 # @compare-versions version1 version2
 #
 # Versions are of the form 'a.b.c' (may be any number of numeric components)
