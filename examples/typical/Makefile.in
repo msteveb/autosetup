@@ -7,9 +7,18 @@ AR = @AR@
 STRIP = @STRIP@
 
 # FLAGS/LIBS
-CFLAGS = @CFLAGS@
-LDFLAGS = @LDFLAGS@
+# If CFLAGS is given on the command line or in the environment
+# it will replace the autosetup value
+CFLAGS ?= @CFLAGS@
+CXXFLAGS ?= @XXCFLAGS@
+CPPFLAGS ?= @CPPFLAGS@
+LDFLAGS ?= @LDFLAGS@
 LDLIBS += @LIBS@
+
+# For gnu make it is simplest if we take over the command to add $(AS_CFLAGS) etc.
+# before user-specified CFLAGS
+COMPILE.c = $(CC) @AS_CFLAGS@ @AS_CPPFLAGS@ $(CFLAGS) $(CPPFLAGS) $(TARGET_ARCH) -c
+COMPILE.cc = $(CXX) @AS_CXXFLAGS@ @AS_CPPFLAGS@ $(CXXFLAGS) $(CPPFLAGS) $(TARGET_ARCH) -c
 
 # Install destination
 prefix = @prefix@
@@ -17,11 +26,12 @@ exec_prefix = @exec_prefix@
 DESTDIR = $(prefix)
 
 # Project-specific CFLAGS
-CPPFLAGS += -D_GNU_SOURCE -Wall -Werror -I.
 
 # VPATH support for out-of-tree build
-ifneq (@srcdir@,.)
-CPPFLAGS += -I@srcdir@
+ifeq (@srcdir@,.)
+AS_CPPFLAGS += -I.
+else
+AS_CPPFLAGS += -I@srcdir@
 VPATH := @srcdir@
 endif
 
@@ -37,7 +47,7 @@ ifeq (@shared@,1)
 # Shared library support from cc-shared
 LIB = libtest.so
 # All objects destined for the shared library need these flags
-CPPFLAGS += @SH_CFLAGS@
+AS_CPPFLAGS += @SH_CFLAGS@
 
 $(LIB): $(LIBOBJS)
 	$(CC) $(CFLAGS) $(LDFLAGS) @SH_LDFLAGS@ -o $@ $^ $(LDLIBS)

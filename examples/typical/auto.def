@@ -16,6 +16,21 @@ if {[cc-check-types "long long"]} {
 }
 cc-check-sizeof "void *"
 
+# Append to AS_CFLAGS
+cc-check-flags -std=c99
+
+# Check but don't add -Wno-error to subsequent tests
+cc-with {} {
+	cc-check-flags -Wno-error
+}
+
+# Check and don't update AS_CFLAGS
+cc-with {} {
+	define-push AS_CFLAGS {
+		cc-check-flags -Wununsed-function
+	}
+}
+
 cc-check-includes sys/un.h
 
 cc-check-functions regcomp waitpid sigaction sys_signame sys_siglist
