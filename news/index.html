@@ -21,7 +21,7 @@
  	  })();
  	</script>
  	
-    <meta name="generator" content="Nanoc 4.11.19">
+    <meta name="generator" content="Nanoc 4.12.7">
   </head>
   <body>
     <div id="header">
@@ -44,6 +44,188 @@
         <div class="main" id="news">
         
         
+<div class="main" id="main">
+<p class="articledate">Thursday, 18 August 2022</p>
+<h2 class="news"><a href="../articles/autosetup-071/">autosetup 0.7.1</a></h2>
+
+
+<p><strong>autosetup</strong> v0.7.1 has been released.</p>
+
+<p>Changes since v0.7.0</p>
+
+<p>Major improvements:</p>
+
+<ul>
+  <li>improve handling of CFLAGS, etc. See <a href="../articles/handling-cflags/">CFLAGS Handling</a></li>
+</ul>
+
+<p>Minor changes and bug fixes:</p>
+
+<ul>
+  <li>autosetup-find-tclsh will now build jimsh0 in the current directory</li>
+  <li>pkg-config: invocation of -print-sysroot is now correct</li>
+  <li>config.guess, config.sub: update to 2021-06-03</li>
+  <li>cc-check-tools: fix when command includes args</li>
+  <li>define-push: simplifies define management</li>
+</ul>
+
+
+
+</div>
+
+<div class="main" id="main">
+<p class="articledate">Wednesday, 17 August 2022</p>
+<h2 class="news"><a href="../articles/handling-cflags/">Handling CFLAGS</a></h2>
+
+
+<p>One question that comes up quite often is, “What is the right way of handling
+CFLAGS within <a href="../">autosetup</a> (also autoconf, automake, etc.) and the Makefiles for
+the best user experience?” – <a href="https://stackoverflow.com/questions/51606653/allowing-users-to-override-cflags-cxxflags-and-friends">stack overflow</a>.
+<a href="https://www.gnu.org/software/automake/">automake</a> spends some time on this –
+<a href="https://www.gnu.org/software/automake/manual/html_node/Flag-Variables-Ordering.html">26.6 Flag Variables Ordering</a>
+however it doesn’t answer all the questions that we might want answered.
+Below is my attempt to untangle the confusion and provide a canonical best
+way to handle CFLAGS with autosetup and make (or similar).</p>
+
+<p>One fundamental consideration is that CFLAGS (and CPPFLAGS, CXXFLAGS)
+are all user-specified and the user’s wishes should be respected above all else.
+This means that overwriting the user’s settings by changing CFLAGS or adding
+additional flags after the user’s settings is not acceptable. With this in mind,
+let’s look at all the points where flags to the C compiler could be specified.</p>
+
+<p>First the user can provide flags in the environment or on the command
+line to <code>configure</code> that we will name (1) and (2).</p>
+
+<pre class="sh_unix">$ CFLAGS=-Dd1 ./configure CFLAGS=-Dd2
+</pre>
+
+<p>Next the user can provide flags in the environment or on the commandline to make or equivalent
+that we will name (3) and (4).</p>
+
+<pre class="sh_unix">$ CFLAGS=-Dd3 make CFLAGS=-Dd4
+</pre>
+
+<p>Finally if no explicit CFLAGS are provided by the user, use <code>-g -O2</code>, which we will name (0).</p>
+
+<p>In addition, <code>configure</code> may wish to add additional flags based on <code>configure</code> tests or user
+options, but these should not affect CFLAGS.</p>
+
+<pre class="sh_autosetup"># If supported, add this flag to compiler flags
+cc-check-flags -std=c99
+</pre>
+
+<p>And also we may we wish to add to CFLAGS within the makefile based on settings.
+(This example could have been done in auto.def instead - it is just indicative).
+Simlarly this should not affect the user’s CFLAGS settings.</p>
+
+<pre class="sh_unix">ifeq(@SHARED@,1)
+# Except we don't want to append to CFLAGS
+CFLAGS += -dynamic
+endif
+</pre>
+
+<p>Now what behaviour provides the best user experience? It is reasonable for (2) to override (1), especially
+as CFLAGS may simply be set in the environment, so the explicit setting on the command line
+should take precedence. Similarly, (4) should override (3) for similar reasons. It is also clear that
+(4) should take precedence over (1) and (2) as this is a later phase. One thing that is not entirely
+clear is whether (3) should override (2). For simplicity we will say it should as otherwise we would
+need to distiguish beteen (1) and (2) in the Makefile. Finally, for CFLAGS all of (1) - (4) should
+override (0). Now as we said that the user’s selection is the highest precedence, our command line
+should clearly be.</p>
+
+<pre class="sh_makefile">cc &lt;other-flags&gt; $CFLAGS -c ... -o ...
+</pre>
+
+<p>With the user’s selection last, overriding other flags that we will discuss shortly, and
+where CFLAGS is defined as below, where the notation means that the first value that is set
+is chosen.</p>
+<pre class="sh_unix">CFLAGS := (4) || (3) || (2) || (1) || (0)
+</pre>
+
+<p>Note that CPPFLAGS can be specified by the user in all the same ways, except that there is no
+default if not specified. The ordering between CFLAGS and CPPFLAGS is not clear, but we may as well follow
+the gnu make approach:</p>
+<pre class="sh_makefile"># default
+COMPILE.c = $(CC) $(CFLAGS) $(CPPFLAGS) $(TARGET_ARCH) -c
+</pre>
+
+<p>So then we have:</p>
+<pre class="sh_makefile">cc &lt;other-flags&gt; $CFLAGS $CPPFLAGS -c ... -o ...
+</pre>
+
+<p>Now we only need to decide how configure-derived flags are set and made available to make.
+While most autosetup checks don’t do anything with CFLAGS by default (it is up to the auto.def
+developer to make the flags available), <code>cc-check-flags</code> unfortunately (as of autosetup 0.7.0) 
+modifieds CFLAGS. This is not OK as CFLAGS is a user value, and should not be touched by autosetup.
+Therefore, as of autosetup 0.7.1, <code>cc-check-flags</code> now adds to AS_CFLAGS instead (autosetup CFLAGS).
+This makes the recommendation of how to handle CFLAGS in auto.def simple. All flags are added to AS_CFLAGS
+(or AS_CPPFLAGS or AS_CXXFLAGS). e.g.</p>
+
+<pre class="sh_autosetup"># Adds to AS_CFLAGS
+cc-check-flags -std=c99
+# Add profiling if selected
+if {[opt-bool profiling]} {
+	define-append AS_CFLAGS -pg
+}
+</pre>
+
+<p>And finally we need to determine how flags can be added in the Makefile.
+It is simplest if we use the same AS_CFLAGS as autosetup. e.g.</p>
+
+<pre class="sh_makefile">ifeq(@SHARED@,1)
+AS_CFLAGS += -dynamic
+endif
+</pre>
+
+<p>Now the only remaining challenge is to ensure that the Makefile implements
+our desired command line:</p>
+
+<pre class="sh_makefile">cc $(AS_CFLAGS) $(AS_CPPFLAGS) $CFLAGS $CPPFLAGS -c ... -o ...
+</pre>
+
+<p>We <em>could</em> start by trying this:</p>
+
+<pre class="sh_makefile">CFLAGS += @AS_CFLAGS@ @AS_CPPFLAGS@ @CFLAGS@ @CPPFLAGS@
+</pre>
+
+<p>However this does not work as these will take precedence over the user flags.
+As there is no way to prepend flags, we could try the cumbersome:</p>
+
+<pre class="sh_makefile">override CFLAGS := @AS_CFLAGS@ @AS_CPPFLAGS@ $(CFLAGS)
+</pre>
+
+<p>But my preference is for the simpler solution to either take over
+the implicit rule entirely, or replace the compile line. Therefore in gnu
+make we can do:</p>
+<pre class="sh_makefile"># Use configure versions if not set during make
+CFLAGS ?= @CFLAGS@
+CPPFLAGS ?= @CPPFLAGS@
+CFlAG
+# ensure we get the ordering we need
+COMPILE.c = $(CC) @AS_CFLAGS@ @AS_CPPFLAGS@ $(CFLAGS) $(CPPFLAGS) $(TARGET_ARCH) -c
+</pre>
+
+<p>(Note that we could changed to <code>CFLAGS = @CFLAGS@</code> if we wanted to ignore (3))</p>
+
+<p>Alternatively replace the rule entirely:</p>
+
+<pre class="sh_makefile"># This may be gnu make only
+%.o: %.c
+        $(CC) @AS_CFLAGS@ @AS_CPPFLAGS@ $(CFLAGS) $(CPPFLAGS) $(TARGET_ARCH) -c $&lt; -o $@
+
+# This may work better for bsd make
+.c.o:
+        $(CC) @AS_CFLAGS@ @AS_CPPFLAGS@ $(CFLAGS) $(CPPFLAGS) $(TARGET_ARCH) -c $&lt; -o $@
+</pre>
+
+<p>This is implemented in <a href="https://github.com/msteveb/autosetup/blob/master/examples/typical/Makefile.in">examples/typical/Makefile.in</a>
+If you have a suggestion why one Makefile approach is better than the others, please
+make a comment on this page.</p>
+
+
+
+</div>
+
 <div class="main" id="main">
 <p class="articledate">Wednesday, 23 September 2020</p>
 <h2 class="news"><a href="../articles/autosetup-070/">autosetup 0.7.0</a></h2>
@@ -238,81 +420,6 @@ find that approach <a href="http://www.mail-archive.com/fossil-users@lists.fossi
 
 <p>Some of the immediate benefits of autosetup are support for cross compilation
 and easily allowing Fossil to be build with different options.</p>
-
-
-
-</div>
-
-<div class="main" id="main">
-<p class="articledate">Friday, 08 July 2011</p>
-<h2 class="news"><a href="../articles/msys-mingw-support/">MSYS/MinGW support</a></h2>
-
-
-<p>Apparently there is considerable interest in supporting builds
-within <a href="http://www.mingw.org/wiki/MSYS">MSYS/MinGW</a> for Windows
-rather than cygwin or cross compiling MinGW from (e.g.) Linux.</p>
-
-<p>The main difficulty in supporting this platform is that MinGW
-doesn’t support fork/exec (or actually vfork/exec) and thus <code>exec</code>
-support in the bootstrap jimsh is limited.</p>
-
-<p>Fortunately, autosetup has few requirements of <code>exec</code> and these
-limitations can be worked around, along with other differences
-such as the use of backlashes in paths.</p>
-
-<p><strong>autosetup running under the MSYS bash shell</strong></p>
-
-<pre class="sh_unix">$ cd examples/typical
-$ ./configure
-No installed jimsh or tclsh, building local bootstrap jimsh0
-Host System...i686-pc-mingw32
-Build System...i686-pc-mingw32
-C compiler... gcc -g -O2
-C++ compiler... c++ -g -O2
-Checking for stdlib.h...ok
-Checking for long long...ok
-Checking for sizeof long long...8
-Checking for sizeof void *...4
-Checking for sys/un.h...not found
-Checking for regcomp...not found
-Checking for waitpid...not found
-Checking for sigaction...not found
-Checking for sys_signame...not found
-Checking for sys_siglist...not found
-Checking for syslog...not found
-Checking for opendir...ok
-Checking for readlink...not found
-Checking for sleep...not found
-Checking for usleep...ok
-Checking for pipe...not found
-Checking for inet_ntop...not found
-Checking for getaddrinfo...not found
-Enabling UTF-8
-Building static library
-Created config.h
-Created Makefile from Makefile.in
-</pre>
-
-
-
-</div>
-
-<div class="main" id="main">
-<p class="articledate">Wednesday, 06 July 2011</p>
-<h2 class="news"><a href="../articles/autosetup-062/">autosetup 0.6.2</a></h2>
-
-
-<p><strong>autosetup</strong> has seen continuing improvements recently, so I've bumped the version to 0.6.2</p>
-
-<p>Here is a summary of recent changes:</p>
-
-<ul>
-  <li>make-autoconf-h is now deprecated in favour of the more flexible make-config-header</li>
-  <li>New: cc-check-defines, cc-check-decls</li>
-  <li>New module: cc-lib contains cc-check-lfs and cc-check-endian</li>
-  <li>Include files are automatically checked as needed</li>
-  <li>Improved documentation</li>
-</ul>
 
 
 

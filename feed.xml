@@ -2,13 +2,206 @@
 <feed xmlns="http://www.w3.org/2005/Atom" xml:base="http://msteveb.github.io/autosetup/">
   <id>http://msteveb.github.io/autosetup/</id>
   <title>autosetup News</title>
-  <updated>2020-09-23T00:00:00Z</updated>
+  <updated>2022-08-18T00:00:00Z</updated>
   <link rel="alternate" href="http://msteveb.github.io/autosetup/" type="text/html">
   <link rel="self" href="http://msteveb.github.io/autosetup/feed.xml" type="application/atom+xml">
   <author>
     <name>steveb@workware.net.au</name>
     <uri>mailto:steveb@workware.net.au</uri>
   </author>
+  <entry>
+    <id>tag:msteveb.github.io,2022-08-18:/autosetup/articles/autosetup-071/</id>
+    <title type="html">autosetup 0.7.1</title>
+    <published>2022-08-18T00:00:00Z</published>
+    <updated>2022-08-18T00:00:00Z</updated>
+    <link rel="alternate" href="http://msteveb.github.io/autosetup/articles/autosetup-071/" type="text/html">
+    <content type="html">&lt;p&gt;&lt;strong&gt;autosetup&lt;/strong&gt; v0.7.1 has been released.&lt;/p&gt;
+
+&lt;p&gt;Changes since v0.7.0&lt;/p&gt;
+
+&lt;p&gt;Major improvements:&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;improve handling of CFLAGS, etc. See &lt;a href="/articles/handling-cflags/"&gt;CFLAGS Handling&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;Minor changes and bug fixes:&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;autosetup-find-tclsh will now build jimsh0 in the current directory&lt;/li&gt;
+  &lt;li&gt;pkg-config: invocation of -print-sysroot is now correct&lt;/li&gt;
+  &lt;li&gt;config.guess, config.sub: update to 2021-06-03&lt;/li&gt;
+  &lt;li&gt;cc-check-tools: fix when command includes args&lt;/li&gt;
+  &lt;li&gt;define-push: simplifies define management&lt;/li&gt;
+&lt;/ul&gt;
+</content>
+  </entry>
+  <entry>
+    <id>tag:msteveb.github.io,2022-08-17:/autosetup/articles/handling-cflags/</id>
+    <title type="html">Handling CFLAGS</title>
+    <published>2022-08-17T00:00:00Z</published>
+    <updated>2022-08-17T00:00:00Z</updated>
+    <link rel="alternate" href="http://msteveb.github.io/autosetup/articles/handling-cflags/" type="text/html">
+    <content type="html">&lt;p&gt;One question that comes up quite often is, “What is the right way of handling
+CFLAGS within &lt;a href="/"&gt;autosetup&lt;/a&gt; (also autoconf, automake, etc.) and the Makefiles for
+the best user experience?” – &lt;a href="https://stackoverflow.com/questions/51606653/allowing-users-to-override-cflags-cxxflags-and-friends"&gt;stack overflow&lt;/a&gt;.
+&lt;a href="https://www.gnu.org/software/automake/"&gt;automake&lt;/a&gt; spends some time on this –
+&lt;a href="https://www.gnu.org/software/automake/manual/html_node/Flag-Variables-Ordering.html"&gt;26.6 Flag Variables Ordering&lt;/a&gt;
+however it doesn’t answer all the questions that we might want answered.
+Below is my attempt to untangle the confusion and provide a canonical best
+way to handle CFLAGS with autosetup and make (or similar).&lt;/p&gt;
+
+&lt;p&gt;One fundamental consideration is that CFLAGS (and CPPFLAGS, CXXFLAGS)
+are all user-specified and the user’s wishes should be respected above all else.
+This means that overwriting the user’s settings by changing CFLAGS or adding
+additional flags after the user’s settings is not acceptable. With this in mind,
+let’s look at all the points where flags to the C compiler could be specified.&lt;/p&gt;
+
+&lt;p&gt;First the user can provide flags in the environment or on the command
+line to &lt;code&gt;configure&lt;/code&gt; that we will name (1) and (2).&lt;/p&gt;
+
+&lt;pre class="sh_unix"&gt;
+$ CFLAGS=-Dd1 ./configure CFLAGS=-Dd2
+&lt;/pre&gt;
+
+&lt;p&gt;Next the user can provide flags in the environment or on the commandline to make or equivalent
+that we will name (3) and (4).&lt;/p&gt;
+
+&lt;pre class="sh_unix"&gt;
+$ CFLAGS=-Dd3 make CFLAGS=-Dd4
+&lt;/pre&gt;
+
+&lt;p&gt;Finally if no explicit CFLAGS are provided by the user, use &lt;code&gt;-g -O2&lt;/code&gt;, which we will name (0).&lt;/p&gt;
+
+&lt;p&gt;In addition, &lt;code&gt;configure&lt;/code&gt; may wish to add additional flags based on &lt;code&gt;configure&lt;/code&gt; tests or user
+options, but these should not affect CFLAGS.&lt;/p&gt;
+
+&lt;pre class="sh_autosetup"&gt;
+# If supported, add this flag to compiler flags
+cc-check-flags -std=c99
+&lt;/pre&gt;
+
+&lt;p&gt;And also we may we wish to add to CFLAGS within the makefile based on settings.
+(This example could have been done in auto.def instead - it is just indicative).
+Simlarly this should not affect the user’s CFLAGS settings.&lt;/p&gt;
+
+&lt;pre class="sh_unix"&gt;
+ifeq(@SHARED@,1)
+# Except we don't want to append to CFLAGS
+CFLAGS += -dynamic
+endif
+&lt;/pre&gt;
+
+&lt;p&gt;Now what behaviour provides the best user experience? It is reasonable for (2) to override (1), especially
+as CFLAGS may simply be set in the environment, so the explicit setting on the command line
+should take precedence. Similarly, (4) should override (3) for similar reasons. It is also clear that
+(4) should take precedence over (1) and (2) as this is a later phase. One thing that is not entirely
+clear is whether (3) should override (2). For simplicity we will say it should as otherwise we would
+need to distiguish beteen (1) and (2) in the Makefile. Finally, for CFLAGS all of (1) - (4) should
+override (0). Now as we said that the user’s selection is the highest precedence, our command line
+should clearly be.&lt;/p&gt;
+
+&lt;pre class="sh_makefile"&gt;
+cc &amp;lt;other-flags&amp;gt; $CFLAGS -c ... -o ...
+&lt;/pre&gt;
+
+&lt;p&gt;With the user’s selection last, overriding other flags that we will discuss shortly, and
+where CFLAGS is defined as below, where the notation means that the first value that is set
+is chosen.&lt;/p&gt;
+&lt;pre class="sh_unix"&gt;
+CFLAGS := (4) || (3) || (2) || (1) || (0)
+&lt;/pre&gt;
+
+&lt;p&gt;Note that CPPFLAGS can be specified by the user in all the same ways, except that there is no
+default if not specified. The ordering between CFLAGS and CPPFLAGS is not clear, but we may as well follow
+the gnu make approach:&lt;/p&gt;
+&lt;pre class="sh_makefile"&gt;
+# default
+COMPILE.c = $(CC) $(CFLAGS) $(CPPFLAGS) $(TARGET_ARCH) -c
+&lt;/pre&gt;
+
+&lt;p&gt;So then we have:&lt;/p&gt;
+&lt;pre class="sh_makefile"&gt;
+cc &amp;lt;other-flags&amp;gt; $CFLAGS $CPPFLAGS -c ... -o ...
+&lt;/pre&gt;
+
+&lt;p&gt;Now we only need to decide how configure-derived flags are set and made available to make.
+While most autosetup checks don’t do anything with CFLAGS by default (it is up to the auto.def
+developer to make the flags available), &lt;code&gt;cc-check-flags&lt;/code&gt; unfortunately (as of autosetup 0.7.0) 
+modifieds CFLAGS. This is not OK as CFLAGS is a user value, and should not be touched by autosetup.
+Therefore, as of autosetup 0.7.1, &lt;code&gt;cc-check-flags&lt;/code&gt; now adds to AS_CFLAGS instead (autosetup CFLAGS).
+This makes the recommendation of how to handle CFLAGS in auto.def simple. All flags are added to AS_CFLAGS
+(or AS_CPPFLAGS or AS_CXXFLAGS). e.g.&lt;/p&gt;
+
+&lt;pre class="sh_autosetup"&gt;
+# Adds to AS_CFLAGS
+cc-check-flags -std=c99
+# Add profiling if selected
+if {[opt-bool profiling]} {
+	define-append AS_CFLAGS -pg
+}
+&lt;/pre&gt;
+
+&lt;p&gt;And finally we need to determine how flags can be added in the Makefile.
+It is simplest if we use the same AS_CFLAGS as autosetup. e.g.&lt;/p&gt;
+
+&lt;pre class="sh_makefile"&gt;
+ifeq(@SHARED@,1)
+AS_CFLAGS += -dynamic
+endif
+&lt;/pre&gt;
+
+&lt;p&gt;Now the only remaining challenge is to ensure that the Makefile implements
+our desired command line:&lt;/p&gt;
+
+&lt;pre class="sh_makefile"&gt;
+cc $(AS_CFLAGS) $(AS_CPPFLAGS) $CFLAGS $CPPFLAGS -c ... -o ...
+&lt;/pre&gt;
+
+&lt;p&gt;We &lt;em&gt;could&lt;/em&gt; start by trying this:&lt;/p&gt;
+
+&lt;pre class="sh_makefile"&gt;
+CFLAGS += @AS_CFLAGS@ @AS_CPPFLAGS@ @CFLAGS@ @CPPFLAGS@
+&lt;/pre&gt;
+
+&lt;p&gt;However this does not work as these will take precedence over the user flags.
+As there is no way to prepend flags, we could try the cumbersome:&lt;/p&gt;
+
+&lt;pre class="sh_makefile"&gt;
+override CFLAGS := @AS_CFLAGS@ @AS_CPPFLAGS@ $(CFLAGS)
+&lt;/pre&gt;
+
+&lt;p&gt;But my preference is for the simpler solution to either take over
+the implicit rule entirely, or replace the compile line. Therefore in gnu
+make we can do:&lt;/p&gt;
+&lt;pre class="sh_makefile"&gt;
+# Use configure versions if not set during make
+CFLAGS ?= @CFLAGS@
+CPPFLAGS ?= @CPPFLAGS@
+CFlAG
+# ensure we get the ordering we need
+COMPILE.c = $(CC) @AS_CFLAGS@ @AS_CPPFLAGS@ $(CFLAGS) $(CPPFLAGS) $(TARGET_ARCH) -c
+&lt;/pre&gt;
+
+&lt;p&gt;(Note that we could changed to &lt;code&gt;CFLAGS = @CFLAGS@&lt;/code&gt; if we wanted to ignore (3))&lt;/p&gt;
+
+&lt;p&gt;Alternatively replace the rule entirely:&lt;/p&gt;
+
+&lt;pre class="sh_makefile"&gt;
+# This may be gnu make only
+%.o: %.c
+        $(CC) @AS_CFLAGS@ @AS_CPPFLAGS@ $(CFLAGS) $(CPPFLAGS) $(TARGET_ARCH) -c $&amp;lt; -o $@
+
+# This may work better for bsd make
+.c.o:
+        $(CC) @AS_CFLAGS@ @AS_CPPFLAGS@ $(CFLAGS) $(CPPFLAGS) $(TARGET_ARCH) -c $&amp;lt; -o $@
+&lt;/pre&gt;
+
+&lt;p&gt;This is implemented in &lt;a href="https://github.com/msteveb/autosetup/blob/master/examples/typical/Makefile.in"&gt;examples/typical/Makefile.in&lt;/a&gt;
+If you have a suggestion why one Makefile approach is better than the others, please
+make a comment on this page.&lt;/p&gt;
+</content>
+  </entry>
   <entry>
     <id>tag:msteveb.github.io,2020-09-23:/autosetup/articles/autosetup-070/</id>
     <title type="html">autosetup 0.7.0</title>

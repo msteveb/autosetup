@@ -1,6 +1,6 @@
 <!DOCTYPE html><html lang="en"><head>
     <meta charset="utf-8">
-    <title>autosetup - autosetup 0.7.0</title>
+    <title>autosetup - autosetup 0.7.1</title>
     <link rel="stylesheet" type="text/css" href="../../css/style.css" media="screen">
     <link rel="stylesheet" type="text/css" href="../../css/sh_style.css" media="screen">
     
@@ -36,32 +36,33 @@
             <a href="../">All News Articles</a>
             » 
         
-            <a href="./">autosetup 0.7.0</a>
+            <a href="./">autosetup 0.7.1</a>
             
         
         </div>
         <div class="main" id="main">
         
-            <p class="articledate">Wednesday, 23 September 2020</p>
-            <h2 class="news">autosetup 0.7.0</h2>
+            <p class="articledate">Thursday, 18 August 2022</p>
+            <h2 class="news">autosetup 0.7.1</h2>
         
-        <p><strong>autosetup</strong> v0.7.0 has been released.</p>
+        <p><strong>autosetup</strong> v0.7.1 has been released.</p>
 
-<p>Changes since v0.6.9</p>
+<p>Changes since v0.7.0</p>
 
 <p>Major improvements:</p>
 
 <ul>
-  <li>options: improved option handling, consistency and documentation</li>
+  <li>improve handling of CFLAGS, etc. See <a href="../handling-cflags/">CFLAGS Handling</a></li>
 </ul>
 
 <p>Minor changes and bug fixes:</p>
 
 <ul>
-  <li>Avoid adding duplicates to $CONFIGURE_OPTS and $AUTO_REMAKE</li>
-  <li>pkg-config: Improve cross compiling support, identify dependency issues, pkg-config-get-var</li>
-  <li>cc: $CXX is set to the empty string if not found rather than false</li>
-  <li>Add support for Tcl 8.7</li>
+  <li>autosetup-find-tclsh will now build jimsh0 in the current directory</li>
+  <li>pkg-config: invocation of -print-sysroot is now correct</li>
+  <li>config.guess, config.sub: update to 2021-06-03</li>
+  <li>cc-check-tools: fix when command includes args</li>
+  <li>define-push: simplifies define management</li>
 </ul>
 
         </div>
