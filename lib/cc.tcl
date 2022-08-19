@@ -678,7 +678,7 @@ proc calc-define-output-type {name spec} {
 }
 
 # Initialise some values from the environment or commandline or default settings
-foreach i {LDFLAGS LIBS CPPFLAGS LINKFLAGS {CFLAGS "-g -O2"}} {
+foreach i {LDFLAGS LIBS CPPFLAGS LINKFLAGS CFLAGS} {
 	lassign $i var default
 	define $var [get-env $var $default]
 }
