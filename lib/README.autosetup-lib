@@ -5,7 +5,7 @@ can be loaded with the 'use' directive.
 
 Files named *.auto are auto-load modules.
 
-Modules which are publically documented (those that contain @synopsis: ...), and auto-load modules are installed
+Modules which are publicly documented (those that contain @synopsis: ...), and auto-load modules are installed
 stand-alone in a local autosetup installation to facilitate understanding by autosetup
 end-users.
 
