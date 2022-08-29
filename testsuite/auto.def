@@ -80,7 +80,7 @@ test define-1.6 {define-append} {
 	define d {2 1}
 	define e {2 2}
 
-	# define-append will append with a space, omitting duplicates but not removing
+	# define-append will append with a space
 	# and will ignore empty values
 	define-append a 1 "" 2
 	define-append a ""
@@ -91,14 +91,22 @@ test define-1.6 {define-append} {
 	define-append e 1 2
 	define-append f 1 2
 	list [get-define a] [get-define b] [get-define c] [get-define d] [get-define e]
-} {{A 1 2} {1 2} {1 2} {2 1} {2 2 1}}
+} {{A 1 2} {1 1 2} {1 2} {2 1 1 2} {2 2 1 2}}
 
-test defined-2.1 {define-append with spaces} {
+test define-1.7 {define-append-argv quoted} {
 	undefine a
-	define-append a {-Dx="with spaces"}
-	define-append a {"-I/path with spaces/tmp"}
+	define-append-argv a cc
+	define-append-argv a "CFLAGS=-Wall -Werror"
+	define-append-argv a -Dabc=\"space\ sep\"
 	get-define a
-} {-Dx="with spaces" "-I/path with spaces/tmp"}
+} {cc "CFLAGS=-Wall -Werror" "-Dabc=\"space sep\""}
+
+test defined-1.8 {define-append-argv with spaces} {
+	undefine a
+	define-append-argv a {-Dx=with spaces}
+	define-append-argv a {-I/path with spaces/tmp}
+	get-define a
+} {"-Dx=with spaces" "-I/path with spaces/tmp"}
 
 test max-1.1 {ints} {
 	max 5 10
