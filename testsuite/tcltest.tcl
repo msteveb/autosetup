@@ -1,4 +1,4 @@
-# tcltest compatibilty/wrapper/extension
+# tcltest compatibility/wrapper/extension
 
 # Common code
 set testinfo(verbose) 0
