@@ -57,27 +57,28 @@ check-feature const {
 	cctest -code {const int _x = 0;}
 }
 
-define EXTRA_CFLAGS ""
-
 # Does the C compiler understand -std=c99?
 check-feature -std=c99 {
 	cctest -cflags {-std=c99}
 }
 # Could check the return code of check-feature instead
 if {[have-feature -std=c99]} {
-	define-append EXTRA_CFLAGS -std=c99 -fpedantic {-Dversion="my version"}
+	define-append-argv AS_CFLAGS -std=c99 -fpedantic {-Dversion="my version"}
 }
 
-# or use cc-check-flags if you want working flags added to CFLAGS automatically
+# or use cc-check-flags if you want working flags added to AS_CFLAGS automatically
 cc-check-flags -bogus
-cc-check-flags -time
 
 # But use -Werror if you are testing a warning flag
 cc-with {-cflags -Werror} {
-	cc-check-flags -Wimplicit-fallthrough=5
+	cc-check-flags -Wimplicit-fallthrough=5 -Wformat-security
+}
+# Or note that any diagnostics from the compiler means it isn't supported
+cc-with {-nooutput 1} {
+	cc-check-flags -time
 }
 
-define version1 "with spaces"
+define-append-argv version1 "with spaces"
 
 # Many apps want to know if they are building with gcc (or at least a compatible compiler)
 cc-check-decls __GNUC__

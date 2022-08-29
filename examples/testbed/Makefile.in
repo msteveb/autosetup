@@ -18,6 +18,7 @@ reconfig:
 
 # Tests specific variables
 # CFLAGS=@CFLAGS@
+# AS_CFLAGS=@AS_CFLAGS@
 # LIBS=@LIBS@
 
 # Test conditional sections
