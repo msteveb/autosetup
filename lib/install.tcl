@@ -212,7 +212,7 @@ can be loaded with the 'use' directive.
 
 *.auto files in this directory are auto-loaded.
 
-For more information, see http://msteveb.github.io/autosetup/
+For more information, see https://msteveb.github.io/autosetup/
 }
 	dputs "install: autosetup/README.autosetup"
 	writefile $target $readme

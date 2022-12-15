@@ -8,7 +8,7 @@ proc autosetup_help {what} {
 
     puts "Usage: [file tail $::autosetup(exe)] \[options\] \[settings\]\n"
     puts "This is [autosetup_version], a build environment \"autoconfigurator\""
-    puts "See the documentation online at http://msteveb.github.io/autosetup/\n"
+    puts "See the documentation online at https://msteveb.github.io/autosetup/\n"
 
     if {$what in {all local}} {
         # Need to load auto.def now
@@ -81,8 +81,8 @@ proc autosetup_reference {{type text}} {
     section {Introduction}
 
     p {
-        See http://msteveb.github.com/autosetup/ for the online documentation for 'autosetup'.
-		This documentation can also be accessed locally with `autosetup --ref`.
+        See https://msteveb.github.io/autosetup/ for the online documentation for 'autosetup'.
+        This documentation can also be accessed locally with `autosetup --ref`.
     }
 
     p {
