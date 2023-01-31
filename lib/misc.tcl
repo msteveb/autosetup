@@ -49,6 +49,19 @@ if {$autosetup(istcl)} {
 	proc isatty? {channel} {
 		dict exists [fconfigure $channel] -xchar
 	}
+	# Jim-compatible stacktrace using info frame
+	proc stacktrace {} {
+		set stacktrace {}
+		# 2 to skip the current frame
+		for {set i 2} {$i < [info frame]} {incr i} {
+			set frame [info frame -$i]
+			if {[dict exists $frame file]} {
+				# We don't need proc, so use ""
+				lappend stacktrace "" [dict get $frame file] [dict get $frame line]
+			}
+		}
+		return $stacktrace
+	}
 } else {
 	if {$autosetup(iswin)} {
 		# On Windows, backslash convert all environment variables
@@ -102,16 +115,11 @@ proc error-location {msg} {
 		return -code error $msg
 	}
 	# Search back through the stack trace for the first error in a .def file
-	for {set i 1} {$i < [info level]} {incr i} {
-		if {$::autosetup(istcl)} {
-			array set info [info frame -$i]
-		} else {
-			lassign [info frame -$i] info(caller) info(file) info(line)
+	foreach {p f l} [stacktrace] {
+		if {[string match *.def $f]} {
+			return "[relative-path $f]:$l: Error: $msg"
 		}
-		if {[string match *.def $info(file)]} {
-			return "[relative-path $info(file)]:$info(line): Error: $msg"
-		}
-		#puts "Skipping $info(file):$info(line)"
+		#puts "Skipping $f:$l"
 	}
 	return $msg
 }
