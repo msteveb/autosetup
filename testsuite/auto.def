@@ -242,14 +242,21 @@ test template-1.2 {make-template in subdir} -body {
 test template-1.3 {make-template with @include} -body {
 	define abc ABC
 	make-template template-a.in template.out
-	set result [readfile template.out]
-	set exp {abc=ABC
-In include file: abc=ABC, def=DEF
-def=DEF}
-	if {$result ne $exp} {
-		error "$result != $exp"
-	}
-} -result {} -cleanup {
+	readfile template.out
+} -result {abc=ABC
+In include file 2: abc=ABC, def=UNDEF
+def=UNDEF} -cleanup {
+	file delete template.out
+}
+
+test template-1.4 {make-template with conditional @include} -body {
+	define abc ABC
+	define COND 1
+	make-template template-a.in template.out
+	readfile template.out
+} -result {abc=ABC
+In include file 1: abc=ABC, def=DEF
+def=DEF} -cleanup {
 	file delete template.out
 }
 

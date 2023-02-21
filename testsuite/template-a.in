@@ -1,4 +1,9 @@
 abc=@abc@
+@if COND
 @define def DEF
-@include @srcdir@/template-a.inc
+@include @srcdir@/template-a1.inc
+@else
+@define def UNDEF
+@include @srcdir@/template-a2.inc
+@endif
 def=@def@
