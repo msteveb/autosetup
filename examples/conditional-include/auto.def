@@ -1,0 +1,4 @@
+autosetup-require-version 0.6.7
+
+use cc cc-lib cc-db pkg-config
+make-template Makefile.in

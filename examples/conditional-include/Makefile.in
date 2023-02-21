@@ -1,0 +1,6 @@
+@if INCLUDE_IT
+"INCLUSION ENABLED"
+@include sub.make
+@else
+"INCLUSION DISABLED"
+@endif
