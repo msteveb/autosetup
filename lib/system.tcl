@@ -210,16 +210,20 @@ proc include-file {infile mapping} {
 			}
 			continue
 		} elseif {[regexp {^@include\s+(.*)} $line -> filearg]} {
-			set incfile [string map $mapping $filearg]
-			if {[file exists $incfile]} {
-				lappend ::autosetup(deps) [file-normalize $incfile]
-				lappend result {*}[include-file $incfile $mapping]
-			} else {
-				user-error "$infile:$linenum: Include file $incfile is missing"
+			if {"0" ni $condstack} {
+				set incfile [string map $mapping $filearg]
+				if {[file exists $incfile]} {
+					lappend ::autosetup(deps) [file-normalize $incfile]
+					lappend result {*}[include-file $incfile $mapping]
+				} else {
+					user-error "$infile:$linenum: Include file $incfile is missing"
+				}
 			}
 			continue
 		} elseif {[regexp {^@define\s+(\w+)\s+(.*)} $line -> var val]} {
-			define $var $val
+			if {"0" ni $condstack} {
+				define $var $val
+			}
 			continue
 		}
 		# Only output this line if the stack contains all "true"
