@@ -198,7 +198,7 @@ COMPILE.c = $(CC) @AS_CFLAGS@ @AS_CPPFLAGS@ $(CFLAGS) $(CPPFLAGS) $(TARGET_ARCH)
 
 &lt;p&gt;This is implemented in &lt;a href="https://github.com/msteveb/autosetup/blob/master/examples/typical/Makefile.in"&gt;examples/typical/Makefile.in&lt;/a&gt;
 If you have a suggestion why one Makefile approach is better than the others, please
-make a comment in Discussions(https://github.com/msteveb/autosetup/discussions).&lt;/p&gt;
+make a comment in &lt;a href="https://github.com/msteveb/autosetup/discussions"&gt;Discussions&lt;/a&gt;.&lt;/p&gt;
 </content>
   </entry>
   <entry>
