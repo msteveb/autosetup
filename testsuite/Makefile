@@ -5,4 +5,4 @@ test: auto.def ../autosetup
 subdirtest: auto.def ../autosetup
 	@mkdir -p _build
 	@cd _build; ENV1=abc ENVCLI=def ENV0= ../configure CLI1=ghi ENVCLI=jkl CLI0= OOT=1
-	@rmdir _build
+	@rm -rf _build
