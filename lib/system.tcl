@@ -55,6 +55,8 @@ options {
 	program-prefix:
 	program-suffix:
 	program-transform-name:
+	x-includes:
+	x-libraries:
 }
 
 # @check-feature name { script }
