@@ -711,10 +711,6 @@ define CXXFLAGS [get-env CXXFLAGS [get-define CFLAGS]]
 # May need a CC_FOR_BUILD, so look for one
 define CC_FOR_BUILD [find-an-executable [get-env CC_FOR_BUILD ""] cc gcc false]
 
-if {[get-define CC] eq ""} {
-	user-error "Could not find a C compiler. Tried: [join $try ", "]"
-}
-
 # These start empty and never come from the user or environment
 define AS_CFLAGS ""
 define AS_CPPFLAGS ""
