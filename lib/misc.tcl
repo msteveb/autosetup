@@ -25,8 +25,12 @@ if {$autosetup(iswin)} {
 	proc split-path {} {
 		split [getenv PATH .] :
 	}
+	# Check for an executable file
 	proc file-isexec {exec} {
-		file executable $exec
+		if {[file executable $exec] && [file isfile $exec]} {
+			return 1
+		}
+		return 0
 	}
 }
 
