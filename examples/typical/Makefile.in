@@ -10,7 +10,7 @@ STRIP = @STRIP@
 # If CFLAGS is given on the command line or in the environment
 # it will replace the autosetup value
 CFLAGS ?= @CFLAGS@
-CXXFLAGS ?= @XXCFLAGS@
+CXXFLAGS ?= @CXXFLAGS@
 CPPFLAGS ?= @CPPFLAGS@
 LDFLAGS ?= @LDFLAGS@
 LDLIBS += @LIBS@
@@ -29,9 +29,9 @@ DESTDIR = $(prefix)
 
 # VPATH support for out-of-tree build
 ifeq (@srcdir@,.)
-AS_CPPFLAGS += -I.
+CPPFLAGS += -I.
 else
-AS_CPPFLAGS += -I@srcdir@
+CPPFLAGS += -I@srcdir@
 VPATH := @srcdir@
 endif
 
@@ -47,7 +47,7 @@ ifeq (@shared@,1)
 # Shared library support from cc-shared
 LIB = libtest.so
 # All objects destined for the shared library need these flags
-AS_CPPFLAGS += @SH_CFLAGS@
+CPPFLAGS += @SH_CFLAGS@
 
 $(LIB): $(LIBOBJS)
 	$(CC) $(CFLAGS) $(LDFLAGS) @SH_LDFLAGS@ -o $@ $^ $(LDLIBS)
