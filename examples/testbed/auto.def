@@ -78,6 +78,14 @@ cc-with {-nooutput 1} {
 	cc-check-flags -time
 }
 
+# When checking for linker flags, need to explicitly link
+# And we don't want them added to AS_CFLAGS automatically
+define-push {AS_CFLAGS} {
+	cc-with {-link 1} {
+		cc-check-flags -Wl,--as-needed -Wl,--no-undefined -Wl,--rpath,/tmp -Wl,--bogus-link-flag
+	}
+}
+
 define-append-argv version1 "with spaces"
 
 # Many apps want to know if they are building with gcc (or at least a compatible compiler)
