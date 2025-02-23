@@ -148,8 +148,8 @@ proc automf_command_reference {} {
 
             if {[regexp {^#.*@section (.*)$} $line -> section]} {
                 lappend doc($current) [list section $section]
-				continue
-			}
+                continue
+            }
 
             # Find embedded module names
             if {[regexp {^#.*@module ([^ ]*)} $line -> modulename]} {
@@ -165,7 +165,7 @@ proc automf_command_reference {} {
             if {$cmd eq "synopsis:"} {
                 set current $modulename
                 lappend doc($current) [list section "Module: $modulename"]
-			} else {
+            } else {
                 lappend doc($current) [list subsection $cmd]
             }
 
