@@ -125,7 +125,7 @@ proc autosetup_output_block {type lines} {
 # Generate a command reference from inline documentation
 proc automf_command_reference {} {
     lappend files $::autosetup(prog)
-    lappend files {*}[lsort [glob -nocomplain $::autosetup(libdir)/*.tcl]]
+    lappend files {*}[lsort [glob -nocomplain $::autosetup(libdir)/{*/*.tcl,*.tcl}]]
 
     # We want to process all non-module files before module files
     # and then modules in alphabetical order.
