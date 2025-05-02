@@ -79,7 +79,10 @@ proc main {argv} {
 	set autosetup(optdefault) {}
 	# options-defaults is a dictionary of overrides for default values for options
 	set autosetup(options-defaults) {}
+	# optionhelp is a list of lists of {option module description}
 	set autosetup(optionhelp) {}
+	# options-defaults-help is a dictionary of replacment help text for options
+	set autosetup(options-defaults-help) {}
 	set autosetup(showhelp) 0
 
 	use util
@@ -388,11 +391,8 @@ proc options-add {opts} {
 
 	for {set i 0} {$i < [llength $opts]} {incr i} {
 		set opt [lindex $opts $i]
-		if {[string match =* $opt]} {
-			# This is a special heading
-			lappend autosetup(optionhelp) [list $opt $autosetup(module)]
-			continue
-		}
+		# Note that previously we supported special headings with a "=" prefix
+		# This is no longer supported
 		unset -nocomplain defaultvalue equal value
 
 		#puts "i=$i, opt=$opt"
@@ -502,14 +502,20 @@ proc options-add {opts} {
 		}
 
 		# Now create the help for this option if appropriate
+		# taking into account any options-default help text
+		unset -nocomplain desc
 		if {[lindex $opts $i+1] eq "=>"} {
 			set desc [lindex $opts $i+2]
+			incr i 2
+		}
+		if {[dict exists $autosetup(options-defaults-help) $name]} {
+			set desc [dict get $autosetup(options-defaults-help) $name]
+		}
+		if {[info exists desc]} {
 			if {[info exists defaultvalue]} {
 				set desc [string map [list @default@ $defaultvalue] $desc]
 			}
-			# A multi-line description
 			lappend autosetup(optionhelp) [list $opthelp $autosetup(module) $desc]
-			incr i 2
 		}
 	}
 }
@@ -582,11 +588,6 @@ proc options-show {what} {
 			puts "Local Options:"
 			incr local
 		}
-		if {[string match =* $opt]} {
-			# Output a special heading line"
-			puts [string range $opt 1 end]
-			continue
-		}
 		puts -nonewline "  [format %-${max}s $opt]"
 		if {[string match \n* $desc]} {
 			# Output a pre-formatted help description as-is
@@ -655,14 +656,19 @@ proc options {optlist} {
 	}
 }
 
-# @options-defaults dictionary
+# @options-defaults {name value ?=> "Help text"? ...}
 #
 # Specifies a dictionary of options and a new default value for each of those options.
+# After any option it is possible to specify replacement help text with "=> Help text".
 # Use before any 'use' statements in 'auto.def' to change the defaults for
 # subsequently included modules.
 proc options-defaults {dict} {
 	foreach {n v} $dict {
+		if {$n eq "=>"} {
+			dict set ::autosetup(options-defaults-help) $prevn $v
+		}
 		dict set ::autosetup(options-defaults) $n $v
+		set prevn $n
 	}
 }
 

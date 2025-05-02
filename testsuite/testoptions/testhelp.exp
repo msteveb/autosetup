@@ -1,0 +1,28 @@
+Usage: configure [options] [settings]
+
+This is autosetup v@VERSION@, a build environment "autoconfigurator"
+See the documentation online at https://msteveb.github.io/autosetup/
+
+  --help?=all?        display help and options. Optional: module name, such as --help=system
+  --license           display the autosetup license
+  --version           display the version of autosetup
+  --reference?=text?  display the autosetup command reference. 'text', 'wiki', 'asciidoc' or 'markdown'
+  --debug             display debugging output as autosetup runs
+  --install?=.?       install autosetup to the current or given directory
+  --sysinstall=path   install standalone autosetup to the given directory (e.g.: /usr/local)
+  --init?=help?       create initial auto.def, etc. Use --init=help for known types
+Local Options:
+  --bool              Enable bool
+  --bool0             Enable bool0
+  --disable-bool1     Disable bool1
+  --disable-obool     Disable obool
+  --disable-obool0    Disable obool0
+  --obool1            Enable obool1
+  --str0=             Str with empty default
+  --str1=abc          Str with text
+  --str2?=abc?        Str (default: 'abc') with text
+  --str3=abc          Str with text and default (default: 'def')
+  --ostr0=            Override str with empty default
+  --ostr1=abc         Override str with text
+  --ostr2?=abc?       Override str (default: 'X2') with text
+  --ostr3=abc         Override str with text and default (default: 'X3')
