@@ -12,12 +12,18 @@ options-defaults {
 	ostr2 X2
 	ostr3 X3
 	ostr4 X4
+	obool 1		=> "Disable obool"
+	obool0 1	=> "Disable obool0"
+	obool1 0	=> "Enable obool1"
 }
 
 options {
-	bool            => "Bool with no default"
-	bool0=0         => "Bool with default=0"
-	bool1=1         => "Bool with default=1"
+	bool            => "Enable bool"
+	bool0=0         => "Enable bool0"
+	bool1=1         => "Disable bool1"
+	obool            => "Enable obool"
+	obool0=0         => "Enable obool0"
+	obool1=1         => "Disable obool1"
 	str0:           => "Str with empty default"
 	str1:abc        => "Str with text"
 	str2:=abc       => "Str (default: '@default@') with text"
@@ -54,6 +60,9 @@ puts argv=$autosetup(argv)
 puts bool=[opt-bool bool]
 puts bool0=[opt-bool bool0]
 puts bool1=[opt-bool bool1]
+puts obool=[opt-bool obool]
+puts obool0=[opt-bool obool0]
+puts obool1=[opt-bool obool1]
 puts str0=[check-opt-str str0]
 puts str1=[check-opt-str str1]
 puts str2=[check-opt-str str2]

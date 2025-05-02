@@ -2,6 +2,9 @@ argv=--str0=a --str1=b --str2=c --str3=d
 bool=0
 bool0=0
 bool1=1
+obool=1
+obool0=1
+obool1=0
 str0=1 a
 str1=1 b
 str2=1 c

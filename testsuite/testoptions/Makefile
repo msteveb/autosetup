@@ -1,4 +1,10 @@
-all: test1 test2 test3 test4 test5 test6 test7
+all: test1 test2 test3 test4 test5 test6 test7 testhelp
+
+testhelp:
+	@./configure --help | sed -e s'/autosetup v[0-9.]*/autosetup v@VERSION@/' >$@.out 2>&1 || true
+	@diff -u $@.exp $@.out
+	@rm $@.out
+	@echo options $@ OK
 
 test1:
 	@./configure >$@.out
