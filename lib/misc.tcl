@@ -61,7 +61,7 @@ if {$autosetup(istcl)} {
 			set frame [info frame -$i]
 			if {[dict exists $frame file]} {
 				# We don't need proc, so use ""
-				lappend stacktrace "" [dict get $frame file] [dict get $frame line]
+				lappend stacktrace "" [dict get $frame file] [dict get $frame line] ""
 			}
 		}
 		return $stacktrace
@@ -118,8 +118,12 @@ proc error-location {msg} {
 	if {$::autosetup(debug)} {
 		return -code error $msg
 	}
-	# Search back through the stack trace for the first error in a .def file
-	foreach {p f l} [stacktrace] {
+	set vars {p f l cmd}
+	if {!$::autosetup(istcl) && ![dict exists $::tcl_platform stackFormat]} {
+		# Older versions of Jim had a 3 element stacktrace
+		set vars {p f l}
+	}
+	foreach $vars [stacktrace] {
 		if {[string match *.def $f]} {
 			return "[relative-path $f]:$l: Error: $msg"
 		}
