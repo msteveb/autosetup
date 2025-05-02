@@ -406,8 +406,8 @@ proc options-add {opts} {
 		# Find the corresponding value in the user options
 		# and set the default if necessary
 		if {[string match "-*" $opt]} {
-			# This is a documentation-only option, like "-C <dir>"
-			set opthelp $opt
+			# We no longer support documentation-only options, like "-C <dir>"
+			autosetup-error "Option $opt is not supported"
 		} elseif {$colon eq ""} {
 			# Boolean option
 			lappend autosetup(options) $name
