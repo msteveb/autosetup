@@ -2626,7 +2626,7 @@ static int aio_cmd_gets(Jim_Interp *interp, int argc, Jim_Obj *const *argv)
     int len;
     int nb;
     unsigned flags = AIO_ONEREAD;
-    char *nl = NULL;
+    const char *nl = NULL;
     int offset = 0;
 
     errno = 0;
