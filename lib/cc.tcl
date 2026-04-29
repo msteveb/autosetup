@@ -686,23 +686,23 @@ proc cc-init {} {
 		define $var [get-env $var $default]
 	}
 
+	set try {}
 	if {[env-is-set CC]} {
 		# Set by the user, so don't try anything else
-		define CC [find-an-executable [get-env CC ""]]
+		lappend try [get-env CC ""]
 	} else {
 		# Try some reasonable options
-		define CC [find-an-executable [get-define cross]cc [get-define cross]gcc]
-		if {[get-define CC] eq ""} {
-			# If --host and --build are the same, this isn't really
-			# a cross build, so try 'cc' and 'gcc' and reset cross
-			if {[get-define host] eq [get-define build]} {
-				define CC [find-an-executable cc gcc]
-				define cross ""
-			}
+		lappend try [get-define cross]cc [get-define cross]gcc
+		# If --host and --build are the same, this isn't really
+		# a cross build, so try 'cc' and 'gcc'. In this case we will reset cross later.
+		if {[get-define host] eq [get-define build]} {
+			lappend try cc gcc
 		}
 	}
-	if {[get-define CC] eq ""} {
-		user-error "Could not find a C compiler. Tried: [join $try ", "]"
+	define CC [find-an-executable -required {*}$try]
+	# If we found cc or gcc, set cross to ""
+	if {[get-define CC] in {cc gcc}} {
+		define cross ""
 	}
 
 	define CPP [get-env CPP "[get-define CC] -E"]
