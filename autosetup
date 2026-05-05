@@ -142,9 +142,7 @@ proc main {argv} {
 
 	# If the local module exists, source it now to allow for
 	# project-local customisations
-	if {[file exists $autosetup(libdir)/local.tcl]} {
-		use local
-	}
+	use -missingok local
 
 	# Now any auto-load modules
 	autosetup_load_auto_modules
@@ -1208,7 +1206,22 @@ proc autosetup_add_dep {filename} {
 # Library module support
 #
 
-# @use module ...
+# Returns the list of directories to search for library modules.
+proc autosetup_libdirs {} {
+	global autosetup
+	set dirs {}
+	# srcdir may not be set (during bootstrap)
+	# Search local before libdir so user modules take precedence
+	if {[info exists autosetup(srcdir)]} {
+		lappend dirs $autosetup(srcdir)/autosetup
+	}
+	if {$autosetup(libdir) ni $dirs} {
+		lappend dirs $autosetup(libdir)
+	}
+	return $dirs
+}
+
+# @use ?-missingok? module ...
 #
 # Load the given library modules.
 # e.g. 'use cc cc-shared'
@@ -1220,13 +1233,17 @@ proc autosetup_add_dep {filename} {
 # support file. In this form, '$::usedir' is set to the module directory
 # when it is loaded.
 #
+# If -missingok is given, missing modules are ignored instead of generating an error.
 proc use {args} {
 	global autosetup libmodule modsource
 
-	set dirs [list $autosetup(libdir)]
-	if {[info exists autosetup(srcdir)]} {
-		lappend dirs $autosetup(srcdir)/autosetup
+	set missingok 0
+	if {[lindex $args 0] eq "-missingok"} {
+		set args [lrange $args 1 end]
+		set missingok 1
 	}
+
+	set dirs [autosetup_libdirs]
 	foreach m $args {
 		if {[info exists libmodule($m)]} {
 			continue
@@ -1234,8 +1251,10 @@ proc use {args} {
 		set libmodule($m) 1
 
 		if {[info exists modsource(${m}.tcl)]} {
+			dputs "Loading embedded module $m"
 			autosetup_load_module $m eval $modsource(${m}.tcl)
 		} else {
+			#dputs "Searching for module $m in $dirs"
 			set locs [list ${m}.tcl ${m}/init.tcl]
 			set found 0
 			foreach dir $dirs {
@@ -1254,9 +1273,10 @@ proc use {args} {
 				# For the convenience of the "use" source, point to the directory
 				# it is being loaded from
 				set ::usedir [file dirname $source]
+				dputs "Loading module $m from $source"
 				autosetup_load_module $m source $source
 				autosetup_add_dep $source
-			} else {
+			} elseif {!$missingok} {
 				autosetup-error "use: No such module: $m"
 			}
 		}
@@ -1267,11 +1287,17 @@ proc autosetup_load_auto_modules {} {
 	global autosetup modsource
 	# First load any embedded auto modules
 	foreach mod [array names modsource *.auto] {
+		dputs "Loading embedded auto module $mod"
 		autosetup_load_module $mod eval $modsource($mod)
 	}
 	# Now any external auto modules
-	foreach file [glob -nocomplain $autosetup(libdir)/*.auto $autosetup(libdir)/*/*.auto] {
-		autosetup_load_module [file tail $file] source $file
+	set dirs [autosetup_libdirs]
+	dputs "Loading auto modules from $dirs"
+	foreach dir $dirs {
+		foreach file [glob -nocomplain $dir/*.auto $dir/*/*.auto] {
+			dputs "Loading auto module $file"
+			autosetup_load_module [file tail $file] source $file
+		}
 	}
 }
 
