@@ -1,7 +1,8 @@
 all: test1 test2 test3 test4 test5 test6 test7 testhelp
 
+# Explicitly set COLUMNS here to avoid the testhelp output being different on different terminals.
 testhelp:
-	@./configure --help | sed -e s'/autosetup v[0-9.]*/autosetup v@VERSION@/' >$@.out 2>&1 || true
+	@COLUMNS=80 ./configure --help | sed -e s'/autosetup v[0-9.]*/autosetup v@VERSION@/' >$@.out 2>&1 || true
 	@diff -u $@.exp $@.out
 	@rm $@.out
 	@echo options $@ OK

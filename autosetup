@@ -568,11 +568,16 @@ proc options-show {what} {
 		set max [max $max [string length $opt]]
 	}
 	set indent [string repeat " " [expr {$max+4}]]
-	set cols [getenv COLUMNS 80]
-	catch {
-		lassign [exec stty size] _ sttycols
-		if {[string is integer -strict $sttycols]} {
-			set cols $sttycols
+	# $COLUMNS overrides stty for window width
+	set cols 80
+	if {[env-is-set COLUMNS]} {
+		set cols [getenv COLUMNS]
+	} else {
+		catch {
+			lassign [exec stty size] _ sttycols
+			if {[string is integer -strict $sttycols]} {
+				set cols $sttycols
+			}
 		}
 	}
 	incr cols -1

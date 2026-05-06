@@ -3,14 +3,18 @@ Usage: configure [options] [settings]
 This is autosetup v@VERSION@, a build environment "autoconfigurator"
 See the documentation online at https://msteveb.github.io/autosetup/
 
-  --help?=all?        display help and options. Optional: module name, such as --help=system
+  --help?=all?        display help and options. Optional: module name, such as
+                      --help=system
   --license           display the autosetup license
   --version           display the version of autosetup
-  --reference?=text?  display the autosetup command reference. 'text', 'wiki', 'asciidoc' or 'markdown'
+  --reference?=text?  display the autosetup command reference. 'text', 'wiki',
+                      'asciidoc' or 'markdown'
   --debug             display debugging output as autosetup runs
   --install?=.?       install autosetup to the current or given directory
-  --sysinstall=path   install standalone autosetup to the given directory (e.g.: /usr/local)
-  --init?=help?       create initial auto.def, etc. Use --init=help for known types
+  --sysinstall=path   install standalone autosetup to the given directory
+                      (e.g.: /usr/local)
+  --init?=help?       create initial auto.def, etc. Use --init=help for known
+                      types
 Local Options:
   --bool              Enable bool
   --bool0             Enable bool0
