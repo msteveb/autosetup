@@ -2,7 +2,7 @@
 # All rights reserved
 
 # Module which provides text formatting
-# wiki.tcl.tk format output
+# wiki.tcl-lang.org format output
 
 use formatting
 
